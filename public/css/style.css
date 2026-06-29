@@ -2158,6 +2158,18 @@ tr:last-child td {
     z-index: 20000 !important;
 }
 
+@media (max-width: 768px) {
+    .swal2-container {
+        padding-bottom: max(16px, env(safe-area-inset-bottom, 16px)) !important;
+    }
+    .swal2-popup {
+        margin-bottom: max(16px, env(safe-area-inset-bottom, 16px)) !important;
+    }
+    .swal2-actions {
+        padding-bottom: max(12px, env(safe-area-inset-bottom, 12px)) !important;
+    }
+}
+
 /* ==========================================================================
    Responsividade Global - Foco em Experiência Mobile (App Style)
    ========================================================================== */
