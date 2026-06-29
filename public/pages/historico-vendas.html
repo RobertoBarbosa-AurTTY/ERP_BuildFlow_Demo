@@ -51,6 +51,9 @@
         }
 
         @media (max-width: 768px) {
+            body {
+                overflow-x: hidden;
+            }
             .tabs-container {
                 width: 100%;
                 overflow-x: auto;
@@ -87,6 +90,32 @@
             #dateFilters input[type="date"] {
                 width: 100% !important;
                 box-sizing: border-box !important;
+            }
+            .card-table table {
+                min-width: 0 !important;
+                width: 100%;
+                table-layout: fixed;
+            }
+            .card-table th,
+            .card-table td {
+                padding: 6px 3px !important;
+                font-size: 0.62rem !important;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .card-table th:last-child,
+            .card-table td:last-child {
+                padding-right: 0 !important;
+            }
+            .card-table td div[style*="gap: 4px"] {
+                gap: 1px !important;
+            }
+            .card-table .btn-icon {
+                width: 22px !important;
+                height: 22px !important;
+                font-size: 0.55rem !important;
+                min-width: 0 !important;
             }
         }
     </style>

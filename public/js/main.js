@@ -699,6 +699,52 @@ const BuildFlow = {
     this.initNotificationBell();
   },
 
+  initUserMenu() {
+    document.querySelectorAll(".user-profile").forEach((profile) => {
+      if (profile.dataset.userMenuAttached) return;
+
+      const dropdown = document.createElement("div");
+      dropdown.className = "user-dropdown";
+      dropdown.innerHTML = `
+        <button type="button" class="user-dropdown-item" data-href="pages/configuracoes.html">
+          <i class="fa-solid fa-sliders"></i> Configurações
+        </button>
+        <button type="button" class="user-dropdown-item danger" data-action="logout">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i> Sair
+        </button>
+      `;
+      profile.appendChild(dropdown);
+
+      profile.addEventListener("click", (event) => {
+        event.stopPropagation();
+        if (dropdown.classList.contains("active")) {
+          dropdown.classList.remove("active");
+          return;
+        }
+        dropdown.classList.add("active");
+      });
+
+      dropdown.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const btn = event.target.closest(".user-dropdown-item");
+        if (!btn) return;
+
+        if (btn.dataset.action === "logout") {
+          this.logout();
+        } else if (btn.dataset.href) {
+          window.location.href = btn.dataset.href;
+        }
+        dropdown.classList.remove("active");
+      });
+
+      document.addEventListener("click", () => {
+        dropdown.classList.remove("active");
+      });
+
+      profile.dataset.userMenuAttached = "1";
+    });
+  },
+
   async createProduct(product) {
     return await this.apiFetch("/products", {
       method: "POST",
@@ -1523,8 +1569,22 @@ const BuildFlow = {
   },
 
   // Dashboard
+  getDashboardMetricsCacheKey() {
+    return 'buildflow_dashboard_cache';
+  },
+
   async getDashboardMetrics() {
-    return this.fetchAndCacheMetrics();
+    const cacheKey = this.getDashboardMetricsCacheKey();
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const { data, expiry } = JSON.parse(cached);
+        if (Date.now() < expiry) return data;
+      } catch { /* ignore */ }
+    }
+    const data = await this.fetchAndCacheMetrics();
+    localStorage.setItem(cacheKey, JSON.stringify({ data, expiry: Date.now() + 30000 }));
+    return data;
   },
 
   // Configurações
@@ -1647,6 +1707,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   BuildFlow.applyTheme();
   BuildFlow.initGlobalSearch();
   BuildFlow.initGlobalNotifications();
+  BuildFlow.initUserMenu();
 
   // Global Logout listener
   const logoutBtn = document.getElementById("logoutBtn");

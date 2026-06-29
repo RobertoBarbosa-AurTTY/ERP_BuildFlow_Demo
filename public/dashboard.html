@@ -332,6 +332,30 @@
               >
               <span class="qa-meta muted" id="qaPdvMeta">—</span>
             </a>
+            <a href="pages/contas-a-pagar.html" class="quick-access-card">
+              <strong>Contas a Pagar</strong>
+              <span class="qa-desc"
+                >Boletos, vencimentos e alertas financeiros.</span
+              >
+            </a>
+            <a href="pages/historico-vendas.html" class="quick-access-card">
+              <strong>Histórico de Vendas</strong>
+              <span class="qa-desc"
+                >Consultar vendas anteriores e detalhes de pedidos.</span
+              >
+            </a>
+            <a href="pages/configuracoes.html" class="quick-access-card">
+              <strong>Configurações</strong>
+              <span class="qa-desc"
+                >Ajustar preferências do sistema e da conta.</span
+              >
+            </a>
+            <a href="pages/relatorios.html" class="quick-access-card">
+              <strong>Relatórios</strong>
+              <span class="qa-desc"
+                >Análise e relatório de performance do negócio.</span
+              >
+            </a>
           </div>
         </section>
       </main>
@@ -347,21 +371,20 @@
 
       async function loadQuickAccessStats() {
         try {
-          const summary = await BuildFlow.getWmsSummary();
+          const today = new Date();
+          const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+          const todayEnd = new Date(todayStart.getTime() + 86400000);
+
+          const [summary, addrs, sales] = await Promise.all([
+            BuildFlow.getWmsSummary(),
+            BuildFlow.getWarehouseAddresses().catch(() => null),
+            BuildFlow.getSales({ start: todayStart.toISOString(), end: todayEnd.toISOString() }).catch(() => []),
+          ]);
+
           setMetricText("qaPriceMeta", `${summary.total} produto(s) no banco`);
-          setMetricText(
-            "qaShelfMeta",
-            `${summary.withAddress} produto(s) endereçado(s)`,
-          );
-          try {
-            const addrs = await BuildFlow.getWarehouseAddresses();
-            setMetricText(
-              "qaCreateAddrMeta",
-              `${addrs.length} endereço(s) no cadastro`,
-            );
-          } catch {
-            setMetricText("qaCreateAddrMeta", "—");
-          }
+          setMetricText("qaShelfMeta", `${summary.withAddress} produto(s) endereçado(s)`);
+          setMetricText("qaCreateAddrMeta", addrs ? `${addrs.length} endereço(s) no cadastro` : "—");
+
           setMetricText(
             "qaAddressMeta",
             summary.withoutAddress > 0
@@ -370,21 +393,11 @@
           );
           setMetricText("qaStockMeta", `${summary.total} item(ns) em estoque`);
 
-          const sales = await BuildFlow.getSales();
-          const todaySales = sales.filter((s) => {
-            const d = new Date(s.createdAt);
-            const t = new Date();
-            return d.toDateString() === t.toDateString();
-          });
+          const todaySales = Array.isArray(sales) ? sales : [];
           setMetricText("qaPdvMeta", `${todaySales.length} venda(s) hoje`);
         } catch (error) {
           console.error("Quick access stats error:", error);
-          [
-            "qaPriceMeta",
-            "qaShelfMeta",
-            "qaAddressMeta",
-            "qaStockMeta",
-          ].forEach((id) => {
+          ["qaPriceMeta", "qaShelfMeta", "qaAddressMeta", "qaStockMeta"].forEach((id) => {
             setMetricText(id, "Erro ao conectar ao banco");
           });
         }
@@ -610,8 +623,7 @@
       }
 
       document.addEventListener("DOMContentLoaded", () => {
-        loadDashboard();
-        loadQuickAccessStats();
+        Promise.all([loadDashboard(), loadQuickAccessStats()]);
 
         const searchInput = document.getElementById("dashboardSearchInput");
         const searchBar = document.getElementById("dashboardSearchBar");

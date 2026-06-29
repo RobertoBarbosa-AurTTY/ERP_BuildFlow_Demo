@@ -31,6 +31,40 @@
         
         @media (max-width: 1200px) {
             .charts-grid { grid-template-columns: 1fr; }
+            .chart-container { padding: 20px; }
+            .chart-container[style*="span 2"],
+            .chart-container[style*="span 2"] { grid-column: span 1 !important; }
+        }
+
+        @media (max-width: 768px) {
+            .report-filters {
+                flex-direction: column;
+                gap: 8px;
+                margin-bottom: 20px;
+            }
+            .filter-group {
+                width: 100%;
+                padding: 10px 14px;
+                justify-content: center;
+            }
+            .filter-group select { flex: 1; max-width: 180px; text-align: left; }
+            .charts-grid { gap: 16px; margin-top: 16px; }
+            .chart-container { padding: 16px; border-radius: 18px; }
+            .chart-container h3 { font-size: 0.95rem; margin-bottom: 16px; }
+            canvas { height: 220px !important; }
+            .page-header h2 { font-size: 1.15rem; }
+            .page-header h2 span { display: block; font-size: 0.85rem; }
+            .page-header p { font-size: 0.78rem; }
+            .grid-stats { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .product-item { padding: 12px 0; }
+            .product-name { font-size: 0.8rem; }
+        }
+
+        @media (max-width: 480px) {
+            .grid-stats { grid-template-columns: 1fr; }
+            canvas { height: 180px !important; }
+            .chart-container { padding: 12px; }
+            .report-filters { margin-bottom: 16px; }
         }
     </style>
 </head>
