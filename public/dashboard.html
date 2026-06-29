@@ -175,14 +175,7 @@
           </div>
         </section>
 
-        <div
-          style="
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-top: 32px;
-          "
-        >
+        <div class="dashboard-tables-grid">
           <section class="card-table">
             <div class="table-header">
               <h3>Vendas Recentes</h3>
@@ -199,9 +192,9 @@
                 Ver Todas
               </button>
             </div>
-            <div style="overflow: auto; max-height: 320px; scrollbar-width: thin; scrollbar-color: transparent transparent;">
+            <div class="table-scroll-wrapper">
               <table>
-                <thead style="position: sticky; top: 0; background: var(--bg-card); z-index: 10;">
+                <thead class="table-sticky-head">
                   <tr>
                     <th>Data/Hora</th>
                     <th>Total</th>
@@ -242,9 +235,9 @@
                 Ver Estoque
               </button>
             </div>
-            <div style="overflow: auto; max-height: 320px; scrollbar-width: thin; scrollbar-color: transparent transparent;">
+            <div class="table-scroll-wrapper">
               <table>
-                <thead style="position: sticky; top: 0; background: var(--bg-card); z-index: 10;">
+                <thead class="table-sticky-head">
                   <tr>
                     <th>Produto</th>
                     <th>Qtd</th>

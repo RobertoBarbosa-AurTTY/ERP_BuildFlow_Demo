@@ -1,3 +1,8 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BuildFlow - Saídas</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -1114,173 +1119,268 @@
             margin-left: 8px;
         }
 
-        /* Responsividade PDV Mobile Profissional */
+        /* Input SKU e FAB: ocultos em desktop */
+        .pdv-input-section {
+            display: none;
+        }
+
+        .pdv-cart-fab {
+            display: none;
+        }
+
+        /* Responsividade PDV - Tablet & Mobile */
+        @media (max-width: 900px) {
+            .pdv-sidebar {
+                width: 340px;
+            }
+        }
+
         @media (max-width: 768px) {
             body {
-                height: auto !important;
-                overflow-y: auto !important;
-                padding-bottom: 90px !important;
+                height: 100dvh;
+                overflow: hidden;
+                overscroll-behavior: none;
+                padding-bottom: 0 !important;
             }
 
-            .pdv-header {
-                flex-direction: column !important;
-                gap: 12px !important;
-                padding: 15px !important;
-                text-align: center !important;
-            }
-
-            .pdv-header-info {
-                flex-direction: column !important;
-                gap: 5px !important;
-                font-size: 0.8rem !important;
-            }
-
-            .pdv-categories {
-                padding: 12px !important;
-                gap: 8px !important;
-                position: sticky !important;
-                top: 0 !important;
-                z-index: 100 !important;
-                background: white !important;
-            }
-
-            .cat-btn {
-                padding: 8px 16px !important;
-                font-size: 0.8rem !important;
-            }
+            .pdv-header { display: none; }
+            .pdv-categories { display: none; }
+            .pdv-main { display: none; }
+            .pdv-footer { display: none; }
+            .pdv-cart-fab { display: none !important; }
 
             .pdv-layout {
-                flex-direction: column !important;
-                height: auto !important;
-                overflow: visible !important;
+                flex-direction: column;
+                overflow: hidden;
+                flex: 1;
+                min-height: 0;
             }
 
-            .pdv-main {
-                grid-template-columns: repeat(2, 1fr) !important;
-                padding: 15px !important;
-                gap: 12px !important;
-                height: auto !important;
-                overflow: visible !important;
-            }
-
-            .product-card {
-                padding: 12px !important;
-                border-radius: 15px !important;
-            }
-
-            .product-img {
-                width: 50px !important;
-                height: 50px !important;
-                margin-bottom: 8px !important;
-            }
-
-            .product-name {
-                font-size: 0.75rem !important;
-                height: 2.2rem !important;
-                line-height: 1.1 !important;
-            }
-
-            .product-price {
-                font-size: 0.9rem !important;
-            }
-
+            /* Sidebar ocupa a tela toda */
             .pdv-sidebar {
-                width: 100% !important;
-                height: auto !important;
-                border-left: none !important;
-                border-top: 2px solid var(--pdv-border) !important;
-                box-shadow: 0 -10px 25px rgba(0,0,0,0.05) !important;
-                background: #f8fafc !important;
+                display: flex;
+                width: 100%;
+                max-height: 100%;
+                height: 100%;
+                border-left: none;
+                flex-direction: column;
+                flex: 1;
+                min-height: 0;
             }
 
+            /* Input de SKU visível no mobile */
             .pdv-input-section {
-                padding: 15px !important;
+                display: block;
+                padding: 12px 16px;
+                flex-shrink: 0;
+                border-bottom: 1px solid var(--pdv-border);
             }
 
-            .input-row {
-                flex-direction: column !important;
-                align-items: stretch !important;
-                gap: 12px !important;
+            .pdv-input-section .input-row {
+                display: flex;
+                gap: 8px;
+                align-items: flex-end;
             }
 
-            .input-group[style*="flex: 0 0 80px"] {
-                flex: 1 !important;
+            .pdv-input-section .input-group {
+                flex: 1;
             }
 
-            .add-btn {
-                width: 100% !important;
-                height: 48px !important;
+            .pdv-input-section .input-group label {
+                display: block;
+                font-size: 0.65rem;
+                font-weight: 800;
+                color: var(--pdv-text-muted);
+                margin-bottom: 6px;
+                text-transform: uppercase;
             }
 
+            .pdv-input-section .pdv-input {
+                width: 100%;
+                background: var(--pdv-input-bg);
+                border: 2px solid var(--pdv-border);
+                border-radius: 8px;
+                padding: 10px 12px;
+                font-size: 0.9375rem;
+                font-weight: 700;
+                color: var(--pdv-text);
+                outline: none;
+                transition: border-color 0.2s;
+            }
+
+            .pdv-input-section .pdv-input:focus {
+                border-color: var(--pdv-primary);
+            }
+
+            .pdv-input-section .add-btn {
+                background: var(--pdv-primary);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                width: 44px;
+                height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                flex-shrink: 0;
+                font-size: 1.2rem;
+            }
+
+            /* Lista de itens do carrinho ocupa espaço disponível */
             .pdv-items-list {
-                max-height: 300px !important;
-                min-height: 100px !important;
+                flex: 1;
+                min-height: 0;
+                overflow-y: auto;
             }
 
             .cart-item {
-                padding: 12px 15px !important;
+                padding: 12px 16px;
+                gap: 10px;
             }
 
+            .item-name {
+                font-size: 0.82rem;
+            }
+
+            .item-price {
+                font-size: 0.85rem;
+            }
+
+            /* Total e ações no final */
             .pdv-total-section {
-                padding: 15px !important;
-                background: white !important;
+                padding: 12px 16px;
+                flex-shrink: 0;
+                border-top: 1px solid var(--pdv-border);
             }
 
             .total-card {
-                padding: 15px !important;
-                margin-bottom: 12px !important;
+                padding: 12px 16px;
+                margin-bottom: 10px;
             }
 
             .total-value {
-                font-size: 1.5rem !important;
+                font-size: 1.35rem;
             }
 
             .action-grid {
-                gap: 8px !important;
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+                width: 100%;
             }
 
             .action-btn {
-                padding: 14px !important;
-                font-size: 0.7rem !important;
+                width: 100%;
+                padding: 10px 8px;
+                border-radius: 12px;
+                border: none;
+                color: white;
+                font-weight: 700;
+                font-size: 0.72rem;
+                cursor: pointer;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+                min-height: 56px;
+                line-height: 1.1;
+                text-align: center;
             }
 
-            .pdv-footer {
-                position: fixed !important;
-                bottom: 0 !important;
-                left: 0 !important;
-                right: 0 !important;
-                height: 75px !important;
-                padding: 8px 12px !important;
-                gap: 8px !important;
-                z-index: 10001 !important;
-                background: white !important;
-                box-shadow: 0 -8px 30px rgba(0,0,0,0.1) !important;
-            }
-
-            .footer-btn {
-                padding: 5px !important;
-                border-radius: 8px !important;
-            }
-
-            .footer-btn i {
-                font-size: 1rem !important;
-            }
-
-            .footer-btn span {
-                font-size: 0.55rem !important;
-                margin-top: 2px !important;
+            .action-btn i {
+                font-size: 1.05rem;
             }
 
             /* Modais no Mobile */
             .modal-card {
-                width: 92% !important;
-                padding: 20px !important;
-                border-radius: 20px !important;
+                width: 92%;
+                max-width: 100%;
+                padding: 20px;
+                border-radius: 20px;
+                margin: 0 12px;
             }
 
             .pdv-discount-option {
+                min-height: 44px;
+                font-size: 0.62rem;
+                padding: 6px 8px;
+            }
+
+            .pdv-discount-option i {
+                font-size: 0.9rem;
+            }
+
+            .swal2-popup.pdv-swal {
+                margin: 12px !important;
+                width: auto !important;
+                max-width: calc(100vw - 24px) !important;
+            }
+
+            .swal2-popup.pdv-swal .pdv-sheet-grid,
+            .swal2-popup.pdv-swal .pdv-sheet-metrics,
+            .swal2-popup.pdv-swal .pdv-sale-summary,
+            .swal2-popup.pdv-swal .pdv-sale-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .toast-container {
+                top: 12px;
+                right: 12px;
+                left: 12px;
+            }
+
+            .toast {
+                padding: 12px 16px;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .pdv-input-section {
+                padding: 10px 12px;
+            }
+
+            .pdv-input-section .pdv-input {
+                padding: 8px 10px;
+                font-size: 0.875rem;
+            }
+
+            .pdv-input-section .add-btn {
+                width: 40px;
+                height: 40px;
+            }
+
+            .cart-item {
+                padding: 10px 12px;
+                gap: 8px;
+            }
+
+            .item-name {
+                font-size: 0.78rem;
+            }
+
+            .item-price {
+                font-size: 0.8rem;
+            }
+
+            .pdv-total-section {
+                padding: 10px 12px;
+            }
+
+            .total-value {
+                font-size: 1.2rem;
+            }
+
+            .action-btn {
+                padding: 8px 6px;
+                font-size: 0.68rem;
                 min-height: 48px;
-                font-size: 0.62rem !important;
+            }
+
+            .action-btn i {
+                font-size: 0.95rem;
             }
         }
     </style>
@@ -1312,7 +1412,17 @@
         </main>
 
         <aside class="pdv-sidebar">
-            <!-- Quick add by SKU removed as per request -->
+            <div class="pdv-input-section">
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Código / SKU</label>
+                        <input type="text" id="mobileSkuInput" class="pdv-input" placeholder="Digite ou escaneie..." autocomplete="off">
+                    </div>
+                    <button class="add-btn" id="mobileSkuScanBtn" title="Escaneer código">
+                        <i class="fa-solid fa-camera"></i>
+                    </button>
+                </div>
+            </div>
 
             <div class="pdv-items-list" id="cartItems">
                 <div class="empty-cart">
@@ -1348,6 +1458,12 @@
             </div>
         </aside>
     </div>
+
+    <button class="pdv-cart-fab" id="cartFab" title="Abrir carrinho" style="display:none;">
+        <i class="fa-solid fa-shopping-basket"></i>
+        <span class="fab-total" id="fabTotal">R$ 0</span>
+        <span class="fab-badge hidden" id="fabBadge">0</span>
+    </button>
 
     <footer class="pdv-footer">
         <button class="footer-btn btn-blue system-btn" id="showFilterBtn">
@@ -1914,6 +2030,97 @@
 
             document.addEventListener('keydown', handleGlobalBarcodeKeydown);
             document.addEventListener('paste', handleGlobalBarcodePaste);
+
+            // Input SKU mobile
+            const mobileSkuInput = document.getElementById('mobileSkuInput');
+            if (mobileSkuInput) {
+                const doMobileSkuSearch = async () => {
+                    const code = mobileSkuInput.value.trim();
+                    if (!code) return;
+                    mobileSkuInput.value = '';
+                    const product = await findProductByBarcode(code);
+                    if (product) {
+                        await showProductSheetModal(product, { lookupValue: code, lookupSource: 'Busca' });
+                    } else {
+                        BuildFlow.showToast(`Produto não encontrado: ${code}`, 'warning');
+                    }
+                };
+                mobileSkuInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        doMobileSkuSearch();
+                    }
+                });
+
+                // Botão de scanner
+                const scanBtn = document.getElementById('mobileSkuScanBtn');
+                if (scanBtn) {
+                    scanBtn.addEventListener('click', async () => {
+                        if (!('BarcodeDetector' in window) || !navigator.mediaDevices?.getUserMedia) {
+                            BuildFlow.showToast('Scanner não suportado. Digite o código manualmente.', 'warning');
+                            return;
+                        }
+
+                        let stream = null;
+                        let detectInterval = null;
+
+                        Swal.fire({
+                            ...pdvSwalOptions({ width: '100%', customClass: { popup: 'pdv-swal pdv-swal--sheet' } }),
+                            title: 'Escaneer código',
+                            html: `
+                                <div style="position:relative;width:100%;aspect-ratio:4/3;background:#000;border-radius:12px;overflow:hidden;">
+                                    <video id="scanner-preview" style="width:100%;height:100%;object-fit:cover;" playsinline autoplay muted></video>
+                                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80%;height:60%;border:3px solid rgba(59,130,246,0.8);border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,0.4);"></div>
+                                </div>
+                                <p style="margin-top:12px;font-size:0.85rem;color:var(--pdv-text-muted);">Aponte a câmera para o código de barras</p>
+                            `,
+                            showConfirmButton: false,
+                            showCloseButton: true,
+                            didOpen: async () => {
+                                try {
+                                    stream = await navigator.mediaDevices.getUserMedia({
+                                        video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } }
+                                    });
+                                    const video = document.getElementById('scanner-preview');
+                                    video.srcObject = stream;
+
+                                    const detector = new BarcodeDetector({
+                                        formats: ['ean_13', 'ean_8', 'code_128', 'code_39', 'code_93', 'upc_a', 'upc_e', 'codabar', 'itf', 'qr_code', 'data_matrix', 'aztec', 'pdf417']
+                                    });
+
+                                    let scanning = true;
+                                    detectInterval = setInterval(async () => {
+                                        if (!scanning || !video.videoWidth) return;
+                                        try {
+                                            const barcodes = await detector.detect(video);
+                                            if (barcodes.length > 0) {
+                                                scanning = false;
+                                                const code = barcodes[0].rawValue;
+                                                Swal.close();
+                                                mobileSkuInput.value = code;
+                                                doMobileSkuSearch();
+                                            }
+                                        } catch (e) {}
+                                    }, 300);
+                                } catch (err) {
+                                    Swal.close();
+                                    BuildFlow.showToast('Erro ao acessar câmera: ' + err.message, 'danger');
+                                }
+                            },
+                            willClose: () => {
+                                if (detectInterval) clearInterval(detectInterval);
+                                if (stream) stream.getTracks().forEach(t => t.stop());
+                            }
+                        });
+                    });
+                }
+            }
+
+            // Botão FAB do carrinho (mobile)
+            const fab = document.getElementById('cartFab');
+            if (fab) {
+                fab.addEventListener('click', showMobileCart);
+            }
 
             // Botão Orçamento (F4)
             document.getElementById('budgetBtn').addEventListener('click', handleBudget);
@@ -3177,6 +3384,113 @@
                 });
             }
             updateTotal();
+            updateFabState();
+        }
+
+        function updateFabState() {
+            if (window.innerWidth > 768) return;
+            const fab = document.getElementById('cartFab');
+            const badge = document.getElementById('fabBadge');
+            const totalEl = document.getElementById('fabTotal');
+            if (!fab) return;
+
+            if (cart.length === 0) {
+                fab.style.display = 'none';
+                return;
+            }
+
+            fab.style.display = 'flex';
+            const summary = getCartSaleSummary();
+            totalEl.textContent = BuildFlow.formatCurrency(summary.total);
+            badge.textContent = cart.length;
+            badge.classList.toggle('hidden', cart.length === 0);
+        }
+
+        function showMobileCart() {
+            if (cart.length === 0) {
+                BuildFlow.showToast('Carrinho vazio', 'warning');
+                return;
+            }
+
+            const summary = getCartSaleSummary();
+
+            let itemsHtml = '';
+            cart.forEach((item, index) => {
+                let itemTotal = item.price * item.qty;
+                let discLabel = '';
+                if (item.discount > 0) {
+                    const disc = item.discountType === 'percent'
+                        ? itemTotal * (item.discount / 100)
+                        : item.discount;
+                    itemTotal -= disc;
+                    discLabel = `<span style="font-size:0.6rem;background:#166534;color:#bbf7d0;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:6px;">-${item.discount}${item.discountType === 'percent' ? '%' : 'R$'}</span>`;
+                }
+                itemsHtml += `
+                    <div onclick="Swal.close(); setTimeout(() => openEditModal(${index}), 100);" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--pdv-border);cursor:pointer;">
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:700;font-size:0.82rem;color:var(--pdv-text);">${BuildFlow.escapeHtml(item.name)}${discLabel}</div>
+                            <div style="font-size:0.72rem;color:var(--pdv-text-muted);">${item.qty} un x ${BuildFlow.formatCurrency(item.price)}</div>
+                        </div>
+                        <div style="font-weight:800;font-size:0.9rem;color:var(--pdv-primary);white-space:nowrap;">${BuildFlow.formatCurrency(itemTotal)}</div>
+                        <div onclick="event.stopPropagation(); removeFromCart(${index}); Swal.close(); setTimeout(showMobileCart, 150);" style="color:var(--pdv-text-muted);font-size:1rem;padding:4px;">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                        </div>
+                    </div>
+                `;
+            });
+
+            const globalDiscountHtml = summary.globalDiscountAmount > 0
+                ? `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:0.78rem;color:var(--pdv-secondary);border-bottom:1px solid var(--pdv-border);"><span>Desconto global (${summary.globalDiscount}${summary.globalDiscountType === 'percent' ? '%' : ' R$'})</span><span>-${BuildFlow.formatCurrency(summary.globalDiscountAmount)}</span></div>`
+                : '';
+
+            Swal.fire({
+                ...pdvSwalOptions({ width: '100%', customClass: { popup: 'pdv-swal pdv-swal--sheet' } }),
+                title: `<i class="fa-solid fa-shopping-basket"></i> Carrinho (${cart.length} ${cart.length === 1 ? 'item' : 'itens'})`,
+                html: `
+                    <div style="text-align:left;">
+                        <div style="max-height:45vh;overflow-y:auto;margin-bottom:12px;">${itemsHtml}</div>
+                        ${globalDiscountHtml}
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:2px solid var(--pdv-border);margin-top:4px;">
+                            <span style="font-size:0.75rem;font-weight:800;text-transform:uppercase;color:var(--pdv-text-muted);">Total</span>
+                            <span style="font-size:1.5rem;font-weight:900;color:var(--pdv-primary);">${BuildFlow.formatCurrency(summary.total)}</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
+                            <button type="button" id="mobile-cart-reserve" class="pdv-btn-inline pdv-btn-inline--muted" style="background:var(--pdv-secondary);color:#fff;width:100%;">
+                                <i class="fa-solid fa-clock"></i> Reservar
+                            </button>
+                            <button type="button" id="mobile-cart-discount" class="pdv-btn-inline pdv-btn-inline--muted" style="background:var(--pdv-purple);color:#fff;width:100%;">
+                                <i class="fa-solid fa-percent"></i> Desconto
+                            </button>
+                            <button type="button" id="mobile-cart-cancel" class="pdv-btn-inline pdv-btn-inline--muted" style="background:var(--pdv-danger);color:#fff;width:100%;">
+                                <i class="fa-solid fa-trash"></i> Cancelar
+                            </button>
+                            <button type="button" id="mobile-cart-pay" class="pdv-btn-inline pdv-btn-inline--primary" style="width:100%;">
+                                <i class="fa-solid fa-credit-card"></i> Pagamento
+                            </button>
+                        </div>
+                    </div>
+                `,
+                showConfirmButton: false,
+                showCloseButton: true,
+                didOpen: () => {
+                    document.getElementById('mobile-cart-reserve')?.addEventListener('click', () => {
+                        Swal.close();
+                        finalizeSale('RESERVED');
+                    });
+                    document.getElementById('mobile-cart-discount')?.addEventListener('click', () => {
+                        Swal.close();
+                        setTimeout(openGlobalModal, 150);
+                    });
+                    document.getElementById('mobile-cart-cancel')?.addEventListener('click', () => {
+                        Swal.close();
+                        document.getElementById('clearCartBtn')?.click();
+                    });
+                    document.getElementById('mobile-cart-pay')?.addEventListener('click', () => {
+                        Swal.close();
+                        finalizeSale('FINALIZED');
+                    });
+                }
+            });
         }
 
         function updateTotal() {

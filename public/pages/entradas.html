@@ -135,7 +135,78 @@
         /* Custom Scrollbar for Modal - Agora Invisível */
         .modal-card::-webkit-scrollbar { width: 0; display: none; }
         .modal-card { scrollbar-width: none; -ms-overflow-style: none; }
-    </style>
+
+        /* ============================
+           Responsividade - Entradas
+           ============================ */
+        @media (max-width: 768px) {
+            .main-content {
+                min-width: 0 !important;
+            }
+            .layout {
+                min-width: 0 !important;
+            }
+            .page-header {
+                gap: 12px !important;
+            }
+            .page-header > div:last-child {
+                flex-direction: column !important;
+                width: 100% !important;
+            }
+            .page-header > div:last-child .btn {
+                width: 100% !important;
+                justify-content: center !important;
+            }
+            .modal-card {
+                padding: 20px !important;
+                border-radius: 16px !important;
+            }
+            .modal-header {
+                margin-bottom: 20px !important;
+            }
+            .modal-header h3 {
+                font-size: 1.1rem !important;
+            }
+            .form-grid {
+                grid-template-columns: 1fr !important;
+                gap: 16px !important;
+            }
+            .form-grid .form-group[style*="grid-column: span 2"] {
+                grid-column: span 1 !important;
+            }
+            .profit-card {
+                grid-template-columns: 1fr !important;
+                gap: 12px !important;
+                padding: 16px !important;
+            }
+            .profit-item b {
+                font-size: 1rem !important;
+            }
+            .entry-mode-group {
+                grid-template-columns: 1fr !important;
+            }
+            .modal-footer {
+                flex-direction: column !important;
+                gap: 10px !important;
+                margin-top: 24px !important;
+            }
+            .modal-footer .btn-modal {
+                width: 100% !important;
+            }
+            .card-table {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+            .card-table table {
+                min-width: 600px !important;
+            }
+            .card-table th,
+            .card-table td {
+                white-space: nowrap !important;
+                padding: 8px 6px !important;
+                font-size: 0.7rem !important;
+            }
+        }
     </style>
 </head>
 <body>
