@@ -1,4 +1,4 @@
-// BuildFlow ERP - Global API and Auth Management
+// ConstruTech ERP - Global API and Auth Management
 const API_BASE = "/api";
 
 const BuildFlow = {
@@ -1039,7 +1039,7 @@ const BuildFlow = {
     const s = this.normalizeSaleRecord(sale);
     if (!s || !jsPDF) return;
 
-    const storeName = settings.storeName || "BuildFlow";
+    const storeName = settings.storeName || "ConstruTech ERP";
     const footer = settings.footerMessage || "Obrigado pela preferência!";
 
     if (type === "thermal") {
@@ -1530,8 +1530,8 @@ const BuildFlow = {
   // Configurações
   getSettings() {
     const defaults = {
-      storeName: "BuildFlow ERP",
-      companyName: "BuildFlow ERP & Logística S.A.",
+      storeName: "ConstruTech ERP",
+      companyName: "ConstruTech ERP",
       companyCnpj: "12.345.678/0001-90",
       address: "Av. Principal, 1000 - São Paulo/SP",
       autoPrint: false,

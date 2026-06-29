@@ -356,7 +356,7 @@
       let body = "";
       if (overdue) body += `${overdue} conta(s) vencida(s). `;
       if (soon) body += `${soon} vencimento(s) nos próximos dias.`;
-      new Notification("BuildFlow — Contas a Pagar", { body, icon: "/favicon.ico" });
+      new Notification("ConstruTech ERP — Contas a Pagar", { body, icon: "/favicon.ico" });
       localStorage.setItem(key, "1");
     };
 

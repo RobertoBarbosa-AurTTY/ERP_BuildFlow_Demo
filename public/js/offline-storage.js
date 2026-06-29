@@ -1,4 +1,4 @@
-const DB_NAME = 'BuildFlowOfflineDB';
+const DB_NAME = 'ConstruTechERPOfflineDB';
 const DB_VERSION = 1;
 
 class OfflineStorage {

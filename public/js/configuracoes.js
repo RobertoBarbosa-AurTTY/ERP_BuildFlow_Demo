@@ -1,4 +1,4 @@
-// BuildFlow ERP - Configurações
+// ConstruTech ERP - Configurações
 document.addEventListener('DOMContentLoaded', () => {
     // Carregar configurações salvas
     loadSettings();
