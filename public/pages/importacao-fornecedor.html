@@ -305,21 +305,21 @@
                 <div class="step-content active" id="step1">
                     <h3 style="margin-bottom: 24px; font-size: 1.1rem; font-weight: 800;">Selecione o Fornecedor</h3>
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px;">
-                        <div class="pricing-option" style="opacity: 0.4; cursor: not-allowed; text-align: left;">
+                        <div class="pricing-option selected" data-supplier="fortlev" style="text-align: left; cursor: pointer;">
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <i class="fa-solid fa-industry" style="font-size: 2rem;"></i>
                                 <div>
                                     <b style="font-size: 1rem;">Fortlev</b>
-                                    <p style="margin: 4px 0 0; font-size: 0.78rem; color: var(--text-muted);">Em Breve</p>
+                                    <p style="margin: 4px 0 0; font-size: 0.78rem; color: var(--text-muted);">Importar Nota PDF ou XML</p>
                                 </div>
                             </div>
                         </div>
-                        <div class="pricing-option" style="opacity: 0.4; cursor: not-allowed; text-align: left;">
+                        <div class="pricing-option" data-supplier="distac" style="text-align: left; cursor: pointer;">
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <i class="fa-solid fa-industry" style="font-size: 2rem;"></i>
                                 <div>
-                                    <b style="font-size: 1rem;">Tigre</b>
-                                    <p style="margin: 4px 0 0; font-size: 0.78rem; color: var(--text-muted);">Em Breve</p>
+                                    <b style="font-size: 1rem;">Distac</b>
+                                    <p style="margin: 4px 0 0; font-size: 0.78rem; color: var(--text-muted);">Importar PDF do Pedido</p>
                                 </div>
                             </div>
                         </div>
@@ -329,17 +329,18 @@
                 <!-- Step 2: Upload File -->
                 <div class="step-content" id="step2">
                     <h3 style="margin-bottom: 24px; font-size: 1.1rem; font-weight: 800;">Upload do Arquivo</h3>
-                    <p style="color: var(--text-muted); margin-bottom: 24px; font-size: 0.9rem;">Selecione o arquivo XML da nota fiscal para importar.</p>
+                    <p style="color: var(--text-muted); margin-bottom: 24px; font-size: 0.9rem;">Selecione o PDF ou XML da nota fiscal da Fortlev para importar.</p>
                     
                     <div class="upload-area" id="uploadArea">
                         <i class="fa-solid fa-file-code" style="font-size: 4rem; color: var(--brand); margin-bottom: 16px;"></i>
                         <h4 style="margin-bottom: 8px; font-size: 1.1rem;">Arraste e solte o arquivo aqui</h4>
                         <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">ou clique para selecionar</p>
                         <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                            <span class="badge" style="background: var(--bg-hover); color: var(--text-secondary); padding: 6px 12px;">XML (nota Fortlev / NF-e)</span>
+                            <span class="badge" style="background: var(--bg-hover); color: var(--text-secondary); padding: 6px 12px;">PDF (nota Fortlev)</span>
+                            <span class="badge" style="background: var(--bg-hover); color: var(--text-secondary); padding: 6px 12px;">XML (nota NF-e)</span>
                         </div>
                     </div>
-                    <input type="file" id="fileInput" accept=".xml" style="display: none;">
+                    <input type="file" id="fileInput" accept=".pdf,.xml" style="display: none;">
                     
                     <div id="filePreview" style="display: none;">
                         <div class="file-preview">
@@ -392,6 +393,7 @@
                             <thead>
                                 <tr>
                                     <th style="width: 120px;">SKU</th>
+                                    <th style="width: 150px;">Cód. Barras</th>
                                     <th>Produto</th>
                                     <th style="width: 140px;">Categoria</th>
                                     <th style="width: 120px;">Quantidade</th>
@@ -615,127 +617,37 @@
             async function handleFile(file) {
                 const ext = (file.name.split('.').pop() || '').toLowerCase();
                 
-                if (ext !== 'xml') {
-                    BuildFlow.showToast('Use apenas arquivos XML para importar dados.', 'warning');
+                if (ext !== 'pdf' && ext !== 'xml') {
+                    BuildFlow.showToast('Use apenas arquivos PDF ou XML.', 'warning');
                     return;
                 }
 
                 selectedFile = file;
+                setParseStatus('Processando arquivo...', 'info');
                 
                 try {
-                    // Ler o conteúdo do XML
-                    const text = await file.text();
-                    console.log('📄 Arquivo selecionado:', file.name);
-                    console.log('📄 Conteúdo do XML carregado (primeiros 2000 chars):', text.substring(0, 2000));
+                    let products = [];
                     
-                    const parser = new DOMParser();
-                    const xmlDoc = parser.parseFromString(text, 'text/xml');
-                    
-                    // Verificar se houve erro de parsing
-                    const parseError = xmlDoc.querySelector('parsererror');
-                    if (parseError) {
-                        throw new Error('Arquivo XML inválido');
+                    if (ext === 'pdf') {
+                        if (typeof ImportParser === 'undefined') {
+                            throw new Error('Módulo ImportParser não carregado.');
+                        }
+                        products = await ImportParser.parsePdfFile(file, selectedSupplier);
+                    } else {
+                        const text = await file.text();
+                        products = ImportParser.parseXmlContent(text, selectedSupplier);
                     }
                     
-                    // Primeiro, tentar parsear o XML estruturado (modelo_dados.xml)
-                    let produtosFromXml = [];
-                    const produtos = xmlDoc.querySelectorAll('produto');
-                    console.log('🔍 Encontrados', produtos.length, 'elementos <produto> no XML');
-                    
-                    if (produtos.length > 0) {
-                        console.log('✅ Encontrado XML estruturado');
-                        produtos.forEach((produto, index) => {
-                            // Tentar várias nomenclaturas para o SKU
-                            let sku = (produto.querySelector('sku')?.textContent || '').trim();
-                            if (!sku) sku = (produto.querySelector('codigoProduto')?.textContent || '').trim();
-                            if (!sku) {
-                                // Última opção: tentar <produto> dentro de <produto>
-                                const children = Array.from(produto.children);
-                                for (const child of children) {
-                                    if (child.tagName.toLowerCase() === 'produto') {
-                                        sku = (child.textContent || '').trim();
-                                        if (sku) break;
-                                    }
-                                }
-                            }
-                            
-                            let descricao = (produto.querySelector('descricao')?.textContent || '').trim();
-                            
-                            let quantidadeText = (produto.querySelector('quantidade')?.textContent || '').trim();
-                            if (!quantidadeText) quantidadeText = (produto.querySelector('qtde')?.textContent || '').trim();
-                            
-                            let precoUnitarioText = (produto.querySelector('precoUnitario')?.textContent || '').trim();
-                            
-                            let unidadeMedida = (produto.querySelector('unidadeMedida')?.textContent || '').trim();
-                            if (!unidadeMedida) unidadeMedida = (produto.querySelector('um')?.textContent || 'UN').trim();
-                            
-                            console.log(`  📦 Produto ${index + 1}:`, { 
-                                sku: sku || 'VAZIO', 
-                                descricao: descricao || 'VAZIO', 
-                                quantidade: quantidadeText,
-                                precoUnitario: precoUnitarioText,
-                                unidadeMedida: unidadeMedida
-                            });
-                            
-                            const quantidade = parseInt(quantidadeText) || 0;
-                            const precoUnitario = parseFloat(precoUnitarioText.replace(',', '.')) || 0;
-                            
-                            if (sku && descricao && quantidade > 0) {
-                                produtosFromXml.push({
-                                    sku: sku,
-                                    name: descricao,
-                                    description: descricao,
-                                    quantity: quantidade,
-                                    unit: unidadeMedida,
-                                    costPrice: precoUnitario,
-                                    brand: 'FORTLEV',
-                                    manufacturer: 'FORTLEV',
-                                    supplier: 'FORTLEV',
-                                    category: getCategoriaFromNome(descricao),
-                                    existing: false,
-                                    margin: 30,
-                                    sellPrice: precoUnitario ? parseFloat((precoUnitario * 1.3).toFixed(2)) : 0
-                                });
-                                console.log(`     ✅ Produto ${index + 1} adicionado com sucesso!`);
-                            } else {
-                                console.log(`     ❌ Produto ${index + 1} ignorado (faltando campos obrigatórios: sku/codigoProduto/produto, descrição ou quantidade/qtde)`);
-                            }
-                        });
-                    }
-                    
-                    console.log('📦 Total de produtos parseados do XML estruturado:', produtosFromXml.length);
-                    
-                    // Se não encontrou o XML estruturado, tentar extrair texto do XML visual (modelo.xml)
-                    if (produtosFromXml.length === 0) {
-                        console.log('🔍 Tentando extrair texto do XML visual (modelo.xml)');
-                        const allTextNodes = xmlDoc.querySelectorAll('Text');
-                        let allText = [];
-                        allTextNodes.forEach(node => {
-                            if (node.textContent && node.textContent.trim()) {
-                                allText.push(node.textContent.trim());
-                            }
-                        });
-                        
-                        console.log('📝 Todos os textos extraídos:', allText);
-                        
-                        // Agora parsear a tabela de produtos do texto extraído
-                        produtosFromXml = parseProdutosFromTexto(allText);
-                    }
-                    
-                    // Se encontrou produtos, usar eles!
-                    if (produtosFromXml.length > 0) {
-                        importedProducts = produtosFromXml;
-                        console.log('✅ Produtos finalizados:', importedProducts);
-                        BuildFlow.showToast(`${importedProducts.length} produtos importados com sucesso do XML!`, 'success');
+                    if (products.length > 0) {
+                        importedProducts = products;
+                        BuildFlow.showToast(`${importedProducts.length} produtos identificados com sucesso!`, 'success');
                         setParseStatus(
                             `<i class="fa-solid fa-check-circle"></i> ${importedProducts.length} produto(s) identificado(s)!`,
                             'success'
                         );
                     } else {
-                        // Nenhum produto encontrado - não usar fallback!
-                        console.warn('⚠️ Nenhum produto encontrado no XML');
                         importedProducts = [];
-                        BuildFlow.showToast('Nenhum produto encontrado no arquivo XML. Verifique se o arquivo está no formato correto da Fortlev.', 'warning');
+                        BuildFlow.showToast('Nenhum produto encontrado no arquivo. Verifique se é uma nota Fortlev válida.', 'warning');
                         setParseStatus(
                             `<i class="fa-solid fa-exclamation-triangle"></i> Nenhum produto identificado!`,
                             'warning'
@@ -743,11 +655,11 @@
                     }
                     
                 } catch (error) {
-                    console.error('❌ Erro ao processar XML:', error);
+                    console.error('Erro ao processar arquivo:', error);
                     importedProducts = [];
-                    BuildFlow.showToast('Erro ao processar o arquivo XML. Verifique se o arquivo é válido.', 'danger');
+                    BuildFlow.showToast('Erro ao processar o arquivo: ' + error.message, 'danger');
                     setParseStatus(
-                        `<i class="fa-solid fa-times-circle"></i> Erro ao processar o arquivo!`,
+                        `<i class="fa-solid fa-times-circle"></i> Erro: ${error.message}`,
                         'danger'
                     );
                 }
@@ -759,93 +671,6 @@
                         : Math.max(1, Math.round(file.size / 1024)) + ' KB';
                 updateFilePreviewIcon(ext);
                 filePreview.style.display = 'flex';
-            }
-            
-            // Função para determinar categoria a partir do nome do produto
-            function getCategoriaFromNome(nome) {
-                const nomeLower = nome.toLowerCase();
-                if (nomeLower.match(/joelho|t[eé]|luva|redu[çc][ãa]o|curva|cap|adapt|uni[ãa]o|bucha/)) {
-                    return 'Conexões';
-                } else if (nomeLower.match(/v[aá]lvula|registro|torneira|pia|lavat|sif[ãa]o/)) {
-                    return 'Hidráulica';
-                } else if (nomeLower.match(/anel|acess[ió]rio|kit|parafuso/)) {
-                    return 'Acessórios';
-                } else if (nomeLower.match(/reservat[óo]rio|caixa|[dáá]gua/)) {
-                    return 'Reservatórios';
-                }
-                return 'Tubos';
-            }
-            
-            // Função para parsear produtos a partir de um array de textos (extraídos do XML visual)
-            function parseProdutosFromTexto(textos) {
-                const produtos = [];
-                const textoCompleto = textos.join(' ');
-                
-                console.log('🔎 Procurando padrão de produtos no texto:', textoCompleto.substring(0, 1000));
-                
-                // Padrão para identificar produtos:
-                // Item (000010) > SKU (8 dígitos) > Descrição > UN > 0 > 0/XX UN > Preço
-                const padraoProduto = /(\d{6})\s+(\d{7,9})\s+([A-Z0-9\sÀ-Ú\-]+?)\s+UN\s+0\s+0\s*\/\s*(\d+)\s+UN\s+R\$\s*([\d.,]+)/g;
-                
-                let match;
-                while ((match = padraoProduto.exec(textoCompleto)) !== null) {
-                    const item = match[1];
-                    const sku = match[2];
-                    const descricao = match[3].trim();
-                    const quantidade = parseInt(match[4]);
-                    const precoTexto = match[5];
-                    const precoUnitario = parseFloat(precoTexto.replace(',', '.'));
-                    
-                    if (sku && descricao && quantidade > 0) {
-                        produtos.push({
-                            sku: sku,
-                            name: descricao,
-                            description: descricao,
-                            quantity: quantidade,
-                            unit: 'UN',
-                            costPrice: precoUnitario,
-                            brand: 'FORTLEV',
-                            manufacturer: 'FORTLEV',
-                            supplier: 'FORTLEV',
-                            category: getCategoriaFromNome(descricao),
-                            existing: false,
-                            margin: 30,
-                            sellPrice: precoUnitario ? parseFloat((precoUnitario * 1.3).toFixed(2)) : 0
-                        });
-                    }
-                }
-                
-                console.log(`✅ Parseados ${produtos.length} produtos do texto`);
-                return produtos;
-            }
-            
-            // Função para retornar os dados padrão
-            function getDadosPadrao() {
-                return [
-                    { sku: '11001001', name: 'TUBO ESGOTO SN DN 100 - 6M FORTLEV', description: 'TUBO ESGOTO SN DN 100 - 6M FORTLEV', quantity: 20, unit: 'UN', costPrice: 47.15, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Tubos', existing: false, margin: 30, sellPrice: 61.30 },
-                    { sku: '11000751', name: 'TUBO ESGOTO SN DN 75 - 6M FORTLEV', description: 'TUBO ESGOTO SN DN 75 - 6M FORTLEV', quantity: 10, unit: 'UN', costPrice: 50.16, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Tubos', existing: false, margin: 30, sellPrice: 65.21 },
-                    { sku: '11000501', name: 'TUBO ESGOTO SN DN 50 - 6M FORTLEV', description: 'TUBO ESGOTO SN DN 50 - 6M FORTLEV', quantity: 7, unit: 'UN', costPrice: 37.91, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Tubos', existing: false, margin: 30, sellPrice: 49.28 },
-                    { sku: '11000401', name: 'TUBO ESGOTO SN DN 40 - 6M FORTLEV', description: 'TUBO ESGOTO SN DN 40 - 6M FORTLEV', quantity: 14, unit: 'UN', costPrice: 23.46, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Tubos', existing: false, margin: 30, sellPrice: 30.50 },
-                    { sku: '10000201', name: 'TUBO SOLDÁVEL 20MM - 6M FORTLEV', description: 'TUBO SOLDÁVEL 20MM - 6M FORTLEV', quantity: 40, unit: 'UN', costPrice: 9.99, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Tubos', existing: false, margin: 30, sellPrice: 12.99 },
-                    { sku: '10000251', name: 'TUBO SOLDÁVEL 25MM - 6M FORTLEV', description: 'TUBO SOLDÁVEL 25MM - 6M FORTLEV', quantity: 56, unit: 'UN', costPrice: 12.74, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Tubos', existing: false, margin: 30, sellPrice: 16.56 },
-                    { sku: '10130207', name: 'JOELHO 90 SOLDÁVEL 20MM FORTLEV', description: 'JOELHO 90 SOLDÁVEL 20MM FORTLEV', quantity: 300, unit: 'UN', costPrice: 0.26, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Conexões', existing: false, margin: 30, sellPrice: 0.34 },
-                    { sku: '10250207', name: 'TE SOLDÁVEL 20MM FORTLEV', description: 'TE SOLDÁVEL 20MM FORTLEV', quantity: 300, unit: 'UN', costPrice: 0.46, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Conexões', existing: false, margin: 30, sellPrice: 0.60 },
-                    { sku: '10170207', name: 'LUVA SOLDÁVEL 20MM FORTLEV', description: 'LUVA SOLDÁVEL 20MM FORTLEV', quantity: 300, unit: 'UN', costPrice: 0.29, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Conexões', existing: false, margin: 30, sellPrice: 0.38 },
-                    { sku: '10130257', name: 'JOELHO 90 SOLDÁVEL 25MM FORTLEV', description: 'JOELHO 90 SOLDÁVEL 25MM FORTLEV', quantity: 300, unit: 'UN', costPrice: 0.38, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Conexões', existing: false, margin: 30, sellPrice: 0.49 },
-                    { sku: '10250257', name: 'TE SOLDÁVEL 25MM FORTLEV', description: 'TE SOLDÁVEL 25MM FORTLEV', quantity: 300, unit: 'UN', costPrice: 0.60, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Conexões', existing: false, margin: 30, sellPrice: 0.78 },
-                    { sku: '10170257', name: 'LUVA SOLDÁVEL 25MM FORTLEV', description: 'LUVA SOLDÁVEL 25MM FORTLEV', quantity: 300, unit: 'UN', costPrice: 0.39, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Conexões', existing: false, margin: 30, sellPrice: 0.51 },
-                    { sku: '11240662', name: 'SIFÃO AJUSTÁVEL BRANCO FORTLEV', description: 'SIFÃO AJUSTÁVEL BRANCO FORTLEV', quantity: 108, unit: 'UN', costPrice: 3.84, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Hidráulica', existing: false, margin: 30, sellPrice: 4.99 },
-                    { sku: '11240661', name: 'SIFÃO AJUSTÁVEL DUPLO FORTLEV', description: 'SIFÃO AJUSTÁVEL DUPLO FORTLEV', quantity: 48, unit: 'UN', costPrice: 9.71, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Hidráulica', existing: false, margin: 30, sellPrice: 12.62 },
-                    { sku: '11231071', name: 'REDUÇÃO EXCÊNTRICA ESG SN 100X75 FORTLEV', description: 'REDUÇÃO EXCÊNTRICA ESG SN 100X75 FORTLEV', quantity: 30, unit: 'UN', costPrice: 6.20, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Conexões', existing: false, margin: 30, sellPrice: 8.06 },
-                    { sku: '11237551', name: 'REDUÇÃO EXCÊNTRICA ESG SN 75X50 FORTLEV', description: 'REDUÇÃO EXCÊNTRICA ESG SN 75X50 FORTLEV', quantity: 20, unit: 'UN', costPrice: 4.15, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Conexões', existing: false, margin: 30, sellPrice: 5.40 },
-                    { sku: '11131003', name: 'JOELHO 90 ESG 100 FORTLEV', description: 'JOELHO 90 ESG 100 FORTLEV', quantity: 60, unit: 'UN', costPrice: 3.14, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Conexões', existing: false, margin: 30, sellPrice: 4.08 },
-                    { sku: '11120502', name: 'JOELHO 45 ESG SN DN 50 FORTLEV', description: 'JOELHO 45 ESG SN DN 50 FORTLEV', quantity: 60, unit: 'UN', costPrice: 2.06, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Conexões', existing: false, margin: 30, sellPrice: 2.68 },
-                    { sku: '10032527', name: 'BUCHA REDUÇÃO SOLD CURTA 25X20MM FORTLEV', description: 'BUCHA REDUÇÃO SOLD CURTA 25X20MM FORTLEV', quantity: 150, unit: 'UN', costPrice: 0.30, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Conexões', existing: false, margin: 30, sellPrice: 0.39 },
-                    { sku: '10033227', name: 'BUCHA REDUÇÃO SOLD CURTA 32X25MM FORTLEV', description: 'BUCHA REDUÇÃO SOLD CURTA 32X25MM FORTLEV', quantity: 150, unit: 'UN', costPrice: 0.64, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Conexões', existing: false, margin: 30, sellPrice: 0.83 },
-                    { sku: '10034031', name: 'BUCHA REDUÇÃO SOLD CURTA 40X32MM FORTLEV', description: 'BUCHA REDUÇÃO SOLD CURTA 40X32MM FORTLEV', quantity: 10, unit: 'UN', costPrice: 1.57, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Conexões', existing: false, margin: 30, sellPrice: 2.04 },
-                    { sku: '16780013', name: 'VÁLVULA PIA/LAVAT 7/8 BR FORTLEV V8', description: 'VÁLVULA PIA/LAVAT 7/8 BR FORTLEV V8', quantity: 80, unit: 'UN', costPrice: 2.48, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Hidráulica', existing: false, margin: 30, sellPrice: 3.22 },
-                    { sku: '11251002', name: 'TE ESG SN DN 100 FORTLEV', description: 'TE ESG SN DN 100 FORTLEV', quantity: 30, unit: 'UN', costPrice: 7.26, brand: 'FORTLEV', manufacturer: 'FORTLEV', supplier: 'FORTLEV', category: 'Conexões', existing: false, margin: 30, sellPrice: 9.44 }
-                ];
             }
 
             async function matchExistingProducts() {
@@ -939,6 +764,7 @@
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td><input type="text" class="form-input-pro" value="${product.sku}" data-index="${index}" data-field="sku"></td>
+                        <td><input type="text" class="form-input-pro" value="${product.barcode || ''}" data-index="${index}" data-field="barcode"></td>
                         <td><input type="text" class="form-input-pro" value="${product.name}" data-index="${index}" data-field="name"></td>
                         <td>
                             <select class="form-input-pro" data-index="${index}" data-field="category">
@@ -1083,6 +909,7 @@
                     const productData = {
                         name: product.name,
                         sku: product.sku,
+                        barcode: product.barcode || '',
                         brand: product.brand,
                         manufacturer: product.manufacturer,
                         supplier: product.supplier,
@@ -1113,6 +940,7 @@
                     products: importedProducts.map(p => ({
                         sku: p.sku,
                         name: p.name,
+                        barcode: p.barcode || '',
                         quantity: p.quantity,
                         costPrice: p.costPrice,
                         existing: p.existing

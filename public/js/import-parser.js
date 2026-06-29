@@ -4,6 +4,7 @@
 (function () {
   const SUPPLIER_BRANDS = {
     fortlev: "FORTLEV",
+    distac: "DISTAC",
   };
 
   function parseBrazilianMoney(str) {
@@ -26,7 +27,7 @@
     if (/JOELHO|T[EÊ]|LUVA|REDU|CURVA|CAP|ADAPTAD|UNI[AÃ]O|CRUZETA|REGISTRO/i.test(n)) {
       return "Conexões";
     }
-    if (/V[AÁ]LVULA|TORNEIRA|REGIST/i.test(n)) {
+    if (/V[AÁ]LVULA|TORNEIRA|REGIST|SIF[AÃ]O|PIA|LAVAT/i.test(n)) {
       return "Hidráulica";
     }
     if (/CAIXA|RESERVAT|CISTERNA/i.test(n)) {
@@ -62,6 +63,7 @@
       sku: String(raw.sku || "").trim(),
       name: name || `Produto ${raw.sku}`,
       description: name,
+      barcode: raw.barcode || "",
       quantity,
       unit: raw.unit || "UN",
       costPrice,
@@ -274,60 +276,146 @@
       .map((l) => l.trim())
       .filter(Boolean);
 
-    for (let i = 0; i < lines.length; i++) {
+    let i = 0;
+
+    while (i < lines.length) {
       const line = lines[i];
-      const skuMatch = line.match(/\b(\d{8})\b/);
-      if (!skuMatch) continue;
+
+      if (!/^\d{6}$/.test(line)) { i++; continue; }
+
+      const itemNumber = line;
+      i++;
+
+      if (i >= lines.length) break;
+      const skuLine = lines[i];
+      const skuMatch = skuLine.match(/^(\d{8})$/);
+      if (!skuMatch) { continue; }
 
       const sku = skuMatch[1];
-      if (seenSkus.has(sku)) continue;
+      if (seenSkus.has(sku)) { i++; continue; }
+      seenSkus.add(sku);
+      i++;
 
-      const block = [line];
-      for (let j = i + 1; j < Math.min(i + 6, lines.length); j++) {
-        if (/\b\d{8}\b/.test(lines[j]) && lines[j] !== line) break;
-        if (/^(total|valor|subtotal|icms|ipi|frete)/i.test(lines[j])) break;
-        block.push(lines[j]);
+      const nameParts = [];
+      while (i < lines.length) {
+        const l = lines[i];
+        if (l === 'UN') break;
+        if (/^\d{6}$/.test(l) || /^\d{8}$/.test(l)) break;
+        if (!/^R\$/i.test(l) && !/^\d+[,.]?\d*\s*%/.test(l) && !/^\d+\s*\/\s*\d+\s*UN/.test(l) && l !== '0') {
+          nameParts.push(l);
+        }
+        i++;
       }
+      const name = nameParts.join(' ').replace(/\s+/g, ' ').trim();
 
-      const blockText = block.join(" ");
-
-      let quantity = 1;
-      const qtyMatch = blockText.match(/(?:0\s*\/\s*)?(\d+)\s*UN\b/i);
-      if (qtyMatch) quantity = parseInt(qtyMatch[1], 10);
+      let quantity = 0;
+      for (let j = i; j < Math.min(i + 12, lines.length); j++) {
+        const qtyMatch = lines[j].match(/(\d+)\s*\/\s*(\d+)\s*UN/i);
+        if (qtyMatch) { quantity = parseInt(qtyMatch[2], 10); break; }
+      }
 
       let costPrice = 0;
-      const prices = [...blockText.matchAll(/R\$\s*([\d.,]+)/gi)];
-      if (prices.length) {
-        costPrice = parseBrazilianMoney(prices[0][1]);
-      }
-
-      let name = blockText
-        .replace(/\b\d{8}\b/g, "")
-        .replace(/R\$\s*[\d.,]+/gi, "")
-        .replace(/(?:0\s*\/\s*)?\d+\s*UN/gi, "")
-        .replace(/\b\d{6}\b/g, "")
-        .replace(/\s+/g, " ")
-        .trim();
-
-      if (name.length < 3) {
-        const nameParts = [];
-        for (let j = i; j < Math.min(i + 5, lines.length); j++) {
-          const ln = lines[j];
-          if (/\b\d{8}\b/.test(ln) && j > i) break;
-          if (/total|icms|valor/i.test(ln)) break;
-          if (!/R\$|UN\b|\d{6,}/.test(ln) || j === i) {
-            nameParts.push(ln.replace(/\b\d{8}\b/, "").trim());
-          }
+      for (let j = i; j < Math.min(i + 12, lines.length); j++) {
+        const priceMatch = lines[j].match(/R\$\s*([\d.,]+)/);
+        if (priceMatch && !lines[j].includes('Total')) {
+          costPrice = parseBrazilianMoney(priceMatch[1]);
+          break;
         }
-        name = nameParts.join(" ").replace(/\s+/g, " ").trim();
       }
 
-      if (!name) name = `Produto ${sku}`;
+      if (sku && name) {
+        products.push(normalizeProduct({ sku, name, quantity, costPrice, itemNumber }, supplierKey));
+      }
 
+      i++;
+      while (i < lines.length && !/^\d{6}$/.test(lines[i])) { i++; }
+    }
+
+    products.sort((a, b) => {
+      if (a.itemNumber && b.itemNumber) return a.itemNumber.localeCompare(b.itemNumber);
+      return 0;
+    });
+
+    return products;
+  }
+
+  function parseDistacPdfText(text, supplierKey = "distac") {
+    const products = [];
+    const seenSkus = new Set();
+    const lines = text.split(/\n/).map((l) => l.trim()).filter(Boolean);
+
+    let i = 0;
+    while (i < lines.length && !lines[i].includes('COD.')) { i++; }
+    if (i >= lines.length) return products;
+    i++;
+
+    let pendingName = '';
+
+    while (i < lines.length) {
+      const line = lines[i];
+
+      if (line.includes('Chave de autenticação') || line.includes('Processado por') ||
+          line.includes('Assinatura') || line.startsWith('Quantidade Total') ||
+          line.startsWith('Total') || line.startsWith('(') || /^R\$\s*[\d.,]+$/.test(line)) {
+        i++; continue;
+      }
+
+      if (!/^\d/.test(line)) { pendingName = line; i++; continue; }
+
+      const parts = line.split(/\s+/).filter(Boolean);
+      if (parts.length < 5) { i++; continue; }
+
+      if (!/^\d{1,2}$/.test(parts[0]) || !/^\d{5,6}$/.test(parts[1]) || !/^\d{13}$/.test(parts[2])) {
+        pendingName = line; i++; continue;
+      }
+
+      const sku = parts[0] + parts[1];
+      const barcode = parts[2];
+      if (seenSkus.has(sku)) { i++; continue; }
       seenSkus.add(sku);
-      products.push(
-        normalizeProduct({ sku, name, quantity, costPrice }, supplierKey),
-      );
+
+      let firstR$Idx = -1;
+      for (let k = 3; k < parts.length; k++) {
+        if (/^R\$/.test(parts[k])) { firstR$Idx = k; break; }
+      }
+
+      if (firstR$Idx < 3) { i++; continue; }
+
+      let qtyStr = firstR$Idx > 3 ? parts[firstR$Idx - 1] : '';
+      let quantity = parseFloat(qtyStr) || 0;
+
+      let nameParts = parts.slice(3, firstR$Idx - 2);
+      let name = nameParts.join(' ').replace(/\s+/g, ' ').trim();
+
+      if (!name && pendingName) {
+        name = pendingName;
+      } else if (!name) {
+        name = parts.slice(3, firstR$Idx - 2).join(' ').trim();
+      }
+      pendingName = '';
+
+      let costPrice = 0;
+      const r$Indices = [];
+      for (let k = firstR$Idx; k < parts.length; k++) {
+        if (/^R\$/.test(parts[k])) r$Indices.push(k);
+      }
+      if (r$Indices.length >= 4) {
+        costPrice = parseBrazilianMoney(parts[r$Indices[3]]);
+      } else if (r$Indices.length >= 1) {
+        costPrice = parseBrazilianMoney(parts[r$Indices[r$Indices.length - 1]]);
+      }
+
+      if (sku && name && name.length >= 2) {
+        products.push(normalizeProduct({
+          sku,
+          barcode,
+          name,
+          quantity: Math.max(1, Math.round(quantity)),
+          costPrice,
+        }, supplierKey));
+      }
+
+      i++;
     }
 
     return products;
@@ -369,12 +457,34 @@
     for (let p = 1; p <= pdf.numPages; p++) {
       const page = await pdf.getPage(p);
       const textContent = await page.getTextContent();
-      allText += textContent.items.map((item) => item.str).join("\n") + "\n";
+
+      if (supplierKey === "distac") {
+        const linesMap = new Map();
+        for (const item of textContent.items) {
+          const y = Math.round(item.transform[5] * 10) / 10;
+          if (!linesMap.has(y)) linesMap.set(y, []);
+          linesMap.get(y).push({ x: item.transform[4], str: item.str });
+        }
+        const sortedLines = [...linesMap.entries()]
+          .sort((a, b) => b[0] - a[0])
+          .map(([, items]) => {
+            items.sort((a, b) => a.x - b.x);
+            return items.map(i => i.str).join(' ').replace(/\s+/g, ' ').trim();
+          });
+        allText += sortedLines.filter(Boolean).join('\n') + '\n';
+      } else {
+        allText += textContent.items.map((item) => item.str).join("\n") + "\n";
+      }
     }
-    const products = parseFortlevPdfText(allText, supplierKey);
+    let products;
+    if (supplierKey === "distac") {
+      products = parseDistacPdfText(allText, supplierKey);
+    } else {
+      products = parseFortlevPdfText(allText, supplierKey);
+    }
     if (!products.length) {
       throw new Error(
-        "Nenhum produto identificado no PDF. Use o XML exportado pelo fornecedor se disponível.",
+        "Nenhum produto identificado no PDF. Verifique se o arquivo é válido.",
       );
     }
     return products;
@@ -400,6 +510,7 @@
     parseFortlevApsXml,
     parseNfeXml,
     parseFortlevPdfText,
+    parseDistacPdfText,
     parseXmlContent,
     parsePdfFile,
     parseImportFile,
