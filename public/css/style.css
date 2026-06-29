@@ -2169,7 +2169,8 @@ tr:last-child td {
     }
 
     body {
-        padding-bottom: 80px;
+        padding-bottom: 90px;
+        padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
         font-size: 13px;
     }
 
@@ -2285,7 +2286,7 @@ tr:last-child td {
     /* --- Layout e Conteúdo --- */
     .main-content {
         margin-left: 0 !important;
-        padding: 0 12px 15px 12px !important;
+        padding: 0 12px 24px 12px !important;
     }
 
     .top-nav {
