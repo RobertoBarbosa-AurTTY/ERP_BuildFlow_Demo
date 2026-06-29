@@ -49,6 +49,46 @@
             border-radius: 6px;
             background: rgba(255,255,255,0.2);
         }
+
+        @media (max-width: 768px) {
+            .tabs-container {
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .tab-btn {
+                padding: 8px 14px;
+                font-size: 0.8rem;
+                white-space: nowrap;
+            }
+            .page-header {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 12px !important;
+            }
+            .page-header > div:last-child {
+                width: 100% !important;
+                flex-direction: column !important;
+                gap: 8px !important;
+            }
+            .page-header > div:last-child .btn {
+                width: 100% !important;
+                justify-content: center !important;
+            }
+            .card-table .table-header {
+                flex-direction: column !important;
+                gap: 10px !important;
+                align-items: stretch !important;
+            }
+            #dateFilters {
+                flex-direction: column !important;
+                gap: 6px !important;
+            }
+            #dateFilters input[type="date"] {
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }
+        }
     </style>
 </head>
 <body>

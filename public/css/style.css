@@ -2336,6 +2336,8 @@ tr:last-child td {
     .page-header {
         margin-bottom: 15px !important;
         gap: 5px !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
     }
 
     .page-header h2 {
@@ -2345,6 +2347,21 @@ tr:last-child td {
 
     .page-header p {
         font-size: 0.75rem !important;
+    }
+
+    .page-header > div:last-child {
+        width: 100% !important;
+        gap: 8px !important;
+    }
+
+    .page-header > div:last-child .btn {
+        width: 100% !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+    }
+
+    .page-header > div:last-child .btn-brand {
+        width: 100% !important;
     }
 
     /* --- Grid de Stats (2 Colunas Compactas) --- */
@@ -2415,9 +2432,14 @@ tr:last-child td {
         font-size: 0.75rem !important;
     }
 
-    /* Demais tabelas (outras páginas) mantêm scroll horizontal */
-    table {
-        min-width: 600px !important;
+    /* Tabelas com scroll horizontal contido no card */
+    .card-table {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .card-table table {
+        min-width: 500px !important;
     }
 
     th, td {
@@ -2426,9 +2448,9 @@ tr:last-child td {
         white-space: nowrap !important;
     }
 
-    /* Truncar ID de usuário longo */
-    td:nth-child(2) {
-        max-width: 100px !important;
+    /* Truncar textos longos em células */
+    td {
+        max-width: 160px !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
     }

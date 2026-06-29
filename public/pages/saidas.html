@@ -2035,15 +2035,49 @@
             const mobileSkuInput = document.getElementById('mobileSkuInput');
             if (mobileSkuInput) {
                 const doMobileSkuSearch = async () => {
-                    const code = mobileSkuInput.value.trim();
-                    if (!code) return;
+                    const raw = mobileSkuInput.value.trim();
+                    if (!raw) return;
                     mobileSkuInput.value = '';
-                    const product = await findProductByBarcode(code);
+                    const code = normalizeBarcodeInput(raw);
+
+                    // 1. Busca local por código de barras exato
+                    let product = dbProducts.find(p => {
+                        const b = normalizeBarcodeInput(p.barcode);
+                        const s = normalizeBarcodeInput(p.sku);
+                        return b === code || s.toLowerCase() === code.toLowerCase();
+                    });
                     if (product) {
                         await showProductSheetModal(product, { lookupValue: code, lookupSource: 'Busca' });
-                    } else {
-                        BuildFlow.showToast(`Produto não encontrado: ${code}`, 'warning');
+                        return;
                     }
+
+                    // 2. Busca local por nome ou parte do código
+                    const lower = code.toLowerCase();
+                    product = dbProducts.find(p =>
+                        String(p.name || '').toLowerCase().includes(lower) ||
+                        String(p.sku || '').toLowerCase().includes(lower) ||
+                        String(p.barcode || '').toLowerCase().includes(lower)
+                    );
+                    if (product) {
+                        await showProductSheetModal(product, { lookupValue: code, lookupSource: 'Busca' });
+                        return;
+                    }
+
+                    // 3. Busca na API
+                    try {
+                        const results = await BuildFlow.getProducts({ search: code, limit: 50 });
+                        if (results && results.length > 0) {
+                            product = results.find(p => {
+                                const b = normalizeBarcodeInput(p.barcode);
+                                const s = normalizeBarcodeInput(p.sku);
+                                return b === code || s.toLowerCase() === code.toLowerCase();
+                            }) || results[0];
+                            await showProductSheetModal(product, { lookupValue: code, lookupSource: 'Busca' });
+                            return;
+                        }
+                    } catch (e) {}
+
+                    BuildFlow.showToast(`Nada encontrado para: ${raw}`, 'warning');
                 };
                 mobileSkuInput.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') {
