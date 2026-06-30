@@ -405,17 +405,29 @@
                 font-size: 0.85rem !important;
             }
             #inventoryTable {
-                min-width: 500px !important;
+                min-width: 0 !important;
+                width: 100%;
+                table-layout: fixed;
             }
             #inventoryTable th,
             #inventoryTable td {
                 white-space: nowrap !important;
                 padding: 6px 4px !important;
                 font-size: 0.65rem !important;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
             #inventoryTable th {
                 font-size: 0.6rem !important;
                 padding: 6px 4px !important;
+            }
+            #inventoryTable th:nth-child(2),
+            #inventoryTable td:nth-child(2),
+            #inventoryTable th:nth-child(5),
+            #inventoryTable td:nth-child(5),
+            #inventoryTable th:nth-child(6),
+            #inventoryTable td:nth-child(6) {
+                display: none !important;
             }
 
             /* Modal: padding e fontes */
