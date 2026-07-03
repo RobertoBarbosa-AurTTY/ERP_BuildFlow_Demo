@@ -1102,7 +1102,7 @@ const BuildFlow = {
 
       const doc = new jsPDF({
         unit: "mm",
-        format: [80, Math.max(140, lineCount * 4.5)],
+        format: [80, Math.max(90, lineCount * 4)],
       });
 
       const ml = 5, mr = 75, cx = 40;

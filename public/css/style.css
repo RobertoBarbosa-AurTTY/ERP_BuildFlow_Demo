@@ -2619,8 +2619,8 @@ tr:last-child td {
 /* Auth - Mobile */
 @media (max-width: 480px) {
     .auth-container {
-        padding: 80px 20px 40px;
-        align-items: flex-start;
+        padding: 20px;
+        align-items: center;
         height: 100vh;
         height: 100dvh;
         overflow: hidden;
