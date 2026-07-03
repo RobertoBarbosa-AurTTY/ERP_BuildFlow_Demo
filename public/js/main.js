@@ -1089,105 +1089,177 @@ const BuildFlow = {
     const footer = settings.footerMessage || "Obrigado pela preferência!";
 
     if (type === "thermal") {
-      let lineCount = 8;
+      let lineCount = 12;
+      if (settings.showCompanyData && (settings.companyCnpj || settings.address)) lineCount += 3;
       s.items.forEach((item) => {
-        lineCount += item.discountAmount > 0 ? 3 : 2;
+        lineCount += item.discountAmount > 0 ? 3 : 1;
       });
       if (s.itemsDiscountTotal > 0) lineCount += 1;
       if (s.globalDiscountAmount > 0) lineCount += 1;
-      if (s.totalDiscount > 0) lineCount += 1;
-      lineCount += 4;
+      lineCount += 5;
       if (s.amountPaid != null) lineCount += 2;
+      lineCount += 5;
 
       const doc = new jsPDF({
         unit: "mm",
-        format: [80, Math.max(120, lineCount * 5)],
+        format: [80, Math.max(140, lineCount * 4.5)],
       });
 
+      const ml = 5, mr = 75, cx = 40;
+      const hr = (yy, w = 0.3) => { doc.setLineWidth(w); doc.line(ml, yy, mr, yy); };
+      let y = 10;
+
+      // --- HEADER ---
+      doc.setFont("courier", "bold");
+      doc.setFontSize(16);
+      doc.text(storeName, cx, y, { align: "center" });
+      y += 5.5;
       doc.setFont("courier", "normal");
-      doc.setFontSize(14);
-      doc.text(storeName, 40, 10, { align: "center" });
       doc.setFontSize(9);
-      doc.text("CUPOM NÃO FISCAL", 40, 15, { align: "center" });
-      doc.text("------------------------------------------", 40, 18, {
-        align: "center",
-      });
-      doc.text(`DATA: ${new Date(s.createdAt).toLocaleString("pt-BR")}`, 5, 23);
-      doc.text(`ID: ${s.saleNumber || String(s._id || "").slice(-6)}`, 5, 27);
-      doc.text(`PGTO: ${s.paymentMethod || "—"}`, 5, 31);
-      doc.text("------------------------------------------", 40, 35, {
-        align: "center",
-      });
+      doc.text("COMPROVANTE DE VENDA", cx, y, { align: "center" });
+      y += 3.5;
+      doc.setFontSize(7);
+      doc.text("NÃO FISCAL", cx, y, { align: "center" });
+      y += 3.5;
+      hr(y, 0.15);
+      y += 4;
 
-      let y = 40;
-      s.items.forEach((item) => {
-        const name = (item.name || "Produto").substring(0, 20);
-        doc.text(`${item.qty}x ${name}`, 5, y);
-        doc.text(this.formatCurrency(item.lineGross), 75, y, {
-          align: "right",
-        });
-        y += 4;
-        if (item.discountAmount > 0) {
-          doc.setFontSize(8);
-          doc.text(`  Desc. ${item.discountLabel || ""}`, 5, y);
-          doc.text(`-${this.formatCurrency(item.discountAmount)}`, 75, y, {
-            align: "right",
-          });
-          y += 4;
-          doc.setFontSize(9);
+      // --- SALE INFO ---
+      doc.setFontSize(9);
+      const d = new Date(s.createdAt);
+      const dateStr = d.toLocaleDateString("pt-BR");
+      const timeStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+      doc.text("DATA", ml, y);
+      doc.text(`${dateStr}  ${timeStr}`, mr, y, { align: "right" });
+      y += 4;
+      doc.text("CUPOM", ml, y);
+      doc.text(`#${s.saleNumber || String(s._id || "").slice(-6)}`, mr, y, { align: "right" });
+      y += 4;
+      doc.text("PGTO", ml, y);
+      doc.text(`${s.paymentMethod || "—"}`, mr, y, { align: "right" });
+      y += 4;
+
+      // --- COMPANY DATA ---
+      if (settings.showCompanyData) {
+        if (settings.companyCnpj || settings.address) {
+          hr(y, 0.08);
+          y += 3;
+          doc.setFontSize(7);
+          if (settings.companyCnpj) {
+            doc.text(`CNPJ ${settings.companyCnpj}`, ml, y);
+            y += 3;
+          }
+          if (settings.address) {
+            doc.text(`${settings.address.substring(0, 34)}`, ml, y);
+            y += 3;
+          }
+          y += 2;
         }
-        doc.text(this.formatCurrency(item.lineTotal), 75, y, {
-          align: "right",
-        });
-        y += 5;
+      }
+
+      hr(y, 0.3);
+      y += 4;
+
+      // --- COLUMN HEADER ---
+      doc.setFont("courier", "bold");
+      doc.setFontSize(8);
+      doc.text("QTD  DESCRICAO", ml, y);
+      doc.text("VALOR", mr, y, { align: "right" });
+      y += 3.5;
+      doc.setFont("courier", "normal");
+      doc.setDrawColor(160, 160, 160);
+      hr(y, 0.1);
+      doc.setDrawColor(0, 0, 0);
+      y += 4;
+
+      // --- ITEMS ---
+      s.items.forEach((item) => {
+        const name = (item.name || "Produto").substring(0, 18);
+        doc.setFontSize(9);
+        doc.text(`${item.qty}x  ${name}`, ml, y);
+        if (item.discountAmount > 0) {
+          doc.text(this.formatCurrency(item.lineGross), mr, y, { align: "right" });
+          y += 4;
+          doc.setFontSize(7);
+          doc.setTextColor(120, 120, 120);
+          doc.text(`  Desc. ${item.discountLabel || ""}`, ml, y);
+          doc.text(`-${this.formatCurrency(item.discountAmount)}`, mr, y, { align: "right" });
+          doc.setTextColor(0, 0, 0);
+          y += 3.5;
+          doc.setFont("courier", "bold");
+          doc.setFontSize(9);
+          doc.text(this.formatCurrency(item.lineTotal), mr, y, { align: "right" });
+          doc.setFont("courier", "normal");
+        } else {
+          doc.setFont("courier", "bold");
+          doc.text(this.formatCurrency(item.lineTotal), mr, y, { align: "right" });
+          doc.setFont("courier", "normal");
+        }
+        y += 4.5;
       });
 
-      doc.text("------------------------------------------", 40, y, {
-        align: "center",
-      });
-      y += 5;
+      // --- TOTALS ---
+      hr(y, 0.3);
+      y += 4.5;
       doc.setFontSize(8);
       if (s.grossSubtotal > 0) {
-        doc.text("Subtotal:", 5, y);
-        doc.text(this.formatCurrency(s.grossSubtotal), 75, y, {
-          align: "right",
-        });
-        y += 4;
+        doc.text("Subtotal bruto:", ml, y);
+        doc.text(this.formatCurrency(s.grossSubtotal), mr, y, { align: "right" });
+        y += 3.5;
       }
       if (s.itemsDiscountTotal > 0) {
-        doc.text("Desc. nos itens:", 5, y);
-        doc.text(`-${this.formatCurrency(s.itemsDiscountTotal)}`, 75, y, {
-          align: "right",
-        });
-        y += 4;
+        doc.text("Desconto nos itens:", ml, y);
+        doc.text(`-${this.formatCurrency(s.itemsDiscountTotal)}`, mr, y, { align: "right" });
+        y += 3.5;
       }
       if (s.globalDiscountAmount > 0) {
-        const gLabel =
-          s.globalDiscountType === "percent"
-            ? `Desc. venda (${s.globalDiscount}%):`
-            : "Desc. na venda:";
-        doc.text(gLabel, 5, y);
-        doc.text(`-${this.formatCurrency(s.globalDiscountAmount)}`, 75, y, {
-          align: "right",
-        });
-        y += 4;
+        const gLabel = s.globalDiscountType === "percent"
+          ? `Desconto na venda (${s.globalDiscount}%):`
+          : "Desconto na venda:";
+        doc.text(gLabel, ml, y);
+        doc.text(`-${this.formatCurrency(s.globalDiscountAmount)}`, mr, y, { align: "right" });
+        y += 3.5;
       }
-      doc.setFontSize(11);
+      y += 2;
       doc.setFont("courier", "bold");
-      doc.text("TOTAL:", 5, y);
-      doc.text(this.formatCurrency(s.total), 75, y, { align: "right" });
-      y += 6;
+      doc.setFontSize(12);
+      doc.text("TOTAL A PAGAR", ml, y);
+      doc.text(this.formatCurrency(s.total), mr, y, { align: "right" });
+      y += 4;
       doc.setFont("courier", "normal");
+
+      // --- PAYMENT ---
       doc.setFontSize(8);
       if (s.amountPaid != null) {
-        doc.text("Valor recebido:", 5, y);
-        doc.text(this.formatCurrency(s.amountPaid), 75, y, { align: "right" });
-        y += 4;
-        doc.text("Troco:", 5, y);
-        doc.text(this.formatCurrency(s.change || 0), 75, y, { align: "right" });
-        y += 4;
+        hr(y, 0.15);
+        y += 2.5;
+        doc.text("Valor recebido:", ml, y);
+        doc.text(this.formatCurrency(s.amountPaid), mr, y, { align: "right" });
+        y += 3;
+        doc.setFont("courier", "bold");
+        doc.text("Troco:", ml, y);
+        doc.text(this.formatCurrency(s.change || 0), mr, y, { align: "right" });
+        doc.setFont("courier", "normal");
+        y += 3.5;
       }
-      doc.text(footer, 40, y + 4, { align: "center" });
+
+      // --- BOTTOM LINE ---
+      hr(y, 0.5);
+      y += 4;
+
+      // --- FOOTER ---
+      doc.setFontSize(8);
+      doc.text(footer, cx, y, { align: "center" });
+      y += 4;
+      doc.setFontSize(6);
+      const legalLines = doc.splitTextToSize(settings.receiptLegalNote || "Documento não fiscal", mr - ml);
+      legalLines.forEach((line) => {
+        doc.text(line, cx, y, { align: "center" });
+        y += 3;
+      });
+      y += 1;
+      doc.text(`PROCON ${settings.proconNumber || "151"}`, cx, y, { align: "center" });
+
       window.open(doc.output("bloburl"), "_blank");
       return;
     }
@@ -1597,6 +1669,8 @@ const BuildFlow = {
       autoPrint: false,
       showCompanyData: true,
       footerMessage: "Obrigado pela preferência!",
+      receiptLegalNote: "Documento não fiscal emitido conforme Lei Complementar nº 123/2006",
+      proconNumber: "151",
       darkMode: true,
       pushNotifications: true,
       systemSounds: false,

@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>BuildFlow - Saídas</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -12,7 +15,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <style>
         :root {
-            --pdv-bg: #0f172a; /* Slate 900 */
+            --pdv-bg: #1e293b; /* Slate 800 */
             --pdv-sidebar-bg: #1e293b; /* Slate 800 */
             --pdv-card-bg: #1e293b;
             --pdv-primary: #3b82f6;
@@ -34,11 +37,17 @@
         body {
             background-color: var(--pdv-bg);
             color: var(--pdv-text);
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+        }
+        #pdv-app {
             height: 100vh;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            font-family: 'Inter', sans-serif;
+        }
+        .swal2-container {
+            z-index: 99999 !important;
         }
 
         .pdv-layout {
@@ -204,63 +213,54 @@
             box-shadow: -4px 0 15px rgba(0,0,0,0.2);
         }
 
-        .pdv-input-section {
-            padding: 20px;
-            background: #1e293b;
-            border-bottom: 1px solid var(--pdv-border);
-        }
-
-        .input-row {
+        .cart-search-row {
             display: flex;
-            gap: 8px;
-            align-items: flex-end;
+            gap: 6px;
+            align-items: center;
+            padding: 10px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: var(--pdv-sidebar-bg);
         }
 
-        .input-group {
+        .cart-search-group {
             flex: 1;
         }
 
-        .input-group label {
-            display: block;
-            font-size: 0.65rem;
-            font-weight: 800;
-            color: var(--pdv-text-muted);
-            margin-bottom: 6px;
-            text-transform: uppercase;
+        .cart-search-btn {
+            background: var(--pdv-primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            font-size: 1rem;
         }
+        .cart-search-btn:active { transform: scale(0.95); }
 
         .pdv-input {
             width: 100%;
             background: var(--pdv-input-bg);
             border: 2px solid var(--pdv-border);
             border-radius: 8px;
-            padding: 10px 12px;
-            font-size: 0.9375rem;
+            padding: 8px 12px;
+            font-size: 0.875rem;
             font-weight: 700;
             color: var(--pdv-text);
             outline: none;
             transition: border-color 0.2s;
+            box-sizing: border-box;
         }
 
         .pdv-input:focus {
             border-color: var(--pdv-primary);
         }
-
-        .add-btn {
-            background: var(--pdv-primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            width: 44px;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
-
-        .add-btn:active { transform: scale(0.95); }
 
         /* Lista de Itens */
         .pdv-items-list {
@@ -268,6 +268,8 @@
             overflow-y: auto;
             padding: 0;
             background: #1f2937;
+            display: flex;
+            flex-direction: column;
         }
 
         .cart-item {
@@ -290,8 +292,14 @@
         .item-remove { color: #475569; cursor: pointer; transition: color 0.2s; }
         .item-remove:hover { color: var(--pdv-danger); }
 
+        #cartItemsContainer {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
         .empty-cart {
-            height: 100%;
+            flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -301,7 +309,7 @@
             gap: 12px;
         }
 
-        .empty-cart i { font-size: 3rem; opacity: 0.3; }
+        .empty-cart i { font-size: 3rem; opacity: 0.4; }
 
         /* Total Section */
         .pdv-total-section {
@@ -788,6 +796,7 @@
             width: 100%;
         }
 
+
         .pdv-sale-summary {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -914,6 +923,10 @@
         .modal-table td {
             padding: 12px;
             border-bottom: 1px solid var(--pdv-border);
+            text-align: left;
+        }
+        .modal-table td:nth-child(2) {
+            text-align: center;
         }
         .modal-table tr:hover { background: #334155; }
 
@@ -1119,14 +1132,13 @@
             margin-left: 8px;
         }
 
-        /* Input SKU e FAB: ocultos em desktop */
-        .pdv-input-section {
-            display: none;
-        }
-
         .pdv-cart-fab {
             display: none;
         }
+        .mobile-extra-actions { display: none; }
+
+        #desktopSearchBtn { display: inline-flex; }
+        #mobileSkuScanBtn { display: none; }
 
         /* Responsividade PDV - Tablet & Mobile */
         @media (max-width: 900px) {
@@ -1147,7 +1159,7 @@
             .pdv-categories { display: none; }
             .pdv-main { display: none; }
             .pdv-footer { display: none; }
-            .pdv-cart-fab { display: none !important; }
+            .pdv-cart-fab { display: none; }
 
             .pdv-layout {
                 flex-direction: column;
@@ -1168,70 +1180,17 @@
                 min-height: 0;
             }
 
-            /* Input de SKU visível no mobile */
-            .pdv-input-section {
-                display: block;
-                padding: 12px 16px;
-                flex-shrink: 0;
-                border-bottom: 1px solid var(--pdv-border);
-            }
-
-            .pdv-input-section .input-row {
-                display: flex;
-                gap: 8px;
-                align-items: flex-end;
-            }
-
-            .pdv-input-section .input-group {
-                flex: 1;
-            }
-
-            .pdv-input-section .input-group label {
-                display: block;
-                font-size: 0.65rem;
-                font-weight: 800;
-                color: var(--pdv-text-muted);
-                margin-bottom: 6px;
-                text-transform: uppercase;
-            }
-
-            .pdv-input-section .pdv-input {
-                width: 100%;
-                background: var(--pdv-input-bg);
-                border: 2px solid var(--pdv-border);
-                border-radius: 8px;
-                padding: 10px 12px;
-                font-size: 0.9375rem;
-                font-weight: 700;
-                color: var(--pdv-text);
-                outline: none;
-                transition: border-color 0.2s;
-            }
-
-            .pdv-input-section .pdv-input:focus {
-                border-color: var(--pdv-primary);
-            }
-
-            .pdv-input-section .add-btn {
-                background: var(--pdv-primary);
-                color: white;
-                border: none;
-                border-radius: 8px;
-                width: 44px;
-                height: 44px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                flex-shrink: 0;
-                font-size: 1.2rem;
-            }
+            #mobileSkuScanBtn { display: inline-flex; }
+            #desktopSearchBtn { display: none; }
+            .mobile-extra-actions { display: grid; }
 
             /* Lista de itens do carrinho ocupa espaço disponível */
             .pdv-items-list {
                 flex: 1;
                 min-height: 0;
                 overflow-y: auto;
+                display: flex;
+                flex-direction: column;
             }
 
             .cart-item {
@@ -1373,20 +1332,6 @@
         }
 
         @media (max-width: 480px) {
-            .pdv-input-section {
-                padding: 10px 12px;
-            }
-
-            .pdv-input-section .pdv-input {
-                padding: 8px 10px;
-                font-size: 0.875rem;
-            }
-
-            .pdv-input-section .add-btn {
-                width: 40px;
-                height: 40px;
-            }
-
             .cart-item {
                 padding: 10px 12px;
                 gap: 8px;
@@ -1421,6 +1366,7 @@
     </style>
 </head>
 <body>
+    <div id="pdv-app">
     <header class="pdv-header">
         <div style="font-weight: 800; font-size: 1.25rem; display: flex; align-items: center; gap: 10px;">
             <i class="fa-solid fa-layer-group text-primary"></i> BuildFlow PDV
@@ -1447,22 +1393,23 @@
         </main>
 
         <aside class="pdv-sidebar">
-            <div class="pdv-input-section">
-                <div class="input-row">
-                    <div class="input-group">
-                        <label>Código / SKU</label>
-                        <input type="text" id="mobileSkuInput" class="pdv-input" placeholder="Digite ou escaneie..." autocomplete="off">
+            <div class="pdv-items-list" id="cartItems">
+                <div class="cart-search-row">
+                    <div class="cart-search-group">
+                        <input type="text" id="mobileSkuInput" class="pdv-input" placeholder="Digite código ou escaneie..." autocomplete="off">
                     </div>
-                    <button class="add-btn" id="mobileSkuScanBtn" title="Escaneer código">
+                    <button class="cart-search-btn" id="desktopSearchBtn" title="Buscar produto">
+                        <i class="fa-solid fa-search"></i>
+                    </button>
+                    <button class="cart-search-btn" id="mobileSkuScanBtn" title="Escaneer código">
                         <i class="fa-solid fa-camera"></i>
                     </button>
                 </div>
-            </div>
-
-            <div class="pdv-items-list" id="cartItems">
-                <div class="empty-cart">
-                    <i class="fa-solid fa-shopping-basket"></i>
-                    <p>Seu carrinho está vazio</p>
+                <div id="cartItemsContainer">
+                    <div class="empty-cart">
+                        <i class="fa-solid fa-shopping-basket"></i>
+                        <p>Seu carrinho está vazio</p>
+                    </div>
                 </div>
             </div>
 
@@ -1488,6 +1435,16 @@
                     <button class="action-btn btn-pay" id="finalizeSaleBtn">
                         <i class="fa-solid fa-credit-card"></i>
                         <span>Pagamento<br>(End)</span>
+                    </button>
+                </div>
+                <div class="action-grid mobile-extra-actions">
+                    <button class="action-btn" id="mobileBudgetBtn" style="background:var(--pdv-cyan, #0891b2);">
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                        <span>Orçamento</span>
+                    </button>
+                    <button class="action-btn" id="mobileHistoryBtn" style="background:var(--pdv-primary);">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>Histórico</span>
                     </button>
                 </div>
             </div>
@@ -1530,6 +1487,7 @@
             <span>Relatórios (F8)</span>
         </button>
     </footer>
+    </div>
 
     <div class="toast-container" id="toastContainer"></div>
 
@@ -1560,7 +1518,8 @@
                 return;
             }
 
-            const total = parseFloat(document.getElementById('totalValue').innerText.replace('R$ ', '').replace('.', '').replace(',', '.'));
+            const summary = getCartSaleSummary();
+            const total = summary.total;
             
             const { value: printType } = await Swal.fire({
                 ...pdvSwalOptions(),
@@ -1581,21 +1540,15 @@
             const budgetData = {
                 saleNumber: 'ORC-' + now.getTime().toString().slice(-6),
                 createdAt: now,
-                items: cart.map(i => {
-                    let itemTotal = i.price * i.qty;
-                    let discountVal = 0;
-                    if (i.discount > 0) {
-                        discountVal = i.discountType === 'percent' ? (itemTotal * (i.discount / 100)) : i.discount;
-                    }
-                    return {
-                        name: i.name,
-                        qty: i.qty,
-                        price: i.price,
-                        discount: i.discount || 0,
-                        discountType: i.discountType || 'percent',
-                        total: itemTotal - discountVal
-                    }
-                }),
+                items: summary.items.map(i => ({
+                    name: i.name,
+                    qty: i.qty,
+                    price: i.price,
+                    discount: i.discount || 0,
+                    discountType: i.discountType || 'percent',
+                    lineGross: i.lineGross,
+                    total: i.lineTotal
+                })),
                 total: total
             };
 
@@ -1605,35 +1558,113 @@
             if (printType === true) { // Cupom Térmico
                 const doc = new jsPDF({
                     unit: 'mm',
-                    format: [80, 150 + (budgetData.items.length * 10)]
+                    format: [80, 150 + (budgetData.items.length * 12)]
                 });
 
-                doc.setFont('courier', 'normal');
-                doc.setFontSize(14);
-                doc.text(settings.storeName, 40, 10, { align: 'center' });
-                doc.setFontSize(9);
-                doc.text('ORÇAMENTO - SEM VALOR FISCAL', 40, 15, { align: 'center' });
-                doc.text('------------------------------------------', 40, 18, { align: 'center' });
-                doc.text(`DATA: ${budgetData.createdAt.toLocaleString('pt-BR')}`, 5, 23);
-                doc.text(`REF: ${budgetData.saleNumber}`, 5, 27);
-                doc.text('------------------------------------------', 40, 31, { align: 'center' });
+                const ml = 5, mr = 75, cx = 40;
+                const hr = (yy, w) => { doc.setLineWidth(w); doc.line(ml, yy, mr, yy); };
+                let y = 10;
 
-                let y = 36;
+                hr(y, 0.5);
+                y += 5;
+                doc.setFont('courier', 'bold');
+                doc.setFontSize(16);
+                doc.text(settings.storeName, cx, y, { align: 'center' });
+                y += 5.5;
+                doc.setFont('courier', 'normal');
+                doc.setFontSize(9);
+                doc.text('ORÇAMENTO', cx, y, { align: 'center' });
+                y += 3.5;
+                doc.setFontSize(7);
+                doc.text('SEM VALOR FISCAL', cx, y, { align: 'center' });
+                y += 3;
+                hr(y, 0.15);
+                y += 4;
+
+                doc.setFontSize(9);
+                const d = budgetData.createdAt;
+                const dateStr = d.toLocaleDateString('pt-BR');
+                const timeStr = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                doc.text('DATA', ml, y);
+                doc.text(`${dateStr}  ${timeStr}`, mr, y, { align: 'right' });
+                y += 4;
+                doc.text('REF', ml, y);
+                doc.text(budgetData.saleNumber, mr, y, { align: 'right' });
+                y += 4;
+
+                if (settings.showCompanyData) {
+                    if (settings.companyCnpj || settings.address) {
+                        hr(y, 0.08);
+                        y += 3;
+                        doc.setFontSize(7);
+                        if (settings.companyCnpj) {
+                            doc.text(`CNPJ ${settings.companyCnpj}`, ml, y);
+                            y += 3;
+                        }
+                        if (settings.address) {
+                            doc.text(`${settings.address.substring(0, 34)}`, ml, y);
+                            y += 3;
+                        }
+                        y += 2;
+                    }
+                }
+
+                hr(y, 0.3);
+                y += 4;
+                doc.setFont('courier', 'bold');
+                doc.setFontSize(8);
+                doc.text('QTD  DESCRICAO', ml, y);
+                doc.text('VALOR', mr, y, { align: 'right' });
+                y += 3.5;
+                doc.setFont('courier', 'normal');
+                doc.setDrawColor(160, 160, 160);
+                hr(y, 0.1);
+                doc.setDrawColor(0, 0, 0);
+                y += 4;
+
                 budgetData.items.forEach(item => {
-                    doc.text(`${item.qty}x ${item.name.substring(0, 22)}`, 5, y);
-                    doc.text(`R$ ${(Number(item.total) || 0).toFixed(2)}`, 75, y, { align: 'right' });
+                    const name = (item.name || 'Item').substring(0, 18);
+                    doc.setFontSize(9);
+                    doc.text(`${item.qty}x  ${name}`, ml, y);
+                    if (item.discount > 0) {
+                        const origTotal = Number(item.price) * Number(item.qty);
+                        const origStr = `R$ ${origTotal.toFixed(2)}`;
+                        doc.text(origStr, mr, y, { align: 'right' });
+                        doc.setDrawColor(160, 160, 160);
+                        const tw = doc.getStringUnitWidth(origStr) * doc.getFontSize();
+                        doc.line(mr - tw, y - 0.5, mr, y - 0.5);
+                        doc.setDrawColor(0, 0, 0);
+                        y += 3.5;
+                        doc.setFontSize(9);
+                        doc.text(`R$ ${(Number(item.total) || 0).toFixed(2)}`, mr, y, { align: 'right' });
+                    } else {
+                        const totalStr = `R$ ${(Number(item.total) || 0).toFixed(2)}`;
+                        doc.text(totalStr, mr, y, { align: 'right' });
+                    }
                     y += 5;
                 });
 
-                doc.text('------------------------------------------', 40, y + 2, { align: 'center' });
-                doc.setFontSize(11);
+                hr(y, 0.3);
+                y += 4.5;
                 doc.setFont('courier', 'bold');
-                doc.text('TOTAL:', 5, y + 8);
-                doc.text(`R$ ${(Number(budgetData.total) || 0).toFixed(2)}`, 75, y + 8, { align: 'right' });
-                
+                doc.setFontSize(12);
+                doc.text('TOTAL:', ml, y);
+                doc.text(`R$ ${(Number(budgetData.total) || 0).toFixed(2)}`, mr, y, { align: 'right' });
+                y += 6;
                 doc.setFont('courier', 'normal');
                 doc.setFontSize(8);
-                doc.text('Válido por 7 dias.', 40, y + 15, { align: 'center' });
+                hr(y, 0.5);
+                y += 4;
+                doc.text('Válido por 7 dias.', cx, y, { align: 'center' });
+                y += 4;
+                doc.setFontSize(6);
+                const legalLines = doc.splitTextToSize(settings.receiptLegalNote || 'Documento não fiscal', mr - ml);
+                legalLines.forEach(line => {
+                    doc.text(line, cx, y, { align: 'center' });
+                    y += 3;
+                });
+                y += 1;
+                doc.text(`PROCON ${settings.proconNumber || '151'}`, cx, y, { align: 'center' });
                 
                 window.open(doc.output('bloburl'), '_blank');
             } else { // Impressão A4
@@ -1668,13 +1699,20 @@
                 doc.text(`Data: ${budgetData.createdAt.toLocaleDateString('pt-BR')}`, 140, infoY + 5);
                 doc.text(`Hora: ${budgetData.createdAt.toLocaleTimeString('pt-BR')}`, 140, infoY + 10);
 
-                const tableData = budgetData.items.map(item => [
-                    item.name,
-                    item.qty,
-                    `R$ ${(Number(item.price) || 0).toFixed(2)}`,
-                    item.discount > 0 ? `${item.discount}${item.discountType === 'percent' ? '%' : ' R$'}` : '-',
-                    `R$ ${(Number(item.total) || 0).toFixed(2)}`
-                ]);
+                const tableData = budgetData.items.map(item => {
+                    const totalVal = `R$ ${(Number(item.total) || 0).toFixed(2)}`;
+                    if (item.discount > 0) {
+                        const origTotal = Number(item.price) * Number(item.qty);
+                        return [
+                            { content: item.name, hasDiscount: true },
+                            item.qty,
+                            `R$ ${(Number(item.price) || 0).toFixed(2)}`,
+                            `${item.discount}${item.discountType === 'percent' ? '%' : ' R$'}`,
+                            { content: totalVal, hasDiscount: true }
+                        ];
+                    }
+                    return [item.name, item.qty, `R$ ${(Number(item.price) || 0).toFixed(2)}`, '-', totalVal];
+                });
 
                 doc.autoTable({
                     startY: 65,
@@ -1689,6 +1727,12 @@
                         2: { cellWidth: 35, halign: 'right' },
                         3: { cellWidth: 25, halign: 'center' },
                         4: { cellWidth: 35, halign: 'right' }
+                    },
+                    didParseCell: function (data) {
+                        if (data.cell.raw && data.cell.raw.hasDiscount) {
+                            data.cell.styles.textColor = [9, 165, 82];
+                            data.cell.styles.fontStyle = 'bold';
+                        }
                     }
                 });
 
@@ -1962,13 +2006,6 @@
             const now = new Date();
             document.getElementById('currentDate').innerText = now.toLocaleDateString('pt-BR');
 
-            // Carregar carrinho persistido
-            const savedCart = localStorage.getItem('pdv_cart');
-            if (savedCart) {
-                cart = JSON.parse(savedCart);
-                updateCart();
-            }
-
             // Carregar produtos do Banco de Dados
             try {
                 dbProducts = await BuildFlow.getProducts();
@@ -2121,6 +2158,12 @@
                     }
                 });
 
+                // Botão de busca (desktop)
+                const desktopSearchBtn = document.getElementById('desktopSearchBtn');
+                if (desktopSearchBtn) {
+                    desktopSearchBtn.addEventListener('click', doMobileSkuSearch);
+                }
+
                 // Botão de scanner
                 const scanBtn = document.getElementById('mobileSkuScanBtn');
                 if (scanBtn) {
@@ -2137,11 +2180,79 @@
                             ...pdvSwalOptions({ width: '100%', customClass: { popup: 'pdv-swal pdv-swal--sheet' } }),
                             title: 'Escaneer código',
                             html: `
-                                <div style="position:relative;width:100%;aspect-ratio:4/3;background:#000;border-radius:12px;overflow:hidden;">
-                                    <video id="scanner-preview" style="width:100%;height:100%;object-fit:cover;" playsinline autoplay muted></video>
-                                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80%;height:60%;border:3px solid rgba(59,130,246,0.8);border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,0.4);"></div>
+                                <style>
+                                    .scanner-wrapper {
+                                        position: relative;
+                                        width: 100%;
+                                        aspect-ratio: 1/1;
+                                        background: #000;
+                                        border-radius: 12px;
+                                        overflow: hidden;
+                                    }
+                                    .scanner-wrapper video {
+                                        width: 100%;
+                                        height: 100%;
+                                        object-fit: cover;
+                                    }
+                                    .scanner-frame {
+                                        position: absolute;
+                                        top: 50%; left: 50%;
+                                        transform: translate(-50%, -50%);
+                                        width: 85%;
+                                        height: 35%;
+                                        border: 2px solid rgba(59,130,246,0.9);
+                                        border-radius: 6px;
+                                        box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                    }
+                                    .scanner-frame-inner {
+                                        width: 90%;
+                                        height: 60%;
+                                        border: 1px solid rgba(59,130,246,0.3);
+                                        border-radius: 3px;
+                                        display: flex;
+                                        flex-direction: column;
+                                        justify-content: space-around;
+                                        padding: 0 4px;
+                                    }
+                                    .scanner-frame-inner span {
+                                        display: block;
+                                        height: 2px;
+                                        background: rgba(59,130,246,0.2);
+                                        border-radius: 1px;
+                                    }
+                                    .scanner-frame-inner span:nth-child(2) { height: 4px; background: rgba(59,130,246,0.15); }
+                                    .scanner-frame-inner span:nth-child(3) { height: 2px; }
+                                    .scanner-frame-inner span:nth-child(4) { height: 3px; background: rgba(59,130,246,0.25); }
+                                    .scanner-frame-inner span:nth-child(5) { height: 2px; }
+                                    .scanner-line {
+                                        position: absolute;
+                                        left: 7.5%;
+                                        width: 85%;
+                                        height: 2px;
+                                        background: #ef4444;
+                                        box-shadow: 0 0 8px #ef4444, 0 0 16px rgba(239,68,68,0.4);
+                                        border-radius: 1px;
+                                        animation: scanMove 2s ease-in-out infinite;
+                                    }
+                                    @keyframes scanMove {
+                                        0% { top: 10%; }
+                                        50% { top: 60%; }
+                                        100% { top: 10%; }
+                                    }
+                                </style>
+                                <div class="scanner-wrapper">
+                                    <video id="scanner-preview" playsinline autoplay muted></video>
+                                    <div class="scanner-frame">
+                                        <div class="scanner-frame-inner">
+                                            <span></span><span></span><span></span><span></span><span></span>
+                                        </div>
+                                    </div>
+                                    <div class="scanner-line"></div>
                                 </div>
-                                <p style="margin-top:12px;font-size:0.85rem;color:var(--pdv-text-muted);">Aponte a câmera para o código de barras</p>
+                                <p style="margin-top:12px;font-size:0.85rem;color:var(--pdv-text-muted);text-align:center;">Aponte a câmera para o código de barras</p>
                             `,
                             showConfirmButton: false,
                             showCloseButton: true,
@@ -2226,6 +2337,9 @@
                     });
                 });
             }
+
+            document.getElementById('mobileBudgetBtn')?.addEventListener('click', handleBudget);
+            document.getElementById('mobileHistoryBtn')?.addEventListener('click', showHistoryQuickView);
         }
 
         function getFreshProduct(productOrId) {
@@ -2480,7 +2594,6 @@
                 
                 cart = [];
                 globalDiscount = 0;
-                localStorage.removeItem('pdv_cart'); 
                 updateCart();
                 
                 dbProducts = await BuildFlow.getProducts();
@@ -2529,7 +2642,9 @@
             const { customClass, ...rest } = extra;
             return {
                 color: 'var(--pdv-text)',
-                backdrop: false,
+                backdrop: 'rgba(0,0,0,0.55)',
+                scrollbarPadding: false,
+
                 customClass: { ...customClass, popup: popupClasses.join(' ') },
                 ...rest
             };
@@ -2701,10 +2816,11 @@
                                         const id = BuildFlow.escapeHtml(BuildFlow.normalizeId(p._id));
                                         const name = BuildFlow.escapeHtml(p.name);
                                         const sku = BuildFlow.escapeHtml(p.sku || '');
+                                        const barcode = BuildFlow.escapeHtml(p.barcode || '');
                                         const loc = BuildFlow.escapeHtml(BuildFlow.formatProductLocationDisplay(p));
                                         const qtyClass = (p.quantity ?? 0) < 10 ? 'var(--pdv-danger)' : 'var(--pdv-success)';
                                         return `
-                                        <tr data-product-id="${id}" class="pdv-product-row" style="cursor:pointer">
+                                        <tr data-product-id="${id}" data-barcode="${barcode}" class="pdv-product-row" style="cursor:pointer">
                                             <td>
                                                 <strong>${name}</strong>
                                                 ${sku ? `<br><small style="color:var(--pdv-text-muted)">${sku}</small>` : ''}
@@ -2724,7 +2840,8 @@
                         searchInput.addEventListener('input', (e) => {
                             const term = e.target.value.toLowerCase();
                             document.querySelectorAll('#modalProductsTable tbody tr').forEach(row => {
-                                row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
+                                const match = row.innerText.toLowerCase().includes(term) || row.getAttribute('data-barcode').toLowerCase().includes(term);
+                                row.style.display = match ? '' : 'none';
                             });
                         });
                         document.querySelectorAll('.pdv-product-row').forEach(row => {
@@ -3250,7 +3367,7 @@
                 if (result.isConfirmed) {
                     globalDiscount = result.value.discount;
                     globalDiscountType = result.value.type;
-                    updateTotal();
+                    updateCart();
                     BuildFlow.showToast('Desconto aplicado!', 'success');
                 }
             });
@@ -3410,46 +3527,48 @@
         }
 
         function updateCart() {
-            const list = document.getElementById('cartItems');
+            const container = document.getElementById('cartItemsContainer');
+            if (!container) return;
+            const summary = getCartSaleSummary();
             
-            // Persistir carrinho no localStorage
-            localStorage.setItem('pdv_cart', JSON.stringify(cart));
-
             if (cart.length === 0) {
-                list.innerHTML = `
+                container.innerHTML = `
                     <div class="empty-cart">
                         <i class="fa-solid fa-shopping-basket"></i>
                         <p>Seu carrinho está vazio</p>
                     </div>
                 `;
             } else {
-                list.innerHTML = '';
-                cart.forEach((item, index) => {
-                    let itemTotal = item.price * item.qty;
-                    let discLabel = '';
-                    
-                    if (item.discount > 0) {
-                        const disc = item.discountType === 'percent' 
-                            ? itemTotal * (item.discount / 100) 
-                            : item.discount;
-                        itemTotal -= disc;
-                        discLabel = `<span class="item-discount-badge">-${item.discount}${item.discountType === 'percent' ? '%' : ' R$'}</span>`;
-                    }
+                container.innerHTML = '';
+                const globalShare = summary.subtotalAfterItems > 0 && summary.globalDiscountAmount > 0
+                    ? summary.globalDiscountAmount / summary.subtotalAfterItems : 0;
+                summary.items.forEach((item, index) => {
+                    const originalTotal = item.lineGross;
+                    const itemFinal = globalShare > 0
+                        ? item.lineTotal * (1 - globalShare)
+                        : item.lineTotal;
+                    const hasDiscount = item.discount > 0 || summary.globalDiscount > 0;
 
                     const div = document.createElement('div');
                     div.className = 'cart-item';
                     div.onclick = () => openEditModal(index);
+                    
+                    const metaHtml = `${item.qty} un x ${BuildFlow.formatCurrency(item.price)}`;
+
                     div.innerHTML = `
                         <div class="item-info">
-                            <div class="item-name">${item.name} ${discLabel}</div>
-                            <div class="item-meta">${item.qty} un x R$ ${(Number(item.price) || 0).toFixed(2)}</div>
+                            <div class="item-name">${BuildFlow.escapeHtml(item.name)}</div>
+                            <div class="item-meta">${metaHtml}</div>
                         </div>
-                        <div class="item-price">R$ ${(Number(itemTotal) || 0).toFixed(2)}</div>
+                        <div style="display:flex;flex-direction:column;align-items:flex-end;margin-right:12px;">
+                            <div class="item-price">${BuildFlow.formatCurrency(itemFinal)}</div>
+                            ${hasDiscount ? `<div style="font-size:0.7rem;text-decoration:line-through;color:var(--pdv-text-muted);">${BuildFlow.formatCurrency(originalTotal)}</div>` : ''}
+                        </div>
                         <div class="item-remove" onclick="event.stopPropagation(); removeFromCart(${index})">
                             <i class="fa-solid fa-circle-xmark"></i>
                         </div>
                     `;
-                    list.appendChild(div);
+                    container.appendChild(div);
                 });
             }
             updateTotal();
@@ -3483,24 +3602,26 @@
 
             const summary = getCartSaleSummary();
 
+            const globalShare = summary.subtotalAfterItems > 0 && summary.globalDiscountAmount > 0
+                ? summary.globalDiscountAmount / summary.subtotalAfterItems : 0;
+            const summaryItems = summary.items;
             let itemsHtml = '';
-            cart.forEach((item, index) => {
-                let itemTotal = item.price * item.qty;
-                let discLabel = '';
-                if (item.discount > 0) {
-                    const disc = item.discountType === 'percent'
-                        ? itemTotal * (item.discount / 100)
-                        : item.discount;
-                    itemTotal -= disc;
-                    discLabel = `<span style="font-size:0.6rem;background:#166534;color:#bbf7d0;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:6px;">-${item.discount}${item.discountType === 'percent' ? '%' : 'R$'}</span>`;
-                }
+            summaryItems.forEach((item, index) => {
+                const originalTotal = item.lineGross;
+                const itemFinal = globalShare > 0
+                    ? item.lineTotal * (1 - globalShare)
+                    : item.lineTotal;
+                const hasDiscount = item.discount > 0 || summary.globalDiscount > 0;
                 itemsHtml += `
                     <div onclick="Swal.close(); setTimeout(() => openEditModal(${index}), 100);" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--pdv-border);cursor:pointer;">
                         <div style="flex:1;min-width:0;">
-                            <div style="font-weight:700;font-size:0.82rem;color:var(--pdv-text);">${BuildFlow.escapeHtml(item.name)}${discLabel}</div>
+                            <div style="font-weight:700;font-size:0.82rem;color:var(--pdv-text);">${BuildFlow.escapeHtml(item.name)}</div>
                             <div style="font-size:0.72rem;color:var(--pdv-text-muted);">${item.qty} un x ${BuildFlow.formatCurrency(item.price)}</div>
                         </div>
-                        <div style="font-weight:800;font-size:0.9rem;color:var(--pdv-primary);white-space:nowrap;">${BuildFlow.formatCurrency(itemTotal)}</div>
+                        <div style="display:flex;flex-direction:column;align-items:flex-end;">
+                            <div style="font-weight:800;font-size:0.9rem;color:var(--pdv-primary);white-space:nowrap;">${BuildFlow.formatCurrency(itemFinal)}</div>
+                            ${hasDiscount ? `<div style="font-size:0.7rem;text-decoration:line-through;color:var(--pdv-text-muted);">${BuildFlow.formatCurrency(originalTotal)}</div>` : ''}
+                        </div>
                         <div onclick="event.stopPropagation(); removeFromCart(${index}); Swal.close(); setTimeout(showMobileCart, 150);" style="color:var(--pdv-text-muted);font-size:1rem;padding:4px;">
                             <i class="fa-solid fa-circle-xmark"></i>
                         </div>
@@ -3530,11 +3651,21 @@
                             <button type="button" id="mobile-cart-discount" class="pdv-btn-inline pdv-btn-inline--muted" style="background:var(--pdv-purple);color:#fff;width:100%;">
                                 <i class="fa-solid fa-percent"></i> Desconto
                             </button>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
                             <button type="button" id="mobile-cart-cancel" class="pdv-btn-inline pdv-btn-inline--muted" style="background:var(--pdv-danger);color:#fff;width:100%;">
-                                <i class="fa-solid fa-trash"></i> Cancelar
+                                <i class="fa-solid fa-trash"></i> Cancelar (Esc)
                             </button>
                             <button type="button" id="mobile-cart-pay" class="pdv-btn-inline pdv-btn-inline--primary" style="width:100%;">
-                                <i class="fa-solid fa-credit-card"></i> Pagamento
+                                <i class="fa-solid fa-credit-card"></i> Pagamento (End)
+                            </button>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+                            <button type="button" id="mobile-cart-budget" class="pdv-btn-inline pdv-btn-inline--muted" style="background:var(--pdv-cyan, #0891b2);color:#fff;width:100%;">
+                                <i class="fa-solid fa-file-invoice-dollar"></i> Orçamento
+                            </button>
+                            <button type="button" id="mobile-cart-history" class="pdv-btn-inline pdv-btn-inline--muted" style="background:var(--pdv-primary);color:#fff;width:100%;">
+                                <i class="fa-solid fa-clock-rotate-left"></i> Histórico
                             </button>
                         </div>
                     </div>
@@ -3557,6 +3688,14 @@
                     document.getElementById('mobile-cart-pay')?.addEventListener('click', () => {
                         Swal.close();
                         finalizeSale('FINALIZED');
+                    });
+                    document.getElementById('mobile-cart-budget')?.addEventListener('click', () => {
+                        Swal.close();
+                        setTimeout(handleBudget, 150);
+                    });
+                    document.getElementById('mobile-cart-history')?.addEventListener('click', () => {
+                        Swal.close();
+                        setTimeout(showHistoryQuickView, 150);
                     });
                 }
             });

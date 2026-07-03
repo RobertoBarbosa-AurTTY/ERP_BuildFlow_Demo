@@ -43,6 +43,8 @@ function loadSettings() {
     if (document.getElementById('autoPrint')) document.getElementById('autoPrint').checked = settings.autoPrint;
     if (document.getElementById('showCompanyData')) document.getElementById('showCompanyData').checked = settings.showCompanyData;
     if (document.getElementById('footerMessage')) document.getElementById('footerMessage').value = settings.footerMessage;
+    if (document.getElementById('receiptLegalNote')) document.getElementById('receiptLegalNote').value = settings.receiptLegalNote;
+    if (document.getElementById('proconNumber')) document.getElementById('proconNumber').value = settings.proconNumber;
 
     // UI
     if (document.getElementById('darkMode')) document.getElementById('darkMode').checked = settings.darkMode;
@@ -73,11 +75,15 @@ function savePrintSettings() {
     const autoPrint = document.getElementById('autoPrint').checked;
     const showCompanyData = document.getElementById('showCompanyData').checked;
     const footerMessage = document.getElementById('footerMessage').value;
+    const receiptLegalNote = document.getElementById('receiptLegalNote').value;
+    const proconNumber = document.getElementById('proconNumber').value;
 
     const settings = JSON.parse(localStorage.getItem('buildflow_settings')) || {};
     settings.autoPrint = autoPrint;
     settings.showCompanyData = showCompanyData;
     settings.footerMessage = footerMessage;
+    settings.receiptLegalNote = receiptLegalNote;
+    settings.proconNumber = proconNumber;
 
     localStorage.setItem('buildflow_settings', JSON.stringify(settings));
     BuildFlow.showToast('Preferências de impressão salvas!', 'success');

@@ -13,6 +13,42 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
     />
+    <style>
+      @media (max-width: 768px) {
+        .dashboard-tables-grid .card-table:last-child table {
+          table-layout: fixed !important;
+          width: 100% !important;
+          min-width: 0 !important;
+        }
+        .dashboard-tables-grid .card-table:last-child th:nth-child(1),
+        .dashboard-tables-grid .card-table:last-child td:nth-child(1) {
+          width: 50% !important;
+          padding: 6px !important;
+          overflow: hidden !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
+        }
+        .dashboard-tables-grid .card-table:last-child {
+          overflow: hidden !important;
+        }
+        .dashboard-tables-grid .card-table:last-child .table-scroll-wrapper {
+          overflow: hidden !important;
+        }
+        .dashboard-tables-grid .card-table:last-child th:nth-child(2),
+        .dashboard-tables-grid .card-table:last-child td:nth-child(2) {
+          width: 50% !important;
+          padding: 6px !important;
+          text-align: right;
+        }
+        .dashboard-tables-grid .card-table:last-child th:nth-child(3),
+        .dashboard-tables-grid .card-table:last-child td:nth-child(3) {
+          width: 0 !important;
+          padding: 0 !important;
+          border: none !important;
+          overflow: hidden !important;
+        }
+      }
+    </style>
   </head>
   <body>
     <div class="layout">

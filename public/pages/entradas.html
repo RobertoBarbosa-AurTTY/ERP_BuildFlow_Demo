@@ -198,13 +198,28 @@
                 -webkit-overflow-scrolling: touch !important;
             }
             .card-table table {
-                min-width: 600px !important;
+                min-width: 0 !important;
+                width: 100%;
+                table-layout: fixed;
             }
             .card-table th,
             .card-table td {
                 white-space: nowrap !important;
-                padding: 8px 6px !important;
+                padding: 8px 8px !important;
                 font-size: 0.7rem !important;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .card-table th:nth-child(1),
+            .card-table td:nth-child(1),
+            .card-table th:nth-child(5),
+            .card-table td:nth-child(5),
+            .card-table th:nth-child(6),
+            .card-table td:nth-child(6) {
+                display: none !important;
+            }
+            .card-table td:nth-child(4) {
+                text-align: center !important;
             }
         }
     </style>
