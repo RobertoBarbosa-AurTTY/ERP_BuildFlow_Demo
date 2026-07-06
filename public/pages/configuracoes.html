@@ -21,9 +21,9 @@
         .settings-row .info { display: flex; flex-direction: column; gap: 4px; text-align: left; }
         .settings-row .info p { font-size: 0.95rem; font-weight: 700; color: var(--text); }
         .settings-row .info span { font-size: 0.8rem; color: var(--text-muted); }
-        
         .form-input { background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; padding: 12px 20px; color: var(--text); font-weight: 600; transition: all 0.2s; width: 100%; max-width: 500px; }
         .form-input:focus { border-color: var(--brand); box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1); outline: none; }
+        input[type="password"].form-input { font-family: inherit; letter-spacing: normal; }
 
         .switch { position: relative; display: inline-block; width: 44px; height: 22px; justify-self: flex-start; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -117,7 +117,7 @@
                             <p>Nome Completo</p>
                             <span>Como você será identificado no sistema</span>
                         </div>
-                        <input type="text" class="form-input" value="Usuário Administrador" style="padding-left: 20px;">
+                        <input type="text" id="profileName" class="form-input" style="padding-left: 20px;">
                     </div>
 
                     <div class="settings-row">
@@ -125,11 +125,27 @@
                             <p>E-mail Corporativo</p>
                             <span>Endereço de acesso e notificações</span>
                         </div>
-                        <input type="email" class="form-input" value="admin@buildflow.com.br" style="padding-left: 20px;">
+                        <input type="email" id="profileEmail" class="form-input" style="padding-left: 20px;">
+                    </div>
+
+                    <div class="settings-row" style="border-bottom: none;">
+                        <div class="info">
+                            <p>Senha Atual</p>
+                            <span>Necessária para alterar email ou criar nova senha</span>
+                        </div>
+                        <input type="password" id="profileCurrentPassword" class="form-input" placeholder="Senha atual" autocomplete="off" style="padding-left: 20px;">
+                    </div>
+
+                    <div class="settings-row">
+                        <div class="info">
+                            <p>Nova Senha</p>
+                            <span>Deixe em branco para manter a atual</span>
+                        </div>
+                        <input type="password" id="profileNewPassword" class="form-input" placeholder="Nova senha" autocomplete="off" style="padding-left: 20px;">
                     </div>
 
                     <div class="card-footer">
-                        <button class="btn btn-brand">Atualizar Perfil</button>
+                        <button class="btn btn-brand" id="saveProfileBtn">Salvar Perfil</button>
                     </div>
                 </div>
 
@@ -252,14 +268,6 @@
                     
                     <div class="settings-row">
                         <div class="info">
-                            <p>Tema Escuro</p>
-                            <span>Ativar interface dark mode profunda</span>
-                        </div>
-                        <label class="switch"><input type="checkbox" id="darkMode" checked><span class="slider"></span></label>
-                    </div>
-
-                    <div class="settings-row">
-                        <div class="info">
                             <p>Notificações Push</p>
                             <span>Alertas visuais de estoque baixo</span>
                         </div>
@@ -276,6 +284,20 @@
 
                     <div class="card-footer">
                         <button class="btn btn-brand" id="saveUIBtn">Salvar Preferências de UI</button>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <div class="section-title"><i class="fa-solid fa-database"></i><h3>Backup do Sistema</h3></div>
+
+                    <div class="settings-row">
+                        <div class="info">
+                            <p>Exportar Backup</p>
+                            <span>Faz o download de uma cópia completa de toda a base de dados do sistema</span>
+                        </div>
+                        <button class="btn btn-brand" id="exportBackupBtn">
+                            <i class="fa-solid fa-download"></i> Exportar Backup
+                        </button>
                     </div>
                 </div>
             </div>

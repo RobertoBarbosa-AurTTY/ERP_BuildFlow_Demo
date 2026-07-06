@@ -286,6 +286,43 @@ exports.handler = async (event, context) => {
         };
       }
 
+      case 'DELETE':
+        const deleteId = event.queryStringParameters?.id;
+        if (!deleteId) return { statusCode: 400, body: JSON.stringify({ message: 'ID da venda é obrigatório' }) };
+
+        const saleToDelete = await sales.findOne({ _id: new ObjectId(deleteId) });
+        if (!saleToDelete) return { statusCode: 404, body: JSON.stringify({ message: 'Venda não encontrada' }) };
+
+        // Restaurar estoque dos produtos
+        if (saleToDelete.status === 'FINALIZED') {
+          const restoreOps = saleToDelete.items.map(item => ({
+            updateOne: {
+              filter: { _id: new ObjectId(item.id) },
+              update: { $inc: { quantity: item.qty } }
+            }
+          }));
+          await db.collection('products').bulkWrite(restoreOps);
+        } else if (saleToDelete.status === 'RESERVED') {
+          const releaseOps = saleToDelete.items.map(item => ({
+            updateOne: {
+              filter: { _id: new ObjectId(item.id) },
+              update: { $inc: { reserved: -item.qty } }
+            }
+          }));
+          await db.collection('products').bulkWrite(releaseOps);
+        }
+
+        // Remover logs relacionados
+        await db.collection('logs').deleteMany({ entityId: new ObjectId(deleteId), entity: 'sales' });
+
+        // Remover a venda
+        await sales.deleteOne({ _id: new ObjectId(deleteId) });
+
+        return {
+          statusCode: 200,
+          body: JSON.stringify({ message: 'Venda excluída permanentemente e estoque restaurado' })
+        };
+
       default:
         return { statusCode: 405, body: 'Method Not Allowed' };
     }

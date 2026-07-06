@@ -7,7 +7,8 @@
     "build": "echo 'No build step required'",
     "dev": "netlify dev",
     "seed": "node src/seed.js",
-    "reset-db": "node src/reset-db.js"
+    "reset-db": "node src/reset-db.js",
+    "clear-sales": "node src/clear-sales.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -17,7 +18,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.3.0",
     "pdf-parse": "^1.1.1",
-    "pdfjs-dist": "^4.7.76"
+    "pdfjs-dist": "^4.7.76",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "netlify-cli": "^26.0.2"

@@ -346,6 +346,9 @@
                                     <button class="btn btn-icon" onclick="viewSaleDetails('${sid}')" title="Ver detalhes" style="width:32px;height:32px;padding:0;background:var(--bg-hover)">
                                         <i class="fa-solid fa-eye"></i>
                                     </button>
+                                    <button class="btn btn-icon" onclick="deleteSale('${sid}')" title="Excluir venda permanentemente" style="width:32px;height:32px;padding:0;background:var(--bg-hover);color:var(--red)">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
                                     <button class="btn btn-icon" onclick="printReceipt('${sid}')" title="Imprimir Nota" style="width: 32px; height: 32px; padding: 0; background: var(--bg-hover);">
                                         <i class="fa-solid fa-print"></i>
                                     </button>
@@ -496,22 +499,22 @@
                 }
             };
 
-            window.cancelSale = async (saleId) => {
+            window.deleteSale = async (saleId) => {
                 const result = await Swal.fire({
-                    title: 'Cancelar Venda?',
-                    text: "Esta ação não pode ser desfeita e os itens retornarão ao estoque.",
+                    title: 'Excluir Venda?',
+                    text: "A venda será removida permanentemente do banco de dados e os produtos voltarão ao estoque.",
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: 'var(--red)',
                     cancelButtonColor: 'var(--text-muted)',
-                    confirmButtonText: 'Sim, cancelar!',
+                    confirmButtonText: 'Sim, excluir!',
                     cancelButtonText: 'Voltar'
                 });
 
                 if (result.isConfirmed) {
                     try {
-                        await BuildFlow.updateSale(saleId, { status: 'CANCELLED' });
-                        BuildFlow.showToast('Venda cancelada com sucesso!', 'success');
+                        await BuildFlow.deleteSale(saleId);
+                        BuildFlow.showToast('Venda excluída permanentemente!', 'success');
                         await loadSales();
                     } catch (error) {
                         BuildFlow.showToast(error.message, 'danger');

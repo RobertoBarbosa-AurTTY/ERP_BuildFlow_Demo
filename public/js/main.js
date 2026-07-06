@@ -531,12 +531,11 @@ const BuildFlow = {
   },
 
   async getDashboardNotifications() {
-    const data = await this.getDashboardMetrics();
-    return Array.isArray(data.notifications) ? data.notifications : [];
-  },
-
-  getNotificationStorageKey() {
-    return 'buildflow_read_notifications';
+    try {
+      return await this.apiFetch("/notifications");
+    } catch {
+      return [];
+    }
   },
 
   getNotificationKey(notification) {
@@ -558,12 +557,6 @@ const BuildFlow = {
     for (const item of (notifications || [])) {
       await this.dismissNotificationByKey(this.getNotificationKey(item));
     }
-  },
-
-  filterUnreadNotifications(notifications) {
-    // Após as mudanças, apenas retorna as notificações retornadas pela API
-    // que já filtra as descartadas
-    return Array.isArray(notifications) ? notifications : [];
   },
 
   buildNotificationDropdown(container, notifications, { onClearAll, onDismiss } = {}) {
@@ -651,19 +644,22 @@ const BuildFlow = {
       dropdown.className = "notification-dropdown";
       actionBtn.appendChild(dropdown);
 
-      const loadNotifications = async () => {
+      const loadNotifications = async (reload) => {
         try {
+          if (reload) {
+            localStorage.removeItem('buildflow_dashboard_cache');
+          }
           const notifications = await this.getDashboardNotifications();
           badge.textContent = notifications.length > 9 ? "9+" : String(notifications.length);
           badge.style.display = notifications.length ? "flex" : "none";
           this.buildNotificationDropdown(dropdown, notifications, {
             onClearAll: async () => {
               await this.dismissNotifications(notifications);
-              await loadNotifications();
+              await loadNotifications(true);
             },
             onDismiss: async (notificationKey) => {
               await this.dismissNotificationByKey(notificationKey);
-              await loadNotifications();
+              await loadNotifications(true);
             },
           });
         } catch (error) {
@@ -793,6 +789,13 @@ const BuildFlow = {
         method: "PUT",
         body: JSON.stringify(data),
       },
+    );
+  },
+
+  async deleteSale(id) {
+    return await this.apiFetch(
+      `/sales?id=${encodeURIComponent(this.normalizeId(id))}`,
+      { method: "DELETE" },
     );
   },
 

@@ -1,36 +1,85 @@
 // BuildFlow ERP - Configurações
 document.addEventListener('DOMContentLoaded', () => {
-    // Carregar configurações salvas
     loadSettings();
-
-    // Listener para salvar dados da empresa
-    const saveCompanyBtn = document.getElementById('saveCompanyBtn');
-    if (saveCompanyBtn) {
-        saveCompanyBtn.addEventListener('click', saveCompanySettings);
-    }
-
-    // Listener para salvar dados de impressão
-    const savePrintBtn = document.getElementById('savePrintBtn');
-    if (savePrintBtn) {
-        savePrintBtn.addEventListener('click', savePrintSettings);
-    }
-
-    // Listener para salvar preferências de UI
-    const saveUIBtn = document.getElementById('saveUIBtn');
-    if (saveUIBtn) {
-        saveUIBtn.addEventListener('click', saveUISettings);
-    }
-
-    const saveUnitBtn = document.getElementById('saveUnitBtn');
-    if (saveUnitBtn) {
-        saveUnitBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            saveUnitSettings();
-        });
-    }
-
+    loadProfile();
     loadUnits();
+
+    document.getElementById('saveCompanyBtn')?.addEventListener('click', saveCompanySettings);
+    document.getElementById('savePrintBtn')?.addEventListener('click', savePrintSettings);
+    document.getElementById('saveUIBtn')?.addEventListener('click', saveUISettings);
+    document.getElementById('saveProfileBtn')?.addEventListener('click', saveProfile);
+    document.getElementById('saveUnitBtn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        saveUnitSettings();
+    });
+    document.getElementById('exportBackupBtn')?.addEventListener('click', exportDatabaseBackup);
 });
+
+function loadProfile() {
+    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    if (document.getElementById('profileName')) {
+        document.getElementById('profileName').value = userData.name || '';
+    }
+    if (document.getElementById('profileEmail')) {
+        document.getElementById('profileEmail').value = userData.email || '';
+    }
+    document.getElementById('profileCurrentPassword').value = '';
+    document.getElementById('profileNewPassword').value = '';
+}
+
+async function saveProfile() {
+    const name = document.getElementById('profileName').value.trim();
+    const email = document.getElementById('profileEmail').value.trim();
+    const currentPassword = document.getElementById('profileCurrentPassword').value;
+    const newPassword = document.getElementById('profileNewPassword').value;
+
+    if (!name) {
+        BuildFlow.showToast('Informe seu nome.', 'warning');
+        return;
+    }
+
+    const body = { name };
+    let requiresPassword = false;
+
+    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    if (email && email !== userData.email) {
+        body.email = email;
+        requiresPassword = true;
+    }
+    if (newPassword) {
+        body.newPassword = newPassword;
+        requiresPassword = true;
+    }
+
+    if (requiresPassword && !currentPassword) {
+        BuildFlow.showToast('Confirme sua senha atual para alterar email ou senha.', 'warning');
+        return;
+    }
+
+    if (requiresPassword) {
+        body.currentPassword = currentPassword;
+    }
+
+    try {
+        const result = await BuildFlow.apiFetch('/auth-update', {
+            method: 'POST',
+            body: JSON.stringify(body)
+        });
+
+        if (result.user) {
+            const stored = JSON.parse(localStorage.getItem('user') || '{}');
+            stored.name = result.user.name;
+            stored.email = result.user.email;
+            localStorage.setItem('user', JSON.stringify(stored));
+        }
+
+        document.getElementById('profileCurrentPassword').value = '';
+        document.getElementById('profileNewPassword').value = '';
+        BuildFlow.showToast('Perfil atualizado com sucesso!', 'success');
+    } catch (error) {
+        BuildFlow.showToast(error.message || 'Erro ao atualizar perfil.', 'danger');
+    }
+}
 
 function loadSettings() {
     const settings = BuildFlow.getSettings();
@@ -39,14 +88,12 @@ function loadSettings() {
     document.getElementById('companyName').value = settings.companyName;
     document.getElementById('companyCnpj').value = settings.companyCnpj;
 
-    // Impressão
     if (document.getElementById('autoPrint')) document.getElementById('autoPrint').checked = settings.autoPrint;
     if (document.getElementById('showCompanyData')) document.getElementById('showCompanyData').checked = settings.showCompanyData;
     if (document.getElementById('footerMessage')) document.getElementById('footerMessage').value = settings.footerMessage;
     if (document.getElementById('receiptLegalNote')) document.getElementById('receiptLegalNote').value = settings.receiptLegalNote;
     if (document.getElementById('proconNumber')) document.getElementById('proconNumber').value = settings.proconNumber;
 
-    // UI
     if (document.getElementById('darkMode')) document.getElementById('darkMode').checked = settings.darkMode;
     if (document.getElementById('pushNotifications')) document.getElementById('pushNotifications').checked = settings.pushNotifications;
     if (document.getElementById('systemSounds')) document.getElementById('systemSounds').checked = settings.systemSounds;
@@ -142,22 +189,89 @@ async function saveUnitSettings() {
         document.getElementById('unitActive').checked = true;
         loadUnits();
     } catch (error) {
-        console.error('Erro ao salvar unidade:', error);
         BuildFlow.showToast(error.message || 'Erro ao salvar unidade.', 'danger');
     }
 }
 
 function saveUISettings() {
-    const darkMode = document.getElementById('darkMode').checked;
     const pushNotifications = document.getElementById('pushNotifications').checked;
     const systemSounds = document.getElementById('systemSounds').checked;
 
     const settings = JSON.parse(localStorage.getItem('buildflow_settings')) || {};
-    settings.darkMode = darkMode;
     settings.pushNotifications = pushNotifications;
     settings.systemSounds = systemSounds;
 
     localStorage.setItem('buildflow_settings', JSON.stringify(settings));
-    BuildFlow.applyTheme(); // Aplica o tema instantaneamente
     BuildFlow.showToast('Preferências de interface salvas!', 'success');
+}
+
+async function exportDatabaseBackup() {
+    const { value: password } = await Swal.fire({
+        title: 'Exportar Backup',
+        text: 'Digite sua senha atual para confirmar:',
+        icon: 'security',
+        input: 'password',
+        inputPlaceholder: 'Senha atual',
+        showCancelButton: true,
+        confirmButtonText: 'Confirmar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#4f46e5',
+        inputValidator: (value) => {
+            if (!value) return 'Informe sua senha';
+        }
+    });
+
+    if (!password) return;
+
+    try {
+        await BuildFlow.apiFetch('/auth-verify', {
+            method: 'POST',
+            body: JSON.stringify({ password })
+        });
+    } catch (error) {
+        BuildFlow.showToast('Senha incorreta!', 'danger');
+        return;
+    }
+
+    const btn = document.getElementById('exportBackupBtn');
+
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Exportando...';
+        }
+
+        const response = await fetch('/api/export-db?format=json', {
+            headers: BuildFlow.getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Erro ao exportar dados');
+        }
+
+        const disposition = response.headers.get('Content-Disposition') || '';
+        const filenameMatch = disposition.match(/filename="?(.+?)"?$/);
+        const filename = filenameMatch ? filenameMatch[1] : `buildflow-backup-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+
+        const blob = await response.blob();
+
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        BuildFlow.showToast('Backup exportado com sucesso!', 'success');
+    } catch (error) {
+        BuildFlow.showToast(error.message || 'Erro ao exportar backup.', 'danger');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-download"></i> Exportar Backup';
+        }
+    }
 }
