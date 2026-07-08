@@ -221,15 +221,34 @@
                     <div class="settings-row">
                         <div class="info">
                             <p>Impressão Automática</p>
-                            <span>Gerar cupom imediatamente após a venda</span>
+                            <span>Gerar cupom imediatamente após a venda sem perguntar</span>
                         </div>
                         <label class="switch"><input type="checkbox" id="autoPrint"><span class="slider"></span></label>
                     </div>
 
                     <div class="settings-row">
                         <div class="info">
+                            <p>Impressão Direta (qz.io)</p>
+                            <span>Imprimir diretamente na impressora sem abrir PDF. Requer <a href="https://qz.io" target="_blank" style="color:var(--brand)">qz-tray</a> instalado.</span>
+                        </div>
+                        <label class="switch"><input type="checkbox" id="useQz"><span class="slider"></span></label>
+                    </div>
+
+                    <div class="settings-row">
+                        <div class="info">
+                            <p>Tipo de Impressão</p>
+                            <span>Formato padrão do cupom: térmico (80mm) ou A4</span>
+                        </div>
+                        <select id="printType" class="form-input" style="padding-left: 20px; max-width: 180px;">
+                            <option value="thermal">Cupom Térmico (80mm)</option>
+                            <option value="a4">Impressão A4</option>
+                        </select>
+                    </div>
+
+                    <div class="settings-row">
+                        <div class="info">
                             <p>Exibir Dados da Empresa</p>
-                            <span>Mostrar CNPJ e Endereço nos documentos A4</span>
+                            <span>Mostrar CNPJ e Endereço nos documentos</span>
                         </div>
                         <label class="switch"><input type="checkbox" id="showCompanyData" checked><span class="slider"></span></label>
                     </div>

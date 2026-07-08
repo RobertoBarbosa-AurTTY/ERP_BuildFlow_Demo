@@ -136,7 +136,7 @@
                         <strong>Resumo de Avisos</strong>
                         <p style="margin: 4px 0 0; color: var(--text-muted);">Use a lista abaixo para acompanhar o histórico de notificações.</p>
                     </div>
-                    <button id="markAllReadBtn">Marcar todas como lidas</button>
+                    <button id="deleteAllMessagesBtn">Excluir mensagens</button>
                 </div>
                 <div id="alertsSummary">Carregando notificações...</div>
             </div>
@@ -177,7 +177,6 @@
                     ${details ? `<div class="alert-details">${details}</div>` : ''}
                     <div class="alert-actions">
                         ${item.href ? `<button class="alert-action-btn" onclick="window.location.href='${item.href}'">Abrir</button>` : ''}
-                        ${isUnread ? `<button class="alert-action-btn mark-read-btn" data-notification-key="${notificationKey}">Marcar como lida</button>` : ''}
                     </div>
                 </div>
             `;
@@ -195,18 +194,7 @@
                 ? notifications.map((item) => createAlertHtml(item, BuildFlow.escapeHtml(BuildFlow.getNotificationKey(item)), true)).join('')
                 : '<div class="notification-panel empty">Sem avisos não lidos.</div>';
 
-            readContainer.innerHTML = '<div class="notification-panel empty">Os avisos marcados como lidos são automaticamente removidos do histórico.</div>';
-
-            document.querySelectorAll('.mark-read-btn').forEach((button) => {
-                button.addEventListener('click', async (event) => {
-                    event.stopPropagation();
-                    const notificationKey = button.dataset.notificationKey;
-                    if (notificationKey) {
-                        await BuildFlow.dismissNotificationByKey(notificationKey);
-                        await renderNotifications();
-                    }
-                });
-            });
+            readContainer.innerHTML = '<div class="notification-panel empty">As mensagens excluídas são removidas do histórico.</div>';
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
@@ -215,9 +203,9 @@
             BuildFlow.initGlobalSearch();
             BuildFlow.initGlobalNotifications();
 
-            const markAllReadBtn = document.getElementById('markAllReadBtn');
-            if (markAllReadBtn) {
-                markAllReadBtn.addEventListener('click', async () => {
+            const deleteAllBtn = document.getElementById('deleteAllMessagesBtn');
+            if (deleteAllBtn) {
+                deleteAllBtn.addEventListener('click', async () => {
                     const notifications = await BuildFlow.getDashboardNotifications();
                     await BuildFlow.dismissNotifications(notifications);
                     await renderNotifications();

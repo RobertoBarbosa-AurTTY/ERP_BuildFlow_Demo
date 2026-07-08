@@ -32,8 +32,8 @@ exports.handler = async (event, context) => {
         if (status && status !== "all") query.status = status;
 
         const pageNum = Math.max(1, parseInt(page, 10));
-        const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
-        const skip = (pageNum - 1) * limitNum;
+        const limitNum = limit === "all" ? 0 : Math.min(100, Math.max(1, parseInt(limit, 10)));
+        const skip = limitNum === 0 ? 0 : (pageNum - 1) * limitNum;
 
         // Executar count e find em paralelo
         const [totalCount, data] = await Promise.all([

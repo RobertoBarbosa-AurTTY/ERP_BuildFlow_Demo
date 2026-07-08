@@ -89,6 +89,8 @@ function loadSettings() {
     document.getElementById('companyCnpj').value = settings.companyCnpj;
 
     if (document.getElementById('autoPrint')) document.getElementById('autoPrint').checked = settings.autoPrint;
+    if (document.getElementById('useQz')) document.getElementById('useQz').checked = settings.useQz;
+    if (document.getElementById('printType')) document.getElementById('printType').value = settings.printType || 'thermal';
     if (document.getElementById('showCompanyData')) document.getElementById('showCompanyData').checked = settings.showCompanyData;
     if (document.getElementById('footerMessage')) document.getElementById('footerMessage').value = settings.footerMessage;
     if (document.getElementById('receiptLegalNote')) document.getElementById('receiptLegalNote').value = settings.receiptLegalNote;
@@ -120,6 +122,8 @@ function saveCompanySettings() {
 
 function savePrintSettings() {
     const autoPrint = document.getElementById('autoPrint').checked;
+    const useQz = document.getElementById('useQz').checked;
+    const printType = document.getElementById('printType').value;
     const showCompanyData = document.getElementById('showCompanyData').checked;
     const footerMessage = document.getElementById('footerMessage').value;
     const receiptLegalNote = document.getElementById('receiptLegalNote').value;
@@ -127,6 +131,8 @@ function savePrintSettings() {
 
     const settings = JSON.parse(localStorage.getItem('buildflow_settings')) || {};
     settings.autoPrint = autoPrint;
+    settings.useQz = useQz;
+    settings.printType = printType;
     settings.showCompanyData = showCompanyData;
     settings.footerMessage = footerMessage;
     settings.receiptLegalNote = receiptLegalNote;

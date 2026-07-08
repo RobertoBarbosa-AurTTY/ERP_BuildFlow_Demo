@@ -66,7 +66,24 @@ async function resetDatabase() {
       console.log('Usuário administrador existente mantido:', adminEmail);
     }
 
-    console.log('Reset do banco finalizado. Agora só restam os dados do usuário administrador.');
+    const secondUserEmail = 'coringa@gmail.com';
+    const existingSecondUser = await users.findOne({ email: secondUserEmail });
+    if (!existingSecondUser) {
+      const hashedPassword = await bcrypt.hash('123', 10);
+      await users.insertOne({
+        name: 'Coringa',
+        email: secondUserEmail,
+        password: hashedPassword,
+        role: 'Admin',
+        permissions: ['all'],
+        createdAt: new Date()
+      });
+      console.log('Usuário criado: coringa@gmail.com / 123');
+    } else {
+      console.log('Usuário existente mantido:', secondUserEmail);
+    }
+
+    console.log('Reset do banco finalizado. Agora o sistema possui os usuários administrador e coringa.');
   } catch (error) {
     console.error('Erro ao resetar o banco de dados:', error);
     process.exit(1);

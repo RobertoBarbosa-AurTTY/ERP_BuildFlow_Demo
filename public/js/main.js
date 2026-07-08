@@ -799,17 +799,6 @@ const BuildFlow = {
     );
   },
 
-  async getAuditLogs(params = {}) {
-    const query = new URLSearchParams(params).toString();
-    const path = query ? `/audit-logs?${query}` : "/audit-logs";
-    const response = await this.apiFetch(path);
-    // Handle both paginated and non-paginated responses for backward compatibility
-    if (response && response.logs) {
-      return response.logs;
-    }
-    return response;
-  },
-
   // Vendas / PDV
   async createSale(saleData) {
     return await this.apiFetch("/sales", {
@@ -1092,105 +1081,107 @@ const BuildFlow = {
     const footer = settings.footerMessage || "Obrigado pela preferência!";
 
     if (type === "thermal") {
-      let lineCount = 12;
+      let lineCount = 14;
       if (settings.showCompanyData && (settings.companyCnpj || settings.address)) lineCount += 3;
       s.items.forEach((item) => {
         lineCount += item.discountAmount > 0 ? 3 : 1;
       });
       if (s.itemsDiscountTotal > 0) lineCount += 1;
       if (s.globalDiscountAmount > 0) lineCount += 1;
-      lineCount += 5;
+      lineCount += 6;
       if (s.amountPaid != null) lineCount += 2;
       lineCount += 5;
 
       const doc = new jsPDF({
         unit: "mm",
-        format: [80, Math.max(90, lineCount * 4)],
+        format: [80, Math.max(90, lineCount * 4.5)],
       });
 
       const ml = 5, mr = 75, cx = 40;
-      const hr = (yy, w = 0.3) => { doc.setLineWidth(w); doc.line(ml, yy, mr, yy); };
+      const hrLight = (yy) => { doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.15); doc.line(ml, yy, mr, yy); doc.setDrawColor(0, 0, 0); };
+      const hrBold = (yy) => { doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.4); doc.line(ml, yy, mr, yy); };
       let y = 10;
 
       // --- HEADER ---
       doc.setFont("courier", "bold");
-      doc.setFontSize(16);
+      doc.setFontSize(14);
       doc.text(storeName, cx, y, { align: "center" });
-      y += 5.5;
+      y += 5;
       doc.setFont("courier", "normal");
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       doc.text("COMPROVANTE DE VENDA", cx, y, { align: "center" });
-      y += 3.5;
-      doc.setFontSize(7);
+      y += 3;
+      doc.setFontSize(6);
       doc.text("NÃO FISCAL", cx, y, { align: "center" });
-      y += 3.5;
-      hr(y, 0.15);
+      y += 4;
+      hrLight(y);
       y += 4;
 
       // --- SALE INFO ---
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       const d = new Date(s.createdAt);
       const dateStr = d.toLocaleDateString("pt-BR");
       const timeStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
       doc.text("DATA", ml, y);
       doc.text(`${dateStr}  ${timeStr}`, mr, y, { align: "right" });
-      y += 4;
+      y += 3.5;
       doc.text("CUPOM", ml, y);
       doc.text(`#${s.saleNumber || String(s._id || "").slice(-6)}`, mr, y, { align: "right" });
-      y += 4;
+      y += 3.5;
       doc.text("PGTO", ml, y);
       doc.text(`${s.paymentMethod || "—"}`, mr, y, { align: "right" });
-      y += 4;
+      y += 3.5;
 
       // --- COMPANY DATA ---
       if (settings.showCompanyData) {
         if (settings.companyCnpj || settings.address) {
-          hr(y, 0.08);
+          hrLight(y);
           y += 3;
           doc.setFontSize(7);
           if (settings.companyCnpj) {
-            doc.text(`CNPJ ${settings.companyCnpj}`, ml, y);
+            doc.text(`CNPJ ${settings.companyCnpj}`, cx, y, { align: "center" });
             y += 3;
           }
           if (settings.address) {
-            doc.text(`${settings.address.substring(0, 34)}`, ml, y);
-            y += 3;
+            const addrLines = doc.splitTextToSize(String(settings.address), mr - ml);
+            addrLines.forEach(line => { doc.text(line, cx, y, { align: "center" }); y += 3; });
           }
           y += 2;
         }
       }
 
-      hr(y, 0.3);
+      hrBold(y);
       y += 4;
 
       // --- COLUMN HEADER ---
       doc.setFont("courier", "bold");
-      doc.setFontSize(8);
-      doc.text("QTD  DESCRICAO", ml, y);
+      doc.setFontSize(7);
+      doc.text("QTD  COD   PRODUTO", ml, y);
       doc.text("VALOR", mr, y, { align: "right" });
+      y += 3;
+      hrLight(y);
       y += 3.5;
-      doc.setFont("courier", "normal");
-      doc.setDrawColor(160, 160, 160);
-      hr(y, 0.1);
-      doc.setDrawColor(0, 0, 0);
-      y += 4;
 
       // --- ITEMS ---
+      doc.setFont("courier", "normal");
       s.items.forEach((item) => {
-        const name = (item.name || "Produto").substring(0, 18);
-        doc.setFontSize(9);
-        doc.text(`${item.qty}x  ${name}`, ml, y);
+        const qtyStr = String(item.qty).padStart(3, "0");
+        const shortSku = ((item.sku || "").slice(-5)).padEnd(5, " ");
+        const nameMax = 22;
+        const name = (item.name || "Produto").substring(0, nameMax);
+        doc.setFontSize(7);
+        doc.text(`${qtyStr}  ${shortSku}  ${name}`, ml, y);
         if (item.discountAmount > 0) {
           doc.text(this.formatCurrency(item.lineGross), mr, y, { align: "right" });
-          y += 4;
-          doc.setFontSize(7);
-          doc.setTextColor(120, 120, 120);
+          y += 3;
+          doc.setFontSize(5.5);
+          doc.setTextColor(140, 140, 140);
           doc.text(`  Desc. ${item.discountLabel || ""}`, ml, y);
           doc.text(`-${this.formatCurrency(item.discountAmount)}`, mr, y, { align: "right" });
           doc.setTextColor(0, 0, 0);
-          y += 3.5;
+          y += 2;
           doc.setFont("courier", "bold");
-          doc.setFontSize(9);
+          doc.setFontSize(7);
           doc.text(this.formatCurrency(item.lineTotal), mr, y, { align: "right" });
           doc.setFont("courier", "normal");
         } else {
@@ -1198,22 +1189,23 @@ const BuildFlow = {
           doc.text(this.formatCurrency(item.lineTotal), mr, y, { align: "right" });
           doc.setFont("courier", "normal");
         }
-        y += 4.5;
+        y += 3.5;
       });
 
+      hrBold(y);
+      y += 3.5;
+
       // --- TOTALS ---
-      hr(y, 0.3);
-      y += 4.5;
-      doc.setFontSize(8);
+      doc.setFontSize(7);
       if (s.grossSubtotal > 0) {
         doc.text("Subtotal bruto:", ml, y);
         doc.text(this.formatCurrency(s.grossSubtotal), mr, y, { align: "right" });
-        y += 3.5;
+        y += 3;
       }
       if (s.itemsDiscountTotal > 0) {
         doc.text("Desconto nos itens:", ml, y);
         doc.text(`-${this.formatCurrency(s.itemsDiscountTotal)}`, mr, y, { align: "right" });
-        y += 3.5;
+        y += 3;
       }
       if (s.globalDiscountAmount > 0) {
         const gLabel = s.globalDiscountType === "percent"
@@ -1221,20 +1213,29 @@ const BuildFlow = {
           : "Desconto na venda:";
         doc.text(gLabel, ml, y);
         doc.text(`-${this.formatCurrency(s.globalDiscountAmount)}`, mr, y, { align: "right" });
-        y += 3.5;
+        y += 3;
       }
-      y += 2;
+      y += 1.5;
+
+      // --- TOTAL BOX ---
+      const totalY = y;
+      const boxH = 9;
+      const boxLabel = "TOTAL A PAGAR";
+      const boxVal = this.formatCurrency(s.total);
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.4);
+      doc.roundedRect(ml - 1, totalY, mr - ml + 2, boxH, 2, 2);
       doc.setFont("courier", "bold");
-      doc.setFontSize(12);
-      doc.text("TOTAL A PAGAR", ml, y);
-      doc.text(this.formatCurrency(s.total), mr, y, { align: "right" });
-      y += 4;
+      doc.setFontSize(9);
+      doc.text(boxLabel, ml + 3, totalY + boxH - 2.5);
+      doc.text(boxVal, mr - 3, totalY + boxH - 2.5, { align: "right" });
+      y = totalY + boxH + 4;
       doc.setFont("courier", "normal");
 
       // --- PAYMENT ---
-      doc.setFontSize(8);
+      doc.setFontSize(7);
       if (s.amountPaid != null) {
-        hr(y, 0.15);
+        hrLight(y);
         y += 2.5;
         doc.text("Valor recebido:", ml, y);
         doc.text(this.formatCurrency(s.amountPaid), mr, y, { align: "right" });
@@ -1243,27 +1244,32 @@ const BuildFlow = {
         doc.text("Troco:", ml, y);
         doc.text(this.formatCurrency(s.change || 0), mr, y, { align: "right" });
         doc.setFont("courier", "normal");
-        y += 3.5;
+        y += 3;
       }
 
       // --- BOTTOM LINE ---
-      hr(y, 0.5);
+      y += 1;
+      hrBold(y);
       y += 4;
 
       // --- FOOTER ---
       doc.setFontSize(8);
       doc.text(footer, cx, y, { align: "center" });
-      y += 4;
+      y += 3.5;
       doc.setFontSize(6);
       const legalLines = doc.splitTextToSize(settings.receiptLegalNote || "Documento não fiscal", mr - ml);
       legalLines.forEach((line) => {
         doc.text(line, cx, y, { align: "center" });
-        y += 3;
+        y += 2.5;
       });
       y += 1;
       doc.text(`PROCON ${settings.proconNumber || "151"}`, cx, y, { align: "center" });
 
-      window.open(doc.output("bloburl"), "_blank");
+      if (settings.useQz && window.QzPrint) {
+        QzPrint.printPdf(doc.output('arraybuffer'));
+      } else {
+        window.open(doc.output("bloburl"), "_blank");
+      }
       return;
     }
 
@@ -1312,6 +1318,7 @@ const BuildFlow = {
           : "—";
       return [
         i.name || "Produto",
+        i.sku || "—",
         String(i.qty),
         this.formatCurrency(i.price),
         disc,
@@ -1320,7 +1327,7 @@ const BuildFlow = {
     });
 
     doc.autoTable({
-      head: [["Item", "Qtd", "Unit.", "Desconto", "Total"]],
+      head: [["Item", "SKU", "Qtd", "Unit.", "Desconto", "Total"]],
       body: tableData,
       startY: settings.showCompanyData ? 75 : 65,
       margin: { left: margin, right: margin },
@@ -1378,7 +1385,11 @@ const BuildFlow = {
         align: "right",
       });
     }
-    window.open(doc.output("bloburl"), "_blank");
+    if (settings.useQz && window.QzPrint) {
+      QzPrint.printPdf(doc.output('arraybuffer'));
+    } else {
+      window.open(doc.output("bloburl"), "_blank");
+    }
   },
 
   /** Converte texto do campo de desconto (R$ 10,50 ou 10%) em número. */
@@ -1665,18 +1676,20 @@ const BuildFlow = {
   // Configurações
   getSettings() {
     const defaults = {
-      storeName: "BuildFlow ERP",
-      companyName: "BuildFlow ERP & Logística S.A.",
-      companyCnpj: "12.345.678/0001-90",
-      address: "Av. Principal, 1000 - São Paulo/SP",
-      autoPrint: false,
-      showCompanyData: true,
-      footerMessage: "Obrigado pela preferência!",
-      receiptLegalNote: "Documento não fiscal emitido conforme Lei Complementar nº 123/2006",
-      proconNumber: "151",
-      darkMode: true,
-      pushNotifications: true,
-      systemSounds: false,
+        storeName: "BuildFlow ERP",
+        companyName: "BuildFlow ERP & Logística S.A.",
+        companyCnpj: "12.345.678/0001-90",
+        address: "Av. Principal, 1000 - São Paulo/SP",
+        autoPrint: false,
+        useQz: false,
+        printType: "thermal",
+        showCompanyData: true,
+        footerMessage: "Obrigado pela preferência!",
+        receiptLegalNote: "Documento não fiscal emitido conforme Lei Complementar nº 123/2006",
+        proconNumber: "151",
+        darkMode: true,
+        pushNotifications: true,
+        systemSounds: false,
     };
     const saved = JSON.parse(localStorage.getItem("buildflow_settings")) || {};
     return { ...defaults, ...saved };

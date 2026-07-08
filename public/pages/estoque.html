@@ -611,6 +611,14 @@
                     <h2>Controle de <span>Estoque</span></h2>
                     <p>Relatório completo de produtos, níveis de estoque e categorias.</p>
                 </div>
+                <div style="display: flex; gap: 12px;">
+                    <button id="exportStockBtn" class="btn" style="background: var(--bg-card); border: 1px solid var(--border); color: var(--text-primary); padding: 10px 20px;">
+                        <i class="fa-solid fa-file-export"></i> Exportar
+                    </button>
+                    <button id="stockSettingsBtn" class="btn" style="background: var(--bg-card); border: 1px solid var(--border); color: var(--text-primary); padding: 10px 14px;" title="Configurações do Estoque">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+                </div>
             </header>
 
             <section class="stats-grid">
@@ -921,6 +929,31 @@
         </div>
     </div>
 
+    <!-- Modal de Configurações do Estoque -->
+    <div id="stockSettingsModal" class="modal">
+        <div class="modal-card" style="max-width: 550px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-gear"></i> Configurações do Estoque</h3>
+                <button class="close-modal" onclick="document.getElementById('stockSettingsModal').style.display='none'">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 24px;">
+                    <h4 style="margin: 0 0 12px; font-size: 1rem;"><i class="fa-solid fa-table"></i> Colunas da Tabela</h4>
+                    <div id="columnToggles" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                </div>
+                <div style="margin-bottom: 24px;">
+                    <h4 style="margin: 0 0 12px; font-size: 1rem;"><i class="fa-solid fa-tags"></i> Gerenciar Categorias</h4>
+                    <div id="categoryManager" style="display: flex; flex-direction: column; gap: 8px;">
+                        <div id="categoryList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-outline" onclick="document.getElementById('stockSettingsModal').style.display='none'" style="padding: 10px 24px;">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Tooltip de cópia -->
     <div id="copyTooltip" class="copy-tooltip"></div>
 
@@ -982,6 +1015,7 @@
             const tableBody = document.getElementById('tableBody');
             const productCount = document.getElementById('productCount');
             let allProducts = [];
+            let currentProducts = [];
             let stagnantProducts = [];
             let lowStockProducts = [];
 
@@ -1125,9 +1159,7 @@
 
             async function loadCategories() {
                 try {
-                    const allProducts = await BuildFlow.getProducts({});
-                    const categories = [...new Set(allProducts.map(p => p.category).filter(c => c))].sort();
-                    
+                    const categories = await BuildFlow.apiFetch('/categories') || [];
                     categoryFilter.innerHTML = '<option value="all">Todas as Categorias</option>';
                     categories.forEach(cat => {
                         const option = document.createElement('option');
@@ -1152,6 +1184,7 @@
                     await calculateStagnantProducts();
                     const filteredProducts = await BuildFlow.getProducts(params);
                     calculateMetrics(allProducts, stagnantProducts);
+                    currentProducts = filteredProducts;
                     renderTable(filteredProducts);
 
                     const urlParams = new URLSearchParams(window.location.search);
@@ -1261,6 +1294,7 @@
                     row.onclick = () => showProductDetails(p);
                     tableBody.appendChild(row);
                 });
+                applyColumnVisibility();
             }
 
             async function showProductDetails(product) {
@@ -1429,6 +1463,7 @@
                 };
 
                 document.getElementById('deleteProductBtn').onclick = async () => {
+                    modal.style.display = 'none';
                     Swal.fire({
                         title: 'Tem certeza?',
                         text: `Deseja excluir ${product.name} do estoque?`,
@@ -1444,7 +1479,6 @@
                                 BuildFlow.showToast('Excluindo produto...', 'info');
                                 await BuildFlow.deleteProduct(product._id); 
                                 BuildFlow.showToast('Produto removido com sucesso!', 'success');
-                                modal.style.display = 'none';
                                 await loadCategories();
                                 loadProducts();
                             } catch (err) {
@@ -1592,6 +1626,141 @@
             }
 
             await updateAllProductDates();
+
+            document.getElementById('exportStockBtn').addEventListener('click', () => {
+                if (!currentProducts.length) {
+                    BuildFlow.showToast('Nenhum produto para exportar', 'warning');
+                    return;
+                }
+                const separator = ';';
+                let csv = `Produto${separator}SKU${separator}Categoria${separator}Quantidade${separator}Reservado${separator}Preço Unit.${separator}Fornecedor${separator}Status\n`;
+                currentProducts.forEach(p => {
+                    const loc = BuildFlow.getProductLocation(p);
+                    const isReceiving = loc.aisle === 'RECV';
+                    const statusText = isReceiving ? 'RECEBIMENTO' : 'Endereçado';
+                    const price = Number(p.price) || 0;
+                    csv += `${p.name || ''}${separator}${p.sku || ''}${separator}${p.category || ''}${separator}${p.quantity || 0}${separator}${p.reserved || 0}${separator}${price.toFixed(2).replace('.', ',')}${separator}${p.supplier || ''}${separator}${statusText}\n`;
+                });
+                const bom = '\uFEFF';
+                const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.setAttribute('download', `estoque-${new Date().toISOString().slice(0, 10)}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+            });
+
+            // Configurações do Estoque
+            const columnDefs = [
+                { key: 'product', label: 'Produto' },
+                { key: 'category', label: 'Categoria' },
+                { key: 'quantity', label: 'Quantidade' },
+                { key: 'price', label: 'Preço Unit.' },
+                { key: 'supplier', label: 'Fornecedor' },
+                { key: 'status', label: 'Status' },
+            ];
+
+            function loadColumnSettings() {
+                try {
+                    return JSON.parse(localStorage.getItem('stockColumnToggles')) || {};
+                } catch { return {}; }
+            }
+
+            function saveColumnSettings(settings) {
+                localStorage.setItem('stockColumnToggles', JSON.stringify(settings));
+            }
+
+            function applyColumnVisibility() {
+                const settings = loadColumnSettings();
+                const headers = document.querySelectorAll('#inventoryTable thead th');
+                const rows = document.querySelectorAll('#inventoryTable tbody tr');
+
+                columnDefs.forEach((col, i) => {
+                    const visible = settings[col.key] !== false;
+                    if (headers[i]) headers[i].style.display = visible ? '' : 'none';
+                    rows.forEach(row => {
+                        const cell = row.children[i];
+                        if (cell) cell.style.display = visible ? '' : 'none';
+                    });
+                });
+            }
+
+            function renderColumnToggles() {
+                const container = document.getElementById('columnToggles');
+                const settings = loadColumnSettings();
+                container.innerHTML = '';
+                columnDefs.forEach(col => {
+                    const checked = settings[col.key] !== false;
+                    const label = document.createElement('label');
+                    label.style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.9rem;padding:4px 0;';
+                    label.innerHTML = `<input type="checkbox" ${checked ? 'checked' : ''} data-key="${col.key}" style="width:16px;height:16px;cursor:pointer;"> ${col.label}`;
+                    label.querySelector('input').addEventListener('change', (e) => {
+                        settings[col.key] = e.target.checked;
+                        saveColumnSettings(settings);
+                        applyColumnVisibility();
+                    });
+                    container.appendChild(label);
+                });
+            }
+
+            async function renderCategoryManager() {
+                const container = document.getElementById('categoryList');
+                container.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;">Carregando...</div>';
+                try {
+                    const categories = await BuildFlow.apiFetch('/categories') || [];
+                    container.innerHTML = '';
+                    if (!categories.length) {
+                        container.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;">Nenhuma categoria encontrada.</div>';
+                        return;
+                    }
+                    categories.forEach(cat => {
+                        const div = document.createElement('div');
+                        div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-hover);border-radius:10px;';
+                        div.innerHTML = `
+                            <span style="font-size:0.9rem;">${BuildFlow.escapeHtml(cat)}</span>
+                            <button class="delete-cat-btn" data-cat="${BuildFlow.escapeHtml(cat)}" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:1rem;padding:4px;" title="Excluir categoria">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        `;
+                        div.querySelector('.delete-cat-btn').addEventListener('click', async (e) => {
+                            e.stopPropagation();
+                            const name = e.currentTarget.dataset.cat;
+                            const result = await Swal.fire({
+                                title: 'Excluir categoria?',
+                                text: `A categoria "${name}" será removida. Produtos com essa categoria não serão afetados.`,
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonColor: '#ef4444',
+                                confirmButtonText: 'Sim, excluir!',
+                                cancelButtonText: 'Cancelar'
+                            });
+                            if (result.isConfirmed) {
+                                try {
+                                    await BuildFlow.apiFetch(`/categories?name=${encodeURIComponent(name)}`, { method: 'DELETE' });
+                                    BuildFlow.showToast(`Categoria "${name}" excluída!`, 'success');
+                                    renderCategoryManager();
+                                    loadCategories();
+                                } catch (err) {
+                                    BuildFlow.showToast('Erro ao excluir categoria', 'danger');
+                                }
+                            }
+                        });
+                        container.appendChild(div);
+                    });
+                } catch (e) {
+                    container.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;">Erro ao carregar categorias.</div>';
+                }
+            }
+
+            document.getElementById('stockSettingsBtn').addEventListener('click', () => {
+                document.getElementById('stockSettingsModal').style.display = 'flex';
+                renderColumnToggles();
+                renderCategoryManager();
+            });
+
+            applyColumnVisibility();
         });
     </script>
 </body>

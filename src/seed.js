@@ -40,6 +40,21 @@ async function seed() {
       );
     }
 
+    const secondUserEmail = "coringa@gmail.com";
+    const secondUserExists = await users.findOne({ email: secondUserEmail });
+    if (!secondUserExists) {
+      const hashedPassword = await bcrypt.hash("123", 10);
+      await users.insertOne({
+        name: "Coringa",
+        email: secondUserEmail,
+        password: hashedPassword,
+        role: "Admin",
+        permissions: ["all"],
+        createdAt: new Date(),
+      });
+      console.log(`✅ Usuário criado (${secondUserEmail} / 123)`);
+    }
+
     // 2. Coleção de Produtos
     const products = db.collection("products");
     await products.createIndex({ sku: 1 }, { unique: true });

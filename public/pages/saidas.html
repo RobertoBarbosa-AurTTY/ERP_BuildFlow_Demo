@@ -13,6 +13,9 @@
     <!-- PDF Export Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <!-- qz-tray for direct thermal printing -->
+    <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.2/build/qz-tray.min.js"></script>
+    <script src="../js/qz-print.js"></script>
     <style>
         :root {
             --pdv-bg: #1e293b; /* Slate 800 */
@@ -1581,10 +1584,6 @@
             <i class="fa-solid fa-clock-rotate-left"></i>
             <span>Histórico (F10)</span>
         </button>
-        <button class="footer-btn btn-gray system-btn" id="showAuditBtn">
-            <i class="fa-solid fa-clipboard-list"></i>
-            <span>Auditoria (F11)</span>
-        </button>
         <button class="footer-btn btn-gray system-btn" id="showReportsBtn">
             <i class="fa-solid fa-print"></i>
             <span>Relatórios (F8)</span>
@@ -1624,7 +1623,151 @@
 
             const summary = getCartSaleSummary();
             const total = summary.total;
-            
+
+            const now = new Date();
+            const budgetData = {
+                saleNumber: 'ORC-' + now.getTime().toString().slice(-6),
+                createdAt: now,
+                items: summary.items.map(i => ({
+                    name: i.name,
+                    sku: i.sku,
+                    qty: i.qty,
+                    price: i.price,
+                    discount: i.discount || 0,
+                    discountType: i.discountType || 'percent',
+                    lineGross: i.lineGross,
+                    total: i.lineTotal
+                })),
+                total: total
+            };
+
+            const { jsPDF } = window.jspdf;
+            const settings = BuildFlow.getSettings();
+
+            if (settings.autoPrint) {
+                BuildFlow.showToast('Orçamento gerado com sucesso!', 'success');
+                if (settings.printType === 'a4') {
+                    const doc = new jsPDF();
+                    const margin = 14;
+                    doc.setFontSize(24);
+                    doc.setTextColor(59, 130, 246);
+                    doc.text(settings.storeName, margin, 20);
+                    doc.setFontSize(10);
+                    doc.setTextColor(100, 116, 139);
+                    doc.text('ORÇAMENTO DE PRODUTOS E MATERIAIS', margin, 28);
+                    doc.setDrawColor(226, 232, 240);
+                    doc.line(margin, 32, 196, 32);
+                    if (settings.showCompanyData) {
+                        doc.setFontSize(10);
+                        doc.setTextColor(30, 41, 59);
+                        doc.text(settings.companyName, margin, 42);
+                        doc.text(`CNPJ: ${settings.companyCnpj}`, margin, 47);
+                        doc.text(`Endereço: ${settings.address}`, margin, 52);
+                    }
+                    const infoY = settings.showCompanyData ? 42 : 42;
+                    doc.setTextColor(30, 41, 59);
+                    doc.text(`Orçamento Nº: #${budgetData.saleNumber}`, 140, infoY);
+                    doc.text(`Data: ${budgetData.createdAt.toLocaleDateString('pt-BR')}`, 140, infoY + 5);
+                    doc.text(`Hora: ${budgetData.createdAt.toLocaleTimeString('pt-BR')}`, 140, infoY + 10);
+                    doc.setFontSize(10);
+                    doc.setTextColor(30, 41, 59);
+                    const headers = [['Produto', 'SKU', 'Qtd', 'Preço Uni.', 'Desc.', 'Total']];
+                    const tableData = budgetData.items.map(item => {
+                        const totalVal = `R$ ${(Number(item.total) || 0).toFixed(2)}`;
+                        if (item.discount > 0) {
+                            const origTotal = Number(item.price) * Number(item.qty);
+                            return [{ content: item.name, hasDiscount: true }, item.sku || "—", item.qty, `R$ ${(Number(item.price) || 0).toFixed(2)}`, `${item.discount}${item.discountType === 'percent' ? '%' : ' R$'}`, { content: totalVal, hasDiscount: true }];
+                        }
+                        return [item.name, item.sku || "—", item.qty, `R$ ${(Number(item.price) || 0).toFixed(2)}`, '-', totalVal];
+                    });
+                    doc.autoTable({ head: headers, body: tableData, startY: 60, theme: 'grid', styles: { fontSize: 9, cellPadding: 3 }, headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold' }, columnStyles: { 0: { cellWidth: 52 }, 1: { cellWidth: 28 }, 2: { cellWidth: 13, halign: 'center' }, 3: { cellWidth: 27, halign: 'right' }, 4: { cellWidth: 22, halign: 'center' }, 5: { cellWidth: 28, halign: 'right' } }, didParseCell: function(data) { if (data.section === 'body' && data.raw && data.raw.hasDiscount) { doc.setFont('Helvetica', 'bold'); } } });
+                    const finalY = doc.lastAutoTable.finalY || 120;
+                    doc.setFontSize(12);
+                    doc.setFont('Helvetica', 'bold');
+                    doc.text(`Total: R$ ${(Number(budgetData.total) || 0).toFixed(2)}`, 196, finalY + 12, { align: 'right' });
+                    doc.setFont('Helvetica', 'normal');
+                    doc.setFontSize(8);
+                    doc.setTextColor(100, 116, 139);
+                    doc.text(`PROCON: ${settings.proconNumber || '151'}`, margin, finalY + 22);
+                    doc.text(settings.receiptLegalNote || 'Documento não fiscal', margin, finalY + 27);
+                    if (settings.useQz && window.QzPrint) { QzPrint.printPdf(doc.output('arraybuffer')); } else { window.open(doc.output('bloburl'), '_blank'); }
+                } else {
+                    const discCount = budgetData.items.filter(i => i.discount > 0).length;
+                    const doc = new jsPDF({ unit: 'mm', format: [80, 100 + (budgetData.items.length * 5) + (discCount * 3.5)] });
+                    const ml = 5, mr = 75, cx = 40;
+                    const hrLight = (yy) => { doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.15); doc.line(ml, yy, mr, yy); doc.setDrawColor(0, 0, 0); };
+                    const hrBold = (yy) => { doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.4); doc.line(ml, yy, mr, yy); };
+                    let y = 10;
+                    doc.setFont('courier', 'bold'); doc.setFontSize(14);
+                    doc.text(settings.storeName, cx, y, { align: 'center' }); y += 5;
+                    doc.setFont('courier', 'normal'); doc.setFontSize(8);
+                    doc.text('ORÇAMENTO', cx, y, { align: 'center' }); y += 3;
+                    doc.setFontSize(6); doc.text('SEM VALOR FISCAL', cx, y, { align: 'center' }); y += 3;
+                    hrLight(y); y += 4;
+                    doc.setFontSize(8);
+                    const d = budgetData.createdAt;
+                    const dateStr = d.toLocaleDateString('pt-BR');
+                    const timeStr = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    doc.text('DATA', ml, y); doc.text(`${dateStr}  ${timeStr}`, mr, y, { align: 'right' }); y += 3.5;
+                    doc.text('REF', ml, y); doc.text(budgetData.saleNumber, mr, y, { align: 'right' }); y += 3.5;
+                    if (settings.showCompanyData && (settings.companyCnpj || settings.address)) {
+                        hrLight(y); y += 3; doc.setFontSize(7);
+                        if (settings.companyCnpj) { doc.text(`CNPJ ${settings.companyCnpj}`, cx, y, { align: 'center' }); y += 3; }
+                        if (settings.address) { const addrLines = doc.splitTextToSize(String(settings.address), mr - ml); addrLines.forEach(line => { doc.text(line, cx, y, { align: 'center' }); y += 3; }); }
+                        y += 2;
+                    }
+                    hrBold(y); y += 4;
+                    doc.setFont('courier', 'bold'); doc.setFontSize(7);
+                    doc.text('QTD  COD   PRODUTO', ml, y); doc.text('VALOR', mr, y, { align: 'right' }); y += 3;
+                    hrLight(y); y += 3.5;
+                    doc.setFont('courier', 'normal');
+                    budgetData.items.forEach(item => {
+                        const qtyStr = String(item.qty).padStart(3, "0");
+                        const shortSku = ((item.sku || "").slice(-5)).padEnd(5, " ");
+                        const nameMax = 22;
+                        const name = (item.name || 'Item').substring(0, nameMax);
+                        doc.setFontSize(7);
+                        doc.text(`${qtyStr}  ${shortSku}  ${name}`, ml, y);
+                        if (item.discount > 0) {
+                            const origTotal = Number(item.price) * Number(item.qty);
+                            const origStr = `R$ ${origTotal.toFixed(2)}`;
+                            doc.text(origStr, mr, y, { align: 'right' });
+                            doc.setDrawColor(180, 180, 180);
+                            const tw = doc.getStringUnitWidth(origStr) * doc.getFontSize();
+                            doc.line(mr - tw, y - 0.3, mr, y - 0.3);
+                            doc.setDrawColor(0, 0, 0);
+                            y += 3;
+                            doc.setFontSize(7);
+                            doc.text(`R$ ${(Number(item.total) || 0).toFixed(2)}`, mr, y, { align: 'right' });
+                        } else {
+                            doc.setFont("courier", "bold");
+                            doc.text(`R$ ${(Number(item.total) || 0).toFixed(2)}`, mr, y, { align: 'right' });
+                            doc.setFont("courier", "normal");
+                        }
+                        y += 4;
+                    });
+                    hrBold(y); y += 3.5;
+                    const totalY = y; const boxH = 9;
+                    const totalLabel = "TOTAL"; const totalVal = `R$ ${(Number(budgetData.total) || 0).toFixed(2)}`;
+                    doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.4);
+                    doc.roundedRect(ml - 1, totalY, mr - ml + 2, boxH, 2, 2);
+                    doc.setFont('courier', 'bold'); doc.setFontSize(9);
+                    doc.text(totalLabel, ml + 3, totalY + boxH - 2.5);
+                    doc.text(totalVal, mr - 3, totalY + boxH - 2.5, { align: 'right' });
+                    y = totalY + boxH + 4;
+                    doc.setFont('courier', 'normal'); doc.setFontSize(7);
+                    hrBold(y); y += 3.5;
+                    doc.text('Válido por 7 dias.', cx, y, { align: 'center' }); y += 4;
+                    doc.setFontSize(6);
+                    const legalLines = doc.splitTextToSize(settings.receiptLegalNote || 'Documento não fiscal', mr - ml);
+                    legalLines.forEach(line => { doc.text(line, cx, y, { align: 'center' }); y += 3; });
+                    y += 1;
+                    doc.text(`PROCON ${settings.proconNumber || '151'}`, cx, y, { align: 'center' });
+                    if (settings.useQz && window.QzPrint) { QzPrint.printPdf(doc.output('arraybuffer')); } else { window.open(doc.output('bloburl'), '_blank'); }
+                }
+                return;
+            }
+
             const { value: printType } = await Swal.fire({
                 ...pdvSwalOptions(),
                 title: 'Gerar Orçamento',
@@ -1640,25 +1783,6 @@
 
             if (printType === undefined) return;
 
-            const now = new Date();
-            const budgetData = {
-                saleNumber: 'ORC-' + now.getTime().toString().slice(-6),
-                createdAt: now,
-                items: summary.items.map(i => ({
-                    name: i.name,
-                    qty: i.qty,
-                    price: i.price,
-                    discount: i.discount || 0,
-                    discountType: i.discountType || 'percent',
-                    lineGross: i.lineGross,
-                    total: i.lineTotal
-                })),
-                total: total
-            };
-
-            const { jsPDF } = window.jspdf;
-            const settings = BuildFlow.getSettings();
-
             if (printType === true) { // Cupom Térmico
                 const discCount = budgetData.items.filter(i => i.discount > 0).length;
                 const doc = new jsPDF({
@@ -1667,99 +1791,110 @@
                 });
 
                 const ml = 5, mr = 75, cx = 40;
-                const hr = (yy, w) => { doc.setLineWidth(w); doc.line(ml, yy, mr, yy); };
+                const hrLight = (yy) => { doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.15); doc.line(ml, yy, mr, yy); doc.setDrawColor(0, 0, 0); };
+                const hrBold = (yy) => { doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.4); doc.line(ml, yy, mr, yy); };
                 let y = 10;
 
-                hr(y, 0.5);
-                y += 5;
                 doc.setFont('courier', 'bold');
-                doc.setFontSize(16);
+                doc.setFontSize(14);
                 doc.text(settings.storeName, cx, y, { align: 'center' });
-                y += 5.5;
+                y += 5;
                 doc.setFont('courier', 'normal');
-                doc.setFontSize(9);
+                doc.setFontSize(8);
                 doc.text('ORÇAMENTO', cx, y, { align: 'center' });
-                y += 3.5;
-                doc.setFontSize(7);
+                y += 3;
+                doc.setFontSize(6);
                 doc.text('SEM VALOR FISCAL', cx, y, { align: 'center' });
                 y += 3;
-                hr(y, 0.15);
+                hrLight(y);
                 y += 4;
 
-                doc.setFontSize(9);
+                doc.setFontSize(8);
                 const d = budgetData.createdAt;
                 const dateStr = d.toLocaleDateString('pt-BR');
                 const timeStr = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                 doc.text('DATA', ml, y);
                 doc.text(`${dateStr}  ${timeStr}`, mr, y, { align: 'right' });
-                y += 4;
+                y += 3.5;
                 doc.text('REF', ml, y);
                 doc.text(budgetData.saleNumber, mr, y, { align: 'right' });
-                y += 4;
+                y += 3.5;
 
                 if (settings.showCompanyData) {
                     if (settings.companyCnpj || settings.address) {
-                        hr(y, 0.08);
+                        hrLight(y);
                         y += 3;
                         doc.setFontSize(7);
                         if (settings.companyCnpj) {
-                            doc.text(`CNPJ ${settings.companyCnpj}`, ml, y);
+                            doc.text(`CNPJ ${settings.companyCnpj}`, cx, y, { align: 'center' });
                             y += 3;
                         }
                         if (settings.address) {
-                            doc.text(`${settings.address.substring(0, 34)}`, ml, y);
-                            y += 3;
+                            const addrLines = doc.splitTextToSize(String(settings.address), mr - ml);
+                            addrLines.forEach(line => { doc.text(line, cx, y, { align: 'center' }); y += 3; });
                         }
                         y += 2;
                     }
                 }
 
-                hr(y, 0.3);
-                y += 4;
-                doc.setFont('courier', 'bold');
-                doc.setFontSize(8);
-                doc.text('QTD  DESCRICAO', ml, y);
-                doc.text('VALOR', mr, y, { align: 'right' });
-                y += 3.5;
-                doc.setFont('courier', 'normal');
-                doc.setDrawColor(160, 160, 160);
-                hr(y, 0.1);
-                doc.setDrawColor(0, 0, 0);
+                hrBold(y);
                 y += 4;
 
+                doc.setFont('courier', 'bold');
+                doc.setFontSize(7);
+                doc.text('QTD  COD   PRODUTO', ml, y);
+                doc.text('VALOR', mr, y, { align: 'right' });
+                y += 3;
+                hrLight(y);
+                y += 3.5;
+
+                doc.setFont('courier', 'normal');
                 budgetData.items.forEach(item => {
-                    const name = (item.name || 'Item').substring(0, 18);
-                    doc.setFontSize(9);
-                    doc.text(`${item.qty}x  ${name}`, ml, y);
+                    const qtyStr = String(item.qty).padStart(3, "0");
+                    const shortSku = ((item.sku || "").slice(-5)).padEnd(5, " ");
+                    const nameMax = 22;
+                    const name = (item.name || 'Item').substring(0, nameMax);
+                    doc.setFontSize(7);
+                    doc.text(`${qtyStr}  ${shortSku}  ${name}`, ml, y);
                     if (item.discount > 0) {
                         const origTotal = Number(item.price) * Number(item.qty);
                         const origStr = `R$ ${origTotal.toFixed(2)}`;
                         doc.text(origStr, mr, y, { align: 'right' });
-                        doc.setDrawColor(160, 160, 160);
+                        doc.setDrawColor(180, 180, 180);
                         const tw = doc.getStringUnitWidth(origStr) * doc.getFontSize();
-                        doc.line(mr - tw, y - 0.5, mr, y - 0.5);
+                        doc.line(mr - tw, y - 0.3, mr, y - 0.3);
                         doc.setDrawColor(0, 0, 0);
-                        y += 3.5;
-                        doc.setFontSize(9);
+                        y += 3;
+                        doc.setFontSize(7);
                         doc.text(`R$ ${(Number(item.total) || 0).toFixed(2)}`, mr, y, { align: 'right' });
                     } else {
-                        const totalStr = `R$ ${(Number(item.total) || 0).toFixed(2)}`;
-                        doc.text(totalStr, mr, y, { align: 'right' });
+                        doc.setFont("courier", "bold");
+                        doc.text(`R$ ${(Number(item.total) || 0).toFixed(2)}`, mr, y, { align: 'right' });
+                        doc.setFont("courier", "normal");
                     }
-                    y += 5;
+                    y += 4;
                 });
 
-                hr(y, 0.3);
-                y += 4.5;
+                hrBold(y);
+                y += 3.5;
+
+                // --- TOTAL BOX ---
+                const totalY = y;
+                const boxH = 9;
+                const totalLabel = "TOTAL";
+                const totalVal = `R$ ${(Number(budgetData.total) || 0).toFixed(2)}`;
+                doc.setDrawColor(0, 0, 0);
+                doc.setLineWidth(0.4);
+                doc.roundedRect(ml - 1, totalY, mr - ml + 2, boxH, 2, 2);
                 doc.setFont('courier', 'bold');
-                doc.setFontSize(12);
-                doc.text('TOTAL:', ml, y);
-                doc.text(`R$ ${(Number(budgetData.total) || 0).toFixed(2)}`, mr, y, { align: 'right' });
-                y += 6;
+                doc.setFontSize(9);
+                doc.text(totalLabel, ml + 3, totalY + boxH - 2.5);
+                doc.text(totalVal, mr - 3, totalY + boxH - 2.5, { align: 'right' });
+                y = totalY + boxH + 4;
                 doc.setFont('courier', 'normal');
-                doc.setFontSize(8);
-                hr(y, 0.5);
-                y += 4;
+                doc.setFontSize(7);
+                hrBold(y);
+                y += 3.5;
                 doc.text('Válido por 7 dias.', cx, y, { align: 'center' });
                 y += 4;
                 doc.setFontSize(6);
@@ -1771,7 +1906,7 @@
                 y += 1;
                 doc.text(`PROCON ${settings.proconNumber || '151'}`, cx, y, { align: 'center' });
                 
-                window.open(doc.output('bloburl'), '_blank');
+                if (settings.useQz && window.QzPrint) { QzPrint.printPdf(doc.output('arraybuffer')); } else { window.open(doc.output('bloburl'), '_blank'); }
             } else { // Impressão A4
                 const doc = new jsPDF();
                 const margin = 14;
@@ -1810,28 +1945,30 @@
                         const origTotal = Number(item.price) * Number(item.qty);
                         return [
                             { content: item.name, hasDiscount: true },
+                            item.sku || "—",
                             item.qty,
                             `R$ ${(Number(item.price) || 0).toFixed(2)}`,
                             `${item.discount}${item.discountType === 'percent' ? '%' : ' R$'}`,
                             { content: totalVal, hasDiscount: true }
                         ];
                     }
-                    return [item.name, item.qty, `R$ ${(Number(item.price) || 0).toFixed(2)}`, '-', totalVal];
+                    return [item.name, item.sku || "—", item.qty, `R$ ${(Number(item.price) || 0).toFixed(2)}`, '-', totalVal];
                 });
 
                 doc.autoTable({
                     startY: 65,
-                    head: [['Descrição do Produto', 'Qtd', 'Vlr. Unitário', 'Desc.', 'Total']],
+                    head: [['Descrição do Produto', 'SKU', 'Qtd', 'Vlr. Unitário', 'Desc.', 'Total']],
                     body: tableData,
                     theme: 'grid',
                     headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' },
                     styles: { fontSize: 9, cellPadding: 5 },
                     columnStyles: {
                         0: { cellWidth: 'auto' },
-                        1: { cellWidth: 20, halign: 'center' },
-                        2: { cellWidth: 35, halign: 'right' },
-                        3: { cellWidth: 25, halign: 'center' },
-                        4: { cellWidth: 35, halign: 'right' }
+                        1: { cellWidth: 22, halign: 'center' },
+                        2: { cellWidth: 16, halign: 'center' },
+                        3: { cellWidth: 30, halign: 'right' },
+                        4: { cellWidth: 20, halign: 'center' },
+                        5: { cellWidth: 30, halign: 'right' }
                     },
                     didParseCell: function (data) {
                         if (data.cell.raw && data.cell.raw.hasDiscount) {
@@ -1854,16 +1991,21 @@
                 doc.text('Validade do Orçamento: 07 dias corridos.', 14, finalY + 25);
                 doc.text('Este documento não possui valor fiscal.', 105, 285, { align: 'center' });
 
-                window.open(doc.output('bloburl'), '_blank');
+                if (settings.useQz && window.QzPrint) { QzPrint.printPdf(doc.output('arraybuffer')); } else { window.open(doc.output('bloburl'), '_blank'); }
             }
             BuildFlow.showToast('Orçamento gerado com sucesso!', 'success');
         }
 
-        function renderCategories() {
+        async function renderCategories() {
             const categoriesContainer = document.querySelector('.pdv-categories');
             
-            // Extrair categorias únicas
-            const categories = [...new Set(dbProducts.map(p => p.category).filter(c => c))].sort();
+            let categories = [];
+            try {
+                categories = await BuildFlow.apiFetch('/categories') || [];
+            } catch (e) {
+                // ignore
+            }
+            categories = [...new Set(categories)].sort();
             
             // Limpar e adicionar botão "Todos"
             categoriesContainer.innerHTML = '';
@@ -2116,7 +2258,7 @@
             // Carregar produtos do Banco de Dados
             try {
                 dbProducts = await BuildFlow.getProducts();
-                renderCategories(); // Renderizar categorias dinamicamente
+                await renderCategories(); // Renderizar categorias dinamicamente
                 reconcileCartWithStock();
                 renderProducts('all');
             } catch (error) {
@@ -2128,7 +2270,6 @@
             // Event Listeners
             document.getElementById('showProductsBtn').addEventListener('click', showProductsQuickView);
             document.getElementById('showHistoryBtn').addEventListener('click', showHistoryQuickView);
-            document.getElementById('showAuditBtn').addEventListener('click', showAuditQuickView);
             document.getElementById('showFilterBtn').addEventListener('click', showProductFilterQuickView);
             document.getElementById('showReportsBtn').addEventListener('click', openReportsPage);
             document.getElementById('showKitsBtn').addEventListener('click', showKitsQuickView);
@@ -2196,10 +2337,6 @@
                 if (e.key === 'F10') {
                     e.preventDefault();
                     window.location.href = 'historico-vendas.html';
-                }
-                if (e.key === 'F11') {
-                    e.preventDefault();
-                    showAuditQuickView();
                 }
                 if (e.key === 'Escape') {
                     closeModal('editItemModal');
@@ -2490,6 +2627,7 @@
                 cart.map(i => ({
                     id: i._id,
                     name: i.name,
+                    sku: i.sku,
                     qty: i.qty,
                     price: i.price,
                     costPrice: i.costPrice || 0,
@@ -2507,6 +2645,7 @@
                 items: summary.items.map(i => ({
                     id: BuildFlow.normalizeId(i.id || i._id),
                     name: i.name,
+                    sku: i.sku,
                     qty: i.qty,
                     price: i.price,
                     costPrice: Number(i.costPrice) || 0,
@@ -2676,19 +2815,8 @@
                 } else {
                     BuildFlow.showToast('Venda finalizada com sucesso!', 'success');
                     
-                    // Perguntar se deseja imprimir o cupom
-                    const printResult = await Swal.fire({
-                        ...pdvSwalOptions(),
-                        title: 'Venda Finalizada!',
-                        text: 'Deseja imprimir o cupom da venda?',
-                        icon: 'success',
-                        showCancelButton: true,
-                        confirmButtonText: 'Sim, Cupom Térmico',
-                        cancelButtonText: 'Não, fechar',
-                        confirmButtonColor: 'var(--pdv-primary)'
-                    });
-
-                    if (printResult.isConfirmed) {
+                    const settings = BuildFlow.getSettings();
+                    if (settings.autoPrint) {
                         const saleForPrint = response.sale || {
                             ...saleData,
                             _id: newSaleId,
@@ -2697,10 +2825,37 @@
                         };
                         BuildFlow.printSalePdf(
                             saleForPrint,
-                            'thermal',
+                            settings.printType || 'thermal',
                             window.jspdf.jsPDF,
-                            BuildFlow.getSettings()
+                            settings
                         );
+                    } else {
+                        // Perguntar se deseja imprimir o cupom
+                        const printResult = await Swal.fire({
+                            ...pdvSwalOptions(),
+                            title: 'Venda Finalizada!',
+                            text: 'Deseja imprimir o cupom da venda?',
+                            icon: 'success',
+                            showCancelButton: true,
+                            confirmButtonText: 'Sim, Cupom Térmico',
+                            cancelButtonText: 'Não, fechar',
+                            confirmButtonColor: 'var(--pdv-primary)'
+                        });
+
+                        if (printResult.isConfirmed) {
+                            const saleForPrint = response.sale || {
+                                ...saleData,
+                                _id: newSaleId,
+                                saleNumber: response.saleNumber,
+                                createdAt: new Date()
+                            };
+                            BuildFlow.printSalePdf(
+                                saleForPrint,
+                                'thermal',
+                                window.jspdf.jsPDF,
+                                settings
+                            );
+                        }
                     }
                 }
                 
@@ -3153,49 +3308,6 @@
                 BuildFlow.showToast('Erro ao gerar documento de impressão', 'danger');
             }
         };
-
-        async function showAuditQuickView() {
-            try {
-                const auditData = await BuildFlow.getAuditLogs();
-                const logs = Array.isArray(auditData) ? auditData : (auditData?.logs || []);
-                let tableHtml = `
-                    <div class="modal-table-container">
-                        <table class="modal-table">
-                            <thead>
-                                <tr>
-                                    <th>Data</th>
-                                    <th>Ação</th>
-                                    <th>Detalhes</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${logs.length ? logs.slice(0, 15).map(l => `
-                                    <tr>
-                                        <td>${new Date(l.timestamp).toLocaleString('pt-BR')}</td>
-                                        <td style="font-weight:700">${BuildFlow.escapeHtml(l.action || 'Sem ação')}</td>
-                                        <td style="font-size:0.75rem">${BuildFlow.escapeHtml((l.details || 'Sem detalhes').slice(0, 80))}${(l.details || '').length > 80 ? '...' : ''}</td>
-                                    </tr>
-                                `).join('') : `
-                                    <tr>
-                                        <td colspan="3" style="text-align:center;color:var(--pdv-text-muted);padding:18px;">
-                                            Nenhum registro de auditoria encontrado.
-                                        </td>
-                                    </tr>
-                                `}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-                Swal.fire({
-                    ...pdvSwalOptions({ width: '640px' }),
-                    title: 'Últimas movimentações',
-                    html: tableHtml,
-                    confirmButtonText: 'Fechar'
-                });
-            } catch (error) {
-                BuildFlow.showToast('Erro ao consultar auditoria', 'danger');
-            }
-        }
 
         async function showProductFilterQuickView() {
             const { value: selectedSort } = await Swal.fire({

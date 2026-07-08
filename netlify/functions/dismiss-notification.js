@@ -19,7 +19,6 @@ exports.handler = async (event, context) => {
       const db = await getDb();
       const dismissedCol = db.collection('dismissed_notifications');
 
-      // Salvar como lida
       await dismissedCol.updateOne(
         { notificationKey },
         { $set: { notificationKey, dismissedAt: new Date() } },
@@ -28,7 +27,7 @@ exports.handler = async (event, context) => {
 
       return {
         statusCode: 200,
-        body: JSON.stringify({ message: 'Notificação marcada como lida com sucesso' }),
+        body: JSON.stringify({ message: 'Notificação excluída com sucesso' }),
       };
     } catch (error) {
       console.error('Dismiss notification error:', error);

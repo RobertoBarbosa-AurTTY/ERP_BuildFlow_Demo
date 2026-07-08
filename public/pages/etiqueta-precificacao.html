@@ -729,8 +729,14 @@
                                         <label for="showSku"><i class="fa-solid fa-hashtag"></i> SKU</label>
                                     </div>
                                     <div class="checkbox-item" style="grid-column: 1 / -1;">
-                                        <input type="checkbox" id="showBarcode" checked>
-                                        <label for="showBarcode"><i class="fa-solid fa-barcode"></i> Código de barras</label>
+                                        <label for="barcodeSource" style="display: block; margin-bottom: 6px; font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em;">
+                                            <i class="fa-solid fa-barcode"></i> Código de barras
+                                        </label>
+                                        <select id="barcodeSource" class="filter-select" style="width: 100%;">
+                                            <option value="barcode">Código de barras do produto</option>
+                                            <option value="sku">SKU como código de barras</option>
+                                            <option value="none">Nenhum</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
@@ -780,17 +786,13 @@
             return div.innerHTML;
         }
 
-        // Função para gerar código de barras em SVG
         function generateBarcodeSVG(barcodeText, width = 240, height = 50) {
             if (!barcodeText) return '';
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', width);
+            svg.setAttribute('height', height);
+            svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
             try {
-                // Cria um elemento SVG temporário
-                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                svg.setAttribute('width', width);
-                svg.setAttribute('height', height);
-                svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-                
-                // Usa o JsBarcode para gerar o código
                 JsBarcode(svg, barcodeText, {
                     format: "EAN13",
                     width: 1.5,
@@ -799,11 +801,22 @@
                     margin: 0,
                     background: "transparent"
                 });
-                
                 return svg.outerHTML;
             } catch (e) {
-                console.error('Erro ao gerar código de barras:', e);
-                return '';
+                try {
+                    JsBarcode(svg, barcodeText, {
+                        format: "CODE128",
+                        width: 1.5,
+                        height: 40,
+                        displayValue: false,
+                        margin: 0,
+                        background: "transparent"
+                    });
+                    return svg.outerHTML;
+                } catch (e2) {
+                    console.error('Erro ao gerar código de barras:', e2);
+                    return '';
+                }
             }
         }
 
@@ -826,7 +839,7 @@
             const price = !isNaN(priceVal) && priceVal > 0 ? priceVal : selectedProduct.price;
             const showStore = document.getElementById('showStoreName').checked;
             const showSku = document.getElementById('showSku').checked;
-            const showBarcode = document.getElementById('showBarcode').checked;
+            const barcodeSource = document.getElementById('barcodeSource').value;
             const color = document.getElementById('labelColor').value || 'yellow';
             const settings = BuildFlow.getSettings();
             const storeName = settings.storeName || settings.companyName || 
@@ -837,16 +850,19 @@
             const sku = escapeHtml(selectedProduct.sku || '');
             const priceDisplay = `${int},${cents}`;
             const barcodeText = selectedProduct.barcode || '';
+            const skuText = selectedProduct.sku || '';
 
             let html = '';
             for (let i = 0; i < qty; i++) {
-                // Gera o código de barras se tiver e estiver habilitado
                 let barcodeHtml = '';
-                if (showBarcode && barcodeText) {
-                    const barcodeSvg = generateBarcodeSVG(barcodeText, 240, 50);
-                    if (barcodeSvg) {
-                        barcodeHtml = `<div class="lp-gondola-barcode-wrapper">${barcodeSvg}</div>`;
-                    }
+                let barcodeSvgContent = '';
+                if (barcodeSource === 'barcode' && barcodeText) {
+                    barcodeSvgContent = generateBarcodeSVG(barcodeText, 240, 50);
+                } else if (barcodeSource === 'sku' && skuText) {
+                    barcodeSvgContent = generateBarcodeSVG(skuText, 240, 50);
+                }
+                if (barcodeSvgContent) {
+                    barcodeHtml = `<div class="lp-gondola-barcode-wrapper">${barcodeSvgContent}</div>`;
                 }
 
                 html += `
@@ -1199,7 +1215,7 @@
                 }
             });
 
-            ['labelQty', 'labelPrice', 'labelColor', 'showStoreName', 'showSku', 'showBarcode'].forEach(id => {
+            ['labelQty', 'labelPrice', 'labelColor', 'showStoreName', 'showSku', 'barcodeSource'].forEach(id => {
                 const el = document.getElementById(id);
                 el.addEventListener('input', renderPriceLabels);
                 el.addEventListener('change', renderPriceLabels);
