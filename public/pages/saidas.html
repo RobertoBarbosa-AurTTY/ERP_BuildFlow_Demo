@@ -2071,7 +2071,7 @@
             let totalPages = 1;
 
             do {
-                const response = await BuildFlow.apiFetch(`/sales?status=FINALIZED&page=${page}&limit=100`);
+                const response = await BuildFlow.apiFetch(`/sales?status=FINALIZED&limit=all`);
                 const sales = Array.isArray(response?.data) ? response.data : [];
 
                 sales.forEach(sale => {
@@ -2118,7 +2118,7 @@
         }
 
         function normalizeBarcodeInput(value) {
-            return String(value || '').trim().replace(/\s+/g, '');
+            return String(value || '').trim().replace(/\s+/g, '').replace(/^[#@.\-_\s]+/, '');
         }
 
         function isLikelyBarcodeInput(value) {
@@ -2152,7 +2152,7 @@
             });
             if (localProduct) return localProduct;
 
-            const searchedProducts = await BuildFlow.getProducts({ search: code, limit: 100 });
+            const searchedProducts = await BuildFlow.getProducts({ search: code, limit: 'all' });
             return searchedProducts.find(product => {
                 const barcode = normalizeBarcodeInput(product.barcode);
                 const sku = normalizeBarcodeInput(product.sku);
@@ -2257,7 +2257,7 @@
 
             // Carregar produtos do Banco de Dados
             try {
-                dbProducts = await BuildFlow.getProducts();
+                dbProducts = await BuildFlow.getProducts({ limit: 'all' });
                 await renderCategories(); // Renderizar categorias dinamicamente
                 reconcileCartWithStock();
                 renderProducts('all');
@@ -2381,7 +2381,7 @@
 
                     // 3. Busca na API
                     try {
-                        const results = await BuildFlow.getProducts({ search: code, limit: 50 });
+                        const results = await BuildFlow.getProducts({ search: code, limit: 'all' });
                         if (results && results.length > 0) {
                             product = results.find(p => {
                                 const b = normalizeBarcodeInput(p.barcode);
@@ -2598,26 +2598,17 @@
 
         function reconcileCartWithStock() {
             if (!cart.length || !dbProducts.length) return;
-            const adjusted = [];
-            cart = cart.filter((item, index) => {
+            const removed = [];
+            cart = cart.filter((item) => {
                 const fresh = getFreshProduct(item);
                 if (!fresh) {
-                    adjusted.push(item.name || 'Item');
+                    removed.push(item.name || 'Item');
                     return false;
-                }
-                const check = BuildFlow.validateLineStock(fresh, cart, item.qty, index);
-                if (!check.ok) {
-                    if (check.maxLine < 1) {
-                        adjusted.push(fresh.name);
-                        return false;
-                    }
-                    item.qty = check.maxLine;
-                    adjusted.push(`${fresh.name} → ${check.maxLine} un.`);
                 }
                 return true;
             });
-            if (adjusted.length) {
-                BuildFlow.showToast('Carrinho ajustado conforme estoque disponível.', 'warning');
+            if (removed.length) {
+                BuildFlow.showToast(`${removed.join(', ')} removido(s) do carrinho (produto não encontrado).`, 'warning');
                 updateCart();
             }
         }
@@ -2767,7 +2758,7 @@
             }
 
             try {
-                dbProducts = await BuildFlow.getProducts();
+                dbProducts = await BuildFlow.getProducts({ limit: 'all' });
             } catch {
                 BuildFlow.showToast('Não foi possível validar o estoque. Tente novamente.', 'danger');
                 return;
@@ -2777,6 +2768,29 @@
             if (!stockCheck.ok) {
                 await showStockValidationErrors(stockCheck);
                 return;
+            }
+            if (stockCheck.warnings && stockCheck.warnings.length > 0) {
+                const list = stockCheck.warnings.map(w =>
+                    `<li style="margin-bottom:8px;text-align:left;">${BuildFlow.escapeHtml(w.message)}</li>`
+                ).join('');
+                const confirm = await Swal.fire({
+                    ...pdvSwalOptions({ width: '520px' }),
+                    icon: 'warning',
+                    title: 'Estoque insuficiente',
+                    html: `
+                        <div style="font-size:0.9rem;margin-bottom:12px;">Os seguintes produtos ficarão com saldo negativo no estoque:</div>
+                        <ul style="margin:0;padding-left:1.2rem;font-size:0.9rem;">${list}</ul>
+                        <div style="margin-top:16px;padding:12px;border-radius:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);font-size:0.85rem;color:var(--pdv-danger)">
+                            <i class="fa-solid fa-triangle-exclamation"></i> O saldo negativo deverá ser regularizado com uma nova entrada de mercadoria.
+                        </div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Continuar mesmo assim',
+                    confirmButtonColor: 'var(--pdv-danger)',
+                    cancelButtonText: 'Cancelar',
+                    reverseButtons: true
+                });
+                if (!confirm.isConfirmed) return;
             }
 
             let paymentMethod = 'Dinheiro';
@@ -2863,7 +2877,7 @@
                 globalDiscount = 0;
                 updateCart();
                 
-                dbProducts = await BuildFlow.getProducts();
+                dbProducts = await BuildFlow.getProducts({ limit: 'all' });
                 invalidateProductSalesRank();
                 if (currentProductSort === 'best_sellers') {
                     try {
@@ -3048,7 +3062,7 @@
             });
 
             if (result.isConfirmed) {
-                if (addToCart(product)) {
+                if (await addToCart(product)) {
                     Swal.close();
                 }
             } else if (backToList && result.dismiss === Swal.DismissReason.cancel) {
@@ -3058,7 +3072,7 @@
 
         async function showProductsQuickView() {
             try {
-                const products = await BuildFlow.getProducts();
+                const products = await BuildFlow.getProducts({ limit: 'all' });
 
                 await Swal.fire({
                     ...pdvSwalOptions({ width: '720px' }),
@@ -3107,7 +3121,7 @@
                         searchInput.addEventListener('input', (e) => {
                             const term = e.target.value.toLowerCase();
                             document.querySelectorAll('#modalProductsTable tbody tr').forEach(row => {
-                                const match = row.innerText.toLowerCase().includes(term) || row.getAttribute('data-barcode').toLowerCase().includes(term);
+                                const match = row.innerText.toLowerCase().includes(term) || row.getAttribute('data-barcode').toLowerCase().includes(term) || row.getAttribute('data-product-id').toLowerCase().includes(term);
                                 row.style.display = match ? '' : 'none';
                             });
                         });
@@ -3130,7 +3144,7 @@
 
         window.showProductDetails = async (productId) => {
             try {
-                const products = await BuildFlow.getProducts();
+                const products = await BuildFlow.getProducts({ limit: 'all' });
                 const p = products.find(prod => BuildFlow.normalizeId(prod._id) === BuildFlow.normalizeId(productId));
                 if (!p) return;
 
@@ -3143,9 +3157,9 @@
                     confirmButtonColor: 'var(--pdv-success)',
                     cancelButtonText: 'Voltar para lista',
                     reverseButtons: true
-                }).then((result) => {
+                }).then(async (result) => {
                     if (result.isConfirmed) {
-                        if (addToCart(p)) {
+                        if (await addToCart(p)) {
                             Swal.close();
                         }
                     } else if (result.isDismissed && result.dismiss === Swal.DismissReason.cancel) {
@@ -3365,7 +3379,7 @@
 
         async function showKitsQuickView() {
             try {
-                const products = await BuildFlow.getProducts({ limit: 100 });
+                const products = await BuildFlow.getProducts({ limit: 'all' });
                 const kitProducts = products.filter(isKitProduct).sort((a, b) => {
                     const recentDiff = getProductRecencyTimestamp(b) - getProductRecencyTimestamp(a);
                     if (recentDiff !== 0) return recentDiff;
@@ -3687,7 +3701,6 @@
                 
                 const available = BuildFlow.getProductAvailableStock(p);
                 const outOfStock = available < 1;
-                if (outOfStock) card.classList.add('product-card--disabled');
 
                 const imageHtml = p.imageUrl 
                     ? `<img src="${p.imageUrl}" alt="${BuildFlow.escapeHtml(p.name)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" onerror="this.parentElement.innerHTML = '<i class=\'fa-solid ${icon}\'></i>'">` 
@@ -3699,18 +3712,14 @@
                     <div class="product-price">${BuildFlow.formatCurrency(p.price)}</div>
                     <div class="product-stock ${outOfStock ? 'out' : ''}">${outOfStock ? 'Sem estoque' : `${available} disp.`}</div>
                 `;
-                card.onclick = () => {
-                    if (outOfStock) {
-                        BuildFlow.showToast(`${p.name}: sem estoque disponível para venda.`, 'warning');
-                        return;
-                    }
-                    addToCart(p);
+                card.onclick = async () => {
+                    await addToCart(p);
                 };
                 grid.appendChild(card);
             });
         }
 
-        function addToCart(product, qty = 1) {
+        async function addToCart(product, qty = 1) {
             const fresh = getFreshProduct(product) || product;
             const pid = BuildFlow.normalizeId(fresh._id);
             const addQty = Math.max(1, parseInt(qty, 10) || 1);
@@ -3722,6 +3731,22 @@
             if (!check.ok) {
                 BuildFlow.showToast(check.message, 'warning');
                 return false;
+            }
+
+            if (check.warning) {
+                const confirm = await Swal.fire({
+                    ...pdvSwalOptions({ width: '480px' }),
+                    icon: 'warning',
+                    title: 'Estoque insuficiente',
+                    text: check.message,
+                    html: `<div style="font-size:0.9rem;line-height:1.5">${check.message}</div><div style="margin-top:12px;padding:12px;border-radius:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);font-size:0.85rem;color:var(--pdv-danger)"><i class="fa-solid fa-triangle-exclamation"></i> O saldo em estoque ficará negativo e deverá ser reposto em uma nova entrada.</div>`,
+                    showCancelButton: true,
+                    confirmButtonText: 'Continuar mesmo assim',
+                    confirmButtonColor: 'var(--pdv-danger)',
+                    cancelButtonText: 'Cancelar',
+                    reverseButtons: true
+                });
+                if (!confirm.isConfirmed) return false;
             }
 
             if (existing) {

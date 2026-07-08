@@ -237,7 +237,7 @@
 
                 // Carregar dados
                 const [allProducts, allSales, allWarehouses] = await Promise.all([
-                    BuildFlow.getProducts(),
+                    BuildFlow.getProducts({ limit: 'all' }),
                     BuildFlow.getSales(),
                     fetch('/api/warehouse-addresses').then(r => r.json()).then(d => d.data || []).catch(() => [])
                 ]);

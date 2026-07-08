@@ -674,7 +674,7 @@
             }
 
             async function matchExistingProducts() {
-                const existingProducts = await BuildFlow.getProducts();
+                const existingProducts = await BuildFlow.getProducts({ limit: 'all' });
                 const skuMap = new Map(existingProducts.map(p => [p.sku, p]));
                 importedProducts.forEach(p => {
                     const existing = skuMap.get(p.sku);
@@ -892,7 +892,7 @@
             }
 
             async function finalizeImport() {
-                const existingProducts = await BuildFlow.getProducts();
+                const existingProducts = await BuildFlow.getProducts({ limit: 'all' });
                 const existingProductMap = new Map(existingProducts.map(p => [p.sku, p]));
                 
                 for (const product of importedProducts) {

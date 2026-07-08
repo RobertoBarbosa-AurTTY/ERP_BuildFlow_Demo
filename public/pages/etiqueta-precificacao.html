@@ -1166,7 +1166,7 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                products = await BuildFlow.getProducts();
+                products = await BuildFlow.getProducts({ limit: 'all' });
             } catch (e) {
                 BuildFlow.showToast('Erro ao carregar produtos', 'danger');
             }

@@ -29,14 +29,16 @@ exports.handler = async (event, context) => {
         }
 
         const pageNum = Math.max(1, parseInt(page, 10));
-        const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
-        const skip = (pageNum - 1) * limitNum;
+        const limitNum = limit === "all" ? 0 : Math.min(10000, Math.max(1, parseInt(limit, 10)));
+        const skip = limitNum === 0 ? 0 : (pageNum - 1) * limitNum;
 
         // Executar count e find em paralelo
         const [totalCount, data] = await Promise.all([
           sales.countDocuments(query),
           sales.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum).toArray()
         ]);
+
+        const totalPages = limitNum === 0 ? 1 : Math.ceil(totalCount / limitNum);
 
         return { 
           statusCode: 200, 
@@ -46,7 +48,7 @@ exports.handler = async (event, context) => {
               page: pageNum,
               limit: limitNum,
               total: totalCount,
-              totalPages: Math.ceil(totalCount / limitNum)
+              totalPages
             }
           }) 
         };
@@ -165,43 +167,6 @@ exports.handler = async (event, context) => {
           demand.set(id, (demand.get(id) || 0) + qty);
         }
 
-        // Verificar estoque em paralelo
-        const productIds = Array.from(demand.keys()).map(id => new ObjectId(id));
-        const products = await productsCol.find({ _id: { $in: productIds } }).toArray();
-        const productMap = new Map(products.map(p => [p._id.toString(), p]));
-        
-        const stockErrors = [];
-        for (const [productId, wantQty] of demand) {
-          const prod = productMap.get(productId);
-          if (!prod) {
-            stockErrors.push({ productId, message: 'Produto não encontrado.' });
-            continue;
-          }
-          const physical = Math.max(0, prod.quantity || 0);
-          const reserved = Math.max(0, prod.reserved || 0);
-          const available = Math.max(0, physical - reserved);
-          if (wantQty > available) {
-            stockErrors.push({
-              productName: prod.name,
-              requested: wantQty,
-              available,
-              reserved,
-              physical,
-              message: `${prod.name}: solicitado ${wantQty}, disponível ${available} (${reserved} reservado(s)).`
-            });
-          }
-        }
-
-        if (stockErrors.length > 0) {
-          return {
-            statusCode: 400,
-            body: JSON.stringify({
-              message: 'Estoque insuficiente. Não é possível vender ou reservar acima do disponível.',
-              errors: stockErrors
-            })
-          };
-        }
-
         const numericId = parseInt(`${Date.now().toString().slice(-8)}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`);
 
         const sale = {
@@ -229,20 +194,7 @@ exports.handler = async (event, context) => {
         // Atualizar estoque em massa
         const bulkOps = Array.from(demand.entries()).map(([productId, wantQty]) => ({
           updateOne: {
-            filter: {
-              _id: new ObjectId(productId),
-              $expr: {
-                $gte: [
-                  {
-                    $subtract: [
-                      { $ifNull: ['$quantity', 0] },
-                      { $ifNull: ['$reserved', 0] }
-                    ]
-                  },
-                  wantQty
-                ]
-              }
-            },
+            filter: { _id: new ObjectId(productId) },
             update: saleStatus === 'RESERVED'
               ? { $inc: { reserved: wantQty } }
               : { $inc: { quantity: -wantQty } }
@@ -251,14 +203,12 @@ exports.handler = async (event, context) => {
 
         const bulkResult = await productsCol.bulkWrite(bulkOps);
         
-        // Verificar se alguma atualização falhou
         if (bulkResult.matchedCount !== demand.size) {
           await sales.deleteOne({ _id: result.insertedId });
-          // Reverter as alterações que foram aplicadas
           return {
             statusCode: 409,
             body: JSON.stringify({
-              message: 'Conflito de estoque. Outra operação alterou o saldo. Tente novamente.'
+              message: 'Conflito de estoque. Produto não encontrado. Tente novamente.'
             })
           };
         }

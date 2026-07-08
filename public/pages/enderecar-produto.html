@@ -705,7 +705,7 @@
       document.addEventListener("DOMContentLoaded", async () => {
         try {
           [products, warehouseAddresses] = await Promise.all([
-            BuildFlow.getProducts(),
+            BuildFlow.getProducts({ limit: 'all' }),
             BuildFlow.getWarehouseAddresses(),
           ]);
           populateAddressSelect();

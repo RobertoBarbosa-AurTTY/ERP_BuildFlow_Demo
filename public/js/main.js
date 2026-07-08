@@ -809,9 +809,9 @@ const BuildFlow = {
 
   /** Estoque livre para venda ou reserva: físico − reservado */
   getProductAvailableStock(product) {
-    const qty = Math.max(0, Number(product?.quantity) || 0);
+    const qty = Number(product?.quantity) || 0;
     const reserved = Math.max(0, Number(product?.reserved) || 0);
-    return Math.max(0, qty - reserved);
+    return qty - reserved;
   },
 
   findProductById(products, id) {
@@ -841,17 +841,18 @@ const BuildFlow = {
       const maxLine = Math.max(0, available - others);
       const reserved = Math.max(0, Number(product.reserved) || 0);
       const physical = Math.max(0, Number(product.quantity) || 0);
+      const deficit = total - available;
       let message;
       if (available === 0) {
-        message = `${product.name}: sem unidades disponíveis (${reserved} reservada(s) de ${physical} no estoque).`;
+        message = `${product.name}: sem unidades disponíveis (${reserved} reservada(s) de ${physical} no estoque). A venda gerará saldo negativo de ${deficit} un.`;
       } else if (others > 0) {
-        message = `${product.name}: no carrinho já há ${others} un.; máximo adicional: ${maxLine} (${available} disponível(is)).`;
+        message = `${product.name}: no carrinho já há ${others} un.; máximo adicional: ${maxLine} (${available} disponível(is)). A venda excederá em ${deficit} un.`;
       } else {
-        message = `${product.name}: máximo ${maxLine} un. disponível(is) (${reserved} reservada(s)).`;
+        message = `${product.name}: máximo ${maxLine} un. disponível(is) (${reserved} reservada(s)). A venda excederá em ${deficit} un.`;
       }
-      return { ok: false, available, maxLine, others, message };
+      return { ok: true, warning: true, available, maxLine, others, message };
     }
-    return { ok: true, available, maxLine: qty, others };
+    return { ok: true, warning: false, available, maxLine: qty, others };
   },
 
   validateCartAgainstStock(cart, products) {
@@ -864,6 +865,7 @@ const BuildFlow = {
     }
 
     const errors = [];
+    const warnings = [];
     for (const [id, requested] of demand) {
       const product = this.findProductById(products, id);
       if (!product) {
@@ -876,16 +878,19 @@ const BuildFlow = {
       if (requested > available) {
         const reserved = Math.max(0, Number(product.reserved) || 0);
         const physical = Math.max(0, Number(product.quantity) || 0);
-        errors.push({
+        const deficit = requested - available;
+        warnings.push({
           productName: product.name,
           requested,
           available,
           reserved,
-          message: `${product.name}: ${requested} un. solicitada(s), ${available} disponível(is) (${reserved} reservada(s) de ${physical}).`,
+          deficit,
+          message: `${product.name}: ${requested} un. solicitada(s), ${available} disponível(is) (${reserved} reservada(s) de ${physical}). Saldo negativo de ${deficit} un. após a venda.`,
         });
       }
     }
-    return { ok: errors.length === 0, errors };
+    if (errors.length > 0) return { ok: false, errors, warnings };
+    return { ok: true, errors: [], warnings };
   },
 
   // Endereçamento WMS
@@ -1700,7 +1705,7 @@ const BuildFlow = {
   },
 
   async getWmsSummary() {
-    const products = await this.getProducts();
+    const products = await this.getProducts({ limit: 'all' });
     const withoutAddress = products.filter(
       (p) => !this.formatShelfAddress(this.getProductLocation(p)),
     ).length;

@@ -21,18 +21,22 @@ exports.handler = async (event, context) => {
         let query = {};
 
         if (search) {
+          const cleanSearch = search.replace(/^[#@.\-_\s]+/, '').trim();
           query.$or = [
-            { name: { $regex: search, $options: "i" } },
-            { sku: { $regex: search, $options: "i" } },
-            { barcode: { $regex: search, $options: "i" } },
-            { supplier: { $regex: search, $options: "i" } },
+            { name: { $regex: cleanSearch, $options: "i" } },
+            { sku: { $regex: cleanSearch, $options: "i" } },
+            { barcode: { $regex: cleanSearch, $options: "i" } },
+            { supplier: { $regex: cleanSearch, $options: "i" } },
           ];
+          if (/^[0-9a-fA-F]{24}$/.test(cleanSearch)) {
+            query.$or.push({ _id: new ObjectId(cleanSearch) });
+          }
         }
         if (category && category !== "all") query.category = category;
         if (status && status !== "all") query.status = status;
 
         const pageNum = Math.max(1, parseInt(page, 10));
-        const limitNum = limit === "all" ? 0 : Math.min(100, Math.max(1, parseInt(limit, 10)));
+        const limitNum = limit === "all" ? 0 : Math.min(10000, Math.max(1, parseInt(limit, 10)));
         const skip = limitNum === 0 ? 0 : (pageNum - 1) * limitNum;
 
         // Executar count e find em paralelo
@@ -40,6 +44,8 @@ exports.handler = async (event, context) => {
           products.countDocuments(query),
           products.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum).toArray()
         ]);
+
+        const totalPages = limitNum === 0 ? 1 : Math.ceil(totalCount / limitNum);
 
         return { 
           statusCode: 200, 
@@ -49,7 +55,7 @@ exports.handler = async (event, context) => {
               page: pageNum,
               limit: limitNum,
               total: totalCount,
-              totalPages: Math.ceil(totalCount / limitNum)
+              totalPages
             }
           }) 
         };

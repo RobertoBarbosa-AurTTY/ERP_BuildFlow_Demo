@@ -20,7 +20,7 @@ exports.handler = async (event) => {
     const query = {};
     if (sku) query.sku = sku;
 
-    const max = Math.min(parseInt(limit, 10) || 50, 100);
+    const max = limit === "all" ? 0 : Math.min(10000, parseInt(limit, 10) || 50);
     const data = await db
       .collection("movimentacoes_estoque")
       .find(query)

@@ -1180,7 +1180,7 @@
                         status: statusFilter.value
                     };
 
-                    allProducts = await BuildFlow.getProducts({});
+                    allProducts = await BuildFlow.getProducts({ limit: 'all' });
                     await calculateStagnantProducts();
                     const filteredProducts = await BuildFlow.getProducts(params);
                     calculateMetrics(allProducts, stagnantProducts);
@@ -1494,8 +1494,7 @@
                 const editProdCategorySelect = document.getElementById('editProdCategory');
                 
                 try {
-                    const allProducts = await BuildFlow.getProducts({});
-                    const categories = [...new Set(allProducts.map(p => p.category).filter(c => c))].sort();
+                    const allProducts = await BuildFlow.getProducts({ limit: 'all' });
                     
                     editProdCategorySelect.innerHTML = '';
                     categories.forEach(cat => {
@@ -1605,7 +1604,7 @@
 
             async function updateAllProductDates() {
                 try {
-                    const allProducts = await BuildFlow.getProducts({});
+                    const allProducts = await BuildFlow.getProducts({ limit: 'all' });
                     const today = new Date().toISOString();
                     
                     for (const product of allProducts) {
