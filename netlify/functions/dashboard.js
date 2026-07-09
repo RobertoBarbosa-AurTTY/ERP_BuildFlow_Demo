@@ -11,6 +11,9 @@ exports.handler = async (event, context) => {
     const db = await getDb();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const startOfPrevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const endOfPrevMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const fourteenDaysFromNow = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
@@ -31,14 +34,15 @@ exports.handler = async (event, context) => {
       nearExpiryProducts,
       recentStockMovements,
       overduePayables,
-      dueSoonPayables
+      dueSoonPayables,
+      prevMonthSales
     ] = await Promise.all([
       // 1. Notificações dispensadas
       db.collection('dismissed_notifications').find({}, { projection: { notificationKey: 1, _id: 0 } }).toArray(),
       
-      // 2. Vendas do dia
+      // 2. Vendas do mês
       db.collection('sales').find(
-        { createdAt: { $gte: today }, status: 'FINALIZED' },
+        { createdAt: { $gte: startOfMonth }, status: 'FINALIZED' },
         { projection: { total: 1, items: 1, _id: 0 } }
       ).toArray(),
       
@@ -153,7 +157,13 @@ exports.handler = async (event, context) => {
         }, {
           projection: { description: 1, supplier: 1, amount: 1, dueDate: 1, _id: 1 }
         }).sort({ dueDate: 1 }).limit(10).toArray();
-      })()
+      })(),
+
+      // 16. Vendas do mês anterior (comparativo)
+      db.collection('sales').find(
+        { createdAt: { $gte: startOfPrevMonth, $lt: endOfPrevMonth }, status: 'FINALIZED' },
+        { projection: { total: 1, items: 1, _id: 0 } }
+      ).toArray()
     ]);
 
     // Calcular faturamento e lucro
@@ -172,6 +182,28 @@ exports.handler = async (event, context) => {
         estimatedProfit += saleTotal * 0.25;
       }
     }
+
+    // Comparativo com mês anterior
+    const prevRevenue = prevMonthSales.reduce((acc, sale) => acc + (Number(sale.total) || 0), 0);
+    const revenueChange = prevRevenue > 0 ? ((revenue - prevRevenue) / prevRevenue * 100).toFixed(1) : null;
+
+    // Top 10 produtos mais vendidos no mês
+    const productSales = {};
+    for (const sale of dailySales) {
+      if (sale.items && sale.items.length > 0) {
+        for (const item of sale.items) {
+          const name = item.name || 'Produto';
+          if (!productSales[name]) {
+            productSales[name] = { name, qty: 0, revenue: 0, category: item.category || '' };
+          }
+          productSales[name].qty += Number(item.qty) || 0;
+          productSales[name].revenue += Number(item.lineTotal) || (Number(item.price) || 0) * (Number(item.qty) || 0);
+        }
+      }
+    }
+    const topProducts = Object.values(productSales)
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 10);
 
     // Preparar notificações
     const dismissedKeys = new Set(dismissedNotifications.map(item => item.notificationKey));
@@ -238,6 +270,9 @@ exports.handler = async (event, context) => {
         recentSales,
         recentProducts,
         notifications: activeNotifications,
+        prevRevenue,
+        revenueChange,
+        topProducts,
       }),
     };
   } catch (error) {

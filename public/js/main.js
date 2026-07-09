@@ -1803,15 +1803,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   BuildFlow.initGlobalSearch();
   BuildFlow.initGlobalNotifications();
   BuildFlow.initUserMenu();
-
-  // Global Logout listener
-  const logoutBtn = document.getElementById("logoutBtn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      BuildFlow.logout();
-    });
-  }
 });
 
 // Animation CSS

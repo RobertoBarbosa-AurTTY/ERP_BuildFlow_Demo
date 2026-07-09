@@ -14,6 +14,12 @@
       href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
     />
     <style>
+      @media (max-width: 1200px) {
+        .insights-grid { grid-template-columns: 1fr !important; }
+      }
+      @media (max-width: 500px) {
+        #insightComparisonDetail { flex-direction: column !important; }
+      }
       @media (max-width: 768px) {
         .dashboard-tables-grid .card-table:last-child table {
           table-layout: fixed !important;
@@ -121,17 +127,6 @@
                 ><span>Configurações</span></a
               >
             </li>
-            <li class="nav-item" style="margin-top: 20px">
-              <a
-                href="#"
-                id="logoutBtn"
-                class="nav-link"
-                style="color: var(--red)"
-              >
-                <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                <span>Sair do Sistema</span>
-              </a>
-            </li>
           </ul>
         </nav>
       </aside>
@@ -172,44 +167,44 @@
           <p id="dashboardDateLine">Carregando resumo do dia...</p>
         </header>
 
-        <section class="grid-stats">
-          <div class="card-stat">
-            <div class="stat-info">
-              <p>Faturamento Diário</p>
-              <h3 id="revenueText">Carregando...</h3>
+          <section class="grid-stats">
+            <div class="card-stat">
+              <div class="stat-info">
+                <p>Faturamento do Mês</p>
+                <h3 id="revenueText">Carregando...</h3>
+              </div>
+              <div class="stat-icon bg-blue-op">
+                <i class="fa-solid fa-wallet"></i>
+              </div>
             </div>
-            <div class="stat-icon bg-blue-op">
-              <i class="fa-solid fa-wallet"></i>
+            <div class="card-stat">
+              <div class="stat-info">
+                <p>Vendas do Mês</p>
+                <h3 id="salesCountText">Carregando...</h3>
+              </div>
+              <div class="stat-icon bg-emerald-op">
+                <i class="fa-solid fa-basket-shopping"></i>
+              </div>
             </div>
-          </div>
-          <div class="card-stat">
-            <div class="stat-info">
-              <p>Vendas Realizadas</p>
-              <h3 id="salesCountText">Carregando...</h3>
+            <div class="card-stat">
+              <div class="stat-info">
+                <p>Produtos em Baixa</p>
+                <h3 id="lowStockText">Carregando...</h3>
+              </div>
+              <div class="stat-icon bg-amber-op">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
             </div>
-            <div class="stat-icon bg-emerald-op">
-              <i class="fa-solid fa-basket-shopping"></i>
+            <div class="card-stat">
+              <div class="stat-info">
+                <p>Lucro do Mês (Est.)</p>
+                <h3 id="profitText">Carregando...</h3>
+              </div>
+              <div class="stat-icon bg-violet-op">
+                <i class="fa-solid fa-chart-simple"></i>
+              </div>
             </div>
-          </div>
-          <div class="card-stat">
-            <div class="stat-info">
-              <p>Produtos em Baixa</p>
-              <h3 id="lowStockText">Carregando...</h3>
-            </div>
-            <div class="stat-icon bg-amber-op">
-              <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
-          </div>
-          <div class="card-stat">
-            <div class="stat-info">
-              <p>Lucro Líquido (Est.)</p>
-              <h3 id="profitText">Carregando...</h3>
-            </div>
-            <div class="stat-icon bg-violet-op">
-              <i class="fa-solid fa-chart-simple"></i>
-            </div>
-          </div>
-        </section>
+          </section>
 
         <div class="dashboard-tables-grid">
           <section class="card-table">
@@ -298,6 +293,47 @@
             </div>
           </section>
         </div>
+
+        <section class="quick-access-section" style="margin-top: 32px;">
+          <div class="section-title">
+            <div class="section-title-inner">
+              <h3 style="display:flex;align-items:center;gap:10px;">
+                <span style="width:3px;height:18px;border-radius:2px;background:var(--brand);display:inline-block;"></span>
+                Insights de Vendas
+              </h3>
+              <p>Comparativo mensal e produtos mais vendidos no período.</p>
+            </div>
+          </div>
+          <div class="insights-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:20px;">
+            <!-- Card: Comparativo -->
+            <div style="background:linear-gradient(135deg, rgba(79,70,229,0.06) 0%, transparent 100%);border:1px solid var(--border);border-radius:20px;padding:24px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
+                <div>
+                  <p style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Comparativo Mensal</p>
+                  <h3 id="insightComparison" style="font-size:2rem;font-weight:800;letter-spacing:-0.02em;margin:0;line-height:1.1;">Carregando...</h3>
+                </div>
+                <div style="width:38px;height:38px;border-radius:10px;background:rgba(79,70,229,0.1);display:flex;align-items:center;justify-content:center;color:var(--brand);font-size:1rem;flex-shrink:0;">
+                  <i class="fa-solid fa-arrow-trend-up"></i>
+                </div>
+              </div>
+              <div id="insightComparisonDetail" style="display:flex;gap:16px;align-items:stretch;">Carregando...</div>
+            </div>
+
+            <!-- Card: Top 10 -->
+            <div style="background:linear-gradient(135deg, rgba(139,92,246,0.06) 0%, transparent 100%);border:1px solid var(--border);border-radius:20px;padding:24px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <div>
+                  <p style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px;">Top 10 Produtos</p>
+                  <h3 style="font-size:1rem;font-weight:700;margin:0;">Mais Vendidos do Mês</h3>
+                </div>
+                <div style="width:38px;height:38px;border-radius:10px;background:rgba(139,92,246,0.1);display:flex;align-items:center;justify-content:center;color:#8b5cf6;font-size:1rem;flex-shrink:0;">
+                  <i class="fa-solid fa-ranking-star"></i>
+                </div>
+              </div>
+              <div id="insightTopProducts" style="display:flex;flex-direction:column;gap:4px;max-height:320px;overflow-y:auto;">Carregando...</div>
+            </div>
+          </div>
+        </section>
 
         <section class="quick-access-section">
           <div class="section-title">
@@ -515,6 +551,79 @@
                         `;
               productsBody.appendChild(row);
             });
+          }
+
+          // 7. Renderizar Insights de Vendas
+          const comparisonEl = document.getElementById("insightComparison");
+          const comparisonDetail = document.getElementById("insightComparisonDetail");
+          const topProductsEl = document.getElementById("insightTopProducts");
+
+          if (data.topProducts && data.topProducts.length > 0) {
+            const monthName = new Date().toLocaleDateString("pt-BR", { month: "long" });
+            const prevMonthName = new Date(new Date().getFullYear(), new Date().getMonth() - 1).toLocaleDateString("pt-BR", { month: "long" });
+
+            if (data.revenueChange !== null) {
+              const change = parseFloat(data.revenueChange);
+              const isUp = change >= 0;
+              const signal = isUp ? '+' : '';
+              const color = isUp ? 'var(--emerald)' : 'var(--red)';
+              const icon = isUp ? 'arrow-up' : 'arrow-down';
+              comparisonEl.innerHTML = `${signal}${change.toFixed(1)}% <i class="fa-solid fa-${icon}" style="font-size:1rem;"></i>`;
+              comparisonEl.style.color = color;
+
+              const maxVal = Math.max(data.revenue || 0, data.prevRevenue || 0, 1);
+              const currPct = ((data.revenue || 0) / maxVal) * 100;
+              const prevPct = ((data.prevRevenue || 0) / maxVal) * 100;
+
+              comparisonDetail.innerHTML = `
+                <div style="flex:1;background:rgba(255,255,255,0.03);border-radius:12px;padding:12px 14px;border:1px solid var(--border);">
+                  <p style="font-size:0.6rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin:0 0 4px;">${monthName}</p>
+                  <p style="font-size:1.1rem;font-weight:800;margin:0;color:var(--text-primary);">R$ ${(data.revenue || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+                  <div style="margin-top:6px;height:3px;background:var(--bg-hover);border-radius:3px;overflow:hidden;">
+                    <div style="width:${currPct}%;height:100%;background:var(--brand);border-radius:3px;"></div>
+                  </div>
+                </div>
+                <div style="flex:1;background:rgba(255,255,255,0.03);border-radius:12px;padding:12px 14px;border:1px solid var(--border);">
+                  <p style="font-size:0.6rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin:0 0 4px;">${prevMonthName}</p>
+                  <p style="font-size:1.1rem;font-weight:800;margin:0;color:var(--text-secondary);">R$ ${(data.prevRevenue || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+                  <div style="margin-top:6px;height:3px;background:var(--bg-hover);border-radius:3px;overflow:hidden;">
+                    <div style="width:${prevPct}%;height:100%;background:var(--text-muted);border-radius:3px;"></div>
+                  </div>
+                </div>
+              `;
+            } else {
+              comparisonEl.textContent = "—";
+              comparisonEl.style.color = "var(--text-muted)";
+              comparisonDetail.innerHTML = `<div style="flex:1;text-align:center;padding:12px;color:var(--text-muted);font-size:0.8rem;">Sem vendas no mês anterior para comparar.</div>`;
+            }
+
+            const topRevenue = data.topProducts[0]?.revenue || 1;
+            const rankColors = ['#10b981', '#6366f1', '#f59e0b'];
+            topProductsEl.innerHTML = data.topProducts.map((p, i) => {
+              const barPct = Math.max(2, (p.revenue / topRevenue) * 100);
+              const isTop3 = i < 3;
+              return `
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;transition:background 0.15s;cursor:default;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
+                <span style="width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800;flex-shrink:0;${isTop3 ? `background:${rankColors[i]};color:white;` : 'background:var(--bg-hover);color:var(--text-muted);'}">${i + 1}</span>
+                <div style="flex:1;min-width:0;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                    <span style="font-size:0.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-primary);">${BuildFlow.escapeHtml(p.name)}</span>
+                    <span style="font-size:0.78rem;font-weight:700;color:var(--emerald);flex-shrink:0;margin-left:8px;">R$ ${(p.revenue || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="flex:1;height:4px;background:var(--bg-hover);border-radius:4px;overflow:hidden;">
+                      <div style="width:${barPct}%;height:100%;background:${isTop3 ? rankColors[i] : 'var(--border)'};border-radius:4px;transition:width 0.3s;"></div>
+                    </div>
+                    <span style="font-size:0.65rem;color:var(--text-muted);font-weight:600;flex-shrink:0;white-space:nowrap;">${p.qty} un · ${BuildFlow.escapeHtml(p.category)}</span>
+                  </div>
+                </div>
+              </div>
+            `}).join("");
+          } else {
+            comparisonEl.textContent = "Sem dados";
+            comparisonEl.style.color = "var(--text-muted)";
+            comparisonDetail.innerHTML = `<div style="flex:1;text-align:center;padding:12px;color:var(--text-muted);font-size:0.8rem;">Nenhuma venda registrada no mês atual.</div>`;
+            topProductsEl.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:0.85rem;">Nenhum produto vendido no período.</div>';
           }
         } catch (error) {
           console.error("Dashboard load error:", error);

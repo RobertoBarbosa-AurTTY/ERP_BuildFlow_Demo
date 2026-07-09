@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BuildFlow - Manual do Sistema</title>
+    <link rel="stylesheet" href="../css/style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" />
+    <style>
+        body {
+            background: var(--bg-page);
+            color: var(--text-primary);
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .library-header {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 20px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .library-header h1 {
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0;
+            color: var(--brand);
+        }
+        .library-header h1 i {
+            font-size: 1.6rem;
+        }
+        .library-header .close-btn {
+            background: var(--bg-hover);
+            border: none;
+            color: var(--text-muted);
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .library-header .close-btn:hover {
+            background: var(--border);
+            color: var(--text-primary);
+        }
+        .library-container {
+            display: flex;
+            flex: 1;
+        }
+        .library-sidebar {
+            width: 260px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            padding: 20px 0;
+            overflow-y: auto;
+            flex-shrink: 0;
+            position: sticky;
+            top: 81px;
+            height: calc(100vh - 81px);
+        }
+        .library-sidebar .search-box {
+            padding: 0 16px 16px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 12px;
+        }
+        .library-sidebar .search-box input {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .library-sidebar .search-box input:focus {
+            border-color: var(--brand);
+        }
+        .library-sidebar nav a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.15s;
+            border-left: 3px solid transparent;
+        }
+        .library-sidebar nav a:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        .library-sidebar nav a.active {
+            color: var(--brand);
+            background: rgba(99,102,241,0.08);
+            border-left-color: var(--brand);
+        }
+        .library-sidebar nav a i {
+            width: 20px;
+            text-align: center;
+            font-size: 1rem;
+        }
+        .library-content {
+            flex: 1;
+            padding: 40px;
+            max-width: 900px;
+        }
+        .library-content .chapter {
+            display: none;
+        }
+        .library-content .chapter.active {
+            display: block;
+        }
+        .library-content .chapter h2 {
+            font-size: 1.8rem;
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-primary);
+        }
+        .library-content .chapter .subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 32px;
+        }
+        .library-content .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+        }
+        .library-content .card h3 {
+            font-size: 1.1rem;
+            margin: 0 0 12px 0;
+            color: var(--text-primary);
+        }
+        .library-content .card p {
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin: 0 0 12px 0;
+        }
+        .library-content .card ol, .library-content .card ul {
+            color: var(--text-muted);
+            line-height: 1.9;
+            padding-left: 24px;
+            margin: 0 0 12px 0;
+        }
+        .library-content .card li {
+            margin-bottom: 4px;
+        }
+        .library-content .card strong {
+            color: var(--text-primary);
+        }
+        .library-content .card .tag {
+            display: inline-block;
+            background: rgba(99,102,241,0.12);
+            color: var(--brand);
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        @media (max-width: 768px) {
+            .library-sidebar {
+                display: none;
+            }
+            .library-content {
+                padding: 24px 16px;
+            }
+            .library-header {
+                padding: 14px 16px;
+            }
+            .library-header h1 {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="library-header">
+        <h1><i class="fa-solid fa-book-open"></i> Manual do Sistema</h1>
+        <button class="close-btn" onclick="window.location.href='/dashboard'" title="Fechar"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <div class="library-container">
+        <aside class="library-sidebar">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Pesquisar tópicos..." oninput="filterTopics(this.value)">
+            </div>
+            <nav id="chapterNav">
+                <a href="#" class="active" data-chapter="pdv"><i class="fa-solid fa-cash-register"></i> PDV</a>
+                <a href="#" data-chapter="estoque"><i class="fa-solid fa-warehouse"></i> Estoque</a>
+                <a href="#" data-chapter="entrada"><i class="fa-solid fa-arrow-right-to-bracket"></i> Entrada</a>
+                <a href="#" data-chapter="etiqueta-precificacao"><i class="fa-solid fa-tag"></i> Etiqueta Precificação</a>
+                <a href="#" data-chapter="etiqueta-prateleira"><i class="fa-solid fa-barcode"></i> Etiqueta Prateleira</a>
+                <a href="#" data-chapter="relatorios"><i class="fa-solid fa-file-invoice"></i> Relatórios</a>
+                <a href="#" data-chapter="historico-vendas"><i class="fa-solid fa-clock-rotate-left"></i> Histórico de Vendas</a>
+                <a href="#" data-chapter="contas-pagar"><i class="fa-solid fa-file-invoice-dollar"></i> Contas a Pagar</a>
+                <a href="#" data-chapter="importacao"><i class="fa-solid fa-file-import"></i> Importar Fornecedor</a>
+                <a href="#" data-chapter="enderecar"><i class="fa-solid fa-location-dot"></i> Endereçar Produto</a>
+                <a href="#" data-chapter="criar-endereco"><i class="fa-solid fa-plus-circle"></i> Criar Endereço</a>
+                <a href="#" data-chapter="dashboard"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+                <a href="#" data-chapter="configuracoes"><i class="fa-solid fa-gear"></i> Configurações</a>
+            </nav>
+        </aside>
+
+        <div class="library-content">
+            <div class="chapter active" id="ch-pdv">
+                <h2><i class="fa-solid fa-cash-register"></i> PDV (Ponto de Venda)</h2>
+                <p class="subtitle">Tudo sobre vendas no sistema</p>
+
+                <div class="card">
+                    <h3>Como realizar uma venda</h3>
+                    <ol>
+                        <li>Acesse <strong>PDV</strong> no menu lateral.</li>
+                        <li>Digite o código de barras, SKU ou nome do produto no campo de busca.</li>
+                        <li>Selecione o produto na lista de resultados para adicioná-lo ao carrinho.</li>
+                        <li>Repita até adicionar todos os itens desejados.</li>
+                        <li>Clique em <strong>Finalizar Venda</strong>.</li>
+                        <li>Escolha a forma de pagamento e confirme.</li>
+                    </ol>
+                </div>
+
+                <div class="card">
+                    <h3>Venda com estoque negativo</h3>
+                    <p>Caso um produto esteja sem estoque, o sistema exibirá um aviso e solicitará confirmação para prosseguir. É possível vender mesmo com saldo negativo.</p>
+                </div>
+
+                <div class="card">
+                    <h3>Descontos</h3>
+                    <p>No carrinho, é possível aplicar desconto percentual ou por valor em cada item individualmente.</p>
+                </div>
+            </div>
+
+            <div class="chapter" id="ch-estoque">
+                <h2><i class="fa-solid fa-warehouse"></i> Estoque</h2>
+                <p class="subtitle">Gerenciamento de produtos</p>
+
+                <div class="card">
+                    <h3>Visualizar produtos</h3>
+                    <p>A página de estoque exibe todos os produtos cadastrados. Use os filtros por categoria, status e busca para encontrar produtos específicos.</p>
+                </div>
+
+                <div class="card">
+                    <h3>Cadastrar / Editar produto</h3>
+                    <ol>
+                        <li>Clique em <strong>+ Novo Produto</strong> para cadastrar.</li>
+                        <li>Preencha os campos obrigatórios (nome, quantidade, preço).</li>
+                        <li>O campo <strong>SKU</strong> deve ter exatamente 9 dígitos numéricos.</li>
+                        <li>Para editar, clique no produto na tabela e depois em <strong>Editar</strong>.</li>
+                        <li>É possível adicionar uma URL de imagem para o produto — o preview aparece no topo do formulário.</li>
+                    </ol>
+                </div>
+
+                <div class="card">
+                    <h3>Custo Unitário</h3>
+                    <p>O campo <strong>Custo Unitário</strong> é usado para calcular a margem de lucro e o lucro total nas vendas. Se não for preenchido, o sistema estima 70% do preço de venda como custo.</p>
+                </div>
+
+                <div class="card">
+                    <h3>Excluir produto</h3>
+                    <p>Na tela de detalhes do produto, clique em <strong>Excluir</strong> e confirme a ação.</p>
+                </div>
+
+                <div class="card">
+                    <h3>Gerenciar categorias</h3>
+                    <p>Clique no ícone de engrenagem ao lado do filtro de categorias para abrir o painel de configurações do estoque. Lá é possível ativar/desativar colunas da tabela e gerenciar categorias (adicionar ou excluir).</p>
+                </div>
+            </div>
+
+            <div class="chapter" id="ch-entrada">
+                <h2><i class="fa-solid fa-arrow-right-to-bracket"></i> Entrada de Produtos</h2>
+                <p class="subtitle">Registrar novos produtos no estoque</p>
+
+                <div class="card">
+                    <h3>Registrar entrada</h3>
+                    <ol>
+                        <li>Acesse <strong>Entrada</strong> no menu lateral.</li>
+                        <li>Preencha os dados do produto (nome, quantidade, preço de custo, etc.).</li>
+                        <li>O campo <strong>SKU</strong> deve ter 9 dígitos numéricos.</li>
+                        <li>Selecione a categoria e fornecedor.</li>
+                        <li>Clique em <strong>Adicionar ao Lote</strong> para incluir na lista de entrada.</li>
+                        <li>Após adicionar todos os itens, clique em <strong>Finalizar Entrada</strong>.</li>
+                    </ol>
+                    <p>Ao finalizar, todos os produtos são cadastrados no estoque automaticamente.</p>
+                </div>
+            </div>
+
+            <div class="chapter" id="ch-etiqueta-precificacao">
+                <h2><i class="fa-solid fa-tag"></i> Etiqueta de Precificação</h2>
+                <p class="subtitle">Impressão de etiquetas de preço</p>
+
+                <div class="card">
+                    <h3>Gerar etiquetas de preço</h3>
+                    <ol>
+                        <li>Acesse <strong>Etiqueta Precificação</strong> no menu.</li>
+                        <li>Selecione produtos usando os filtros de busca.</li>
+                        <li>Marque os produtos desejados e clique em <strong>Gerar Etiquetas</strong>.</li>
+                        <li>As etiquetas são exibidas para impressão com nome, preço e código de barras.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="chapter" id="ch-etiqueta-prateleira">
+                <h2><i class="fa-solid fa-barcode"></i> Etiqueta de Prateleira</h2>
+                <p class="subtitle">Impressão de etiquetas de prateleira</p>
+
+                <div class="card">
+                    <h3>Gerar etiquetas de prateleira</h3>
+                    <ol>
+                        <li>Acesse <strong>Etiqueta Prateleira</strong> no menu.</li>
+                        <li>Busque e selecione os produtos.</li>
+                        <li>Clique em <strong>Gerar Etiquetas</strong> para imprimir.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="chapter" id="ch-relatorios">
+                <h2><i class="fa-solid fa-file-invoice"></i> Relatórios</h2>
+                <p class="subtitle">Análise de dados do sistema</p>
+
+                <div class="card">
+                    <h3>Relatório de vendas</h3>
+                    <p>Filtre por período e visualize o resumo de vendas, incluindo valores, formas de pagamento e produtos mais vendidos.</p>
+                </div>
+
+                <div class="card">
+                    <h3>Exportar CSV</h3>
+                    <p>Na página de estoque, use o botão <strong>Exportar CSV</strong> para baixar uma planilha com todos os produtos, incluindo custos e lucros.</p>
+                </div>
+            </div>
+
+            <div class="chapter" id="ch-historico-vendas">
+                <h2><i class="fa-solid fa-clock-rotate-left"></i> Histórico de Vendas</h2>
+                <p class="subtitle">Consulta de vendas realizadas</p>
+
+                <div class="card">
+                    <h3>Consultar vendas realizadas</h3>
+                    <ol>
+                        <li>Acesse <strong>Histórico de Vendas</strong> no menu.</li>
+                        <li>Use os filtros por data, forma de pagamento ou busca textual.</li>
+                        <li>Clique em uma venda para ver os detalhes completos.</li>
+                        <li>É possível estornar uma venda se necessário.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="chapter" id="ch-contas-pagar">
+                <h2><i class="fa-solid fa-file-invoice-dollar"></i> Contas a Pagar</h2>
+                <p class="subtitle">Gerenciamento financeiro</p>
+
+                <div class="card">
+                    <h3>Gerenciar contas</h3>
+                    <ol>
+                        <li>Acesse <strong>Contas a Pagar</strong> no menu.</li>
+                        <li>Clique em <strong>+ Nova Conta</strong> para cadastrar.</li>
+                        <li>Preencha descrição, valor, vencimento e categoria.</li>
+                        <li>Use os filtros para visualizar contas pendentes, pagas ou vencidas.</li>
+                        <li>Clique em uma conta para marcar como paga ou editar.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="chapter" id="ch-importacao">
+                <h2><i class="fa-solid fa-file-import"></i> Importar Fornecedor</h2>
+                <p class="subtitle">Importação em lote de produtos</p>
+
+                <div class="card">
+                    <h3>Importar produtos do fornecedor</h3>
+                    <ol>
+                        <li>Acesse <strong>Importar Fornecedor</strong> no menu.</li>
+                        <li>Faça upload do arquivo CSV ou XML do fornecedor.</li>
+                        <li>O sistema processa e exibe os produtos para revisão.</li>
+                        <li>Confirme a importação para adicionar os produtos ao estoque.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="chapter" id="ch-enderecar">
+                <h2><i class="fa-solid fa-location-dot"></i> Endereçar Produto</h2>
+                <p class="subtitle">Atribuir localização física no depósito</p>
+
+                <div class="card">
+                    <h3>Atribuir localização física</h3>
+                    <ol>
+                        <li>Acesse <strong>Endereçar Produto</strong> no menu.</li>
+                        <li>Busque o produto e selecione o endereço (corredor, prateleira, nível, posição).</li>
+                        <li>Confirme para salvar a localização.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="chapter" id="ch-criar-endereco">
+                <h2><i class="fa-solid fa-plus-circle"></i> Criar Endereço</h2>
+                <p class="subtitle">Cadastrar novas localizações</p>
+
+                <div class="card">
+                    <h3>Cadastrar novos endereços</h3>
+                    <ol>
+                        <li>Acesse <strong>Criar Endereço</strong> no menu.</li>
+                        <li>Defina o depósito, corredor, prateleira, nível e posição.</li>
+                        <li>Clique em <strong>Criar</strong> para adicionar ao sistema.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="chapter" id="ch-dashboard">
+                <h2><i class="fa-solid fa-chart-line"></i> Dashboard</h2>
+                <p class="subtitle">Visão geral do negócio</p>
+
+                <div class="card">
+                    <h3>Visão geral</h3>
+                    <p>O dashboard exibe:</p>
+                    <ul>
+                        <li><strong>Faturamento diário e mensal</strong></li>
+                        <li><strong>Lucro líquido</strong> (considerando custo dos produtos)</li>
+                        <li><strong>Produtos mais vendidos</strong></li>
+                        <li><strong>Estoque baixo e produtos parados</strong></li>
+                        <li><strong>Vendas recentes</strong></li>
+                    </ul>
+                    <p>Os valores de lucro consideram o custo unitário cadastrado no produto.</p>
+                </div>
+            </div>
+
+            <div class="chapter" id="ch-configuracoes">
+                <h2><i class="fa-solid fa-gear"></i> Configurações</h2>
+                <p class="subtitle">Ajustes do sistema</p>
+
+                <div class="card">
+                    <h3>Perfil da empresa</h3>
+                    <p>Configure nome da empresa, endereço, telefone e outras informações na página de configurações.</p>
+                </div>
+
+                <div class="card">
+                    <h3>Notificações</h3>
+                    <p>O sistema emite notificações para estoque baixo, produtos parados e vencimentos próximos. O sininho no topo exibe alertas não lidos.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('#chapterNav a').forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                document.querySelectorAll('#chapterNav a').forEach(a => a.classList.remove('active'));
+                link.classList.add('active');
+                document.querySelectorAll('.chapter').forEach(ch => ch.classList.remove('active'));
+                document.getElementById('ch-' + link.dataset.chapter).classList.add('active');
+            });
+        });
+
+        function filterTopics(value) {
+            const term = value.toLowerCase().trim();
+            document.querySelectorAll('#chapterNav a').forEach(link => {
+                const text = link.textContent.toLowerCase();
+                link.style.display = term && !text.includes(term) ? 'none' : '';
+            });
+        }
+
+        const hash = window.location.hash.slice(1);
+        if (hash) {
+            const target = document.querySelector(`#chapterNav a[data-chapter="${hash}"]`);
+            if (target) target.click();
+        }
+    </script>
+</body>
+</html>
