@@ -10,6 +10,93 @@
   to = "/.netlify/functions/:splat"
   status = 200
 
+# Clean URLs
+[[redirects]]
+  from = "/dashboard"
+  to = "/dashboard.html"
+  status = 200
+
+[[redirects]]
+  from = "/pos"
+  to = "/pages/saidas.html"
+  status = 200
+
+[[redirects]]
+  from = "/stock"
+  to = "/pages/estoque.html"
+  status = 200
+
+[[redirects]]
+  from = "/receiving"
+  to = "/pages/entradas.html"
+  status = 200
+
+[[redirects]]
+  from = "/price-tag"
+  to = "/pages/etiqueta-precificacao.html"
+  status = 200
+
+[[redirects]]
+  from = "/shelf-tag"
+  to = "/pages/etiqueta-prateleira.html"
+  status = 200
+
+[[redirects]]
+  from = "/reports"
+  to = "/pages/relatorios.html"
+  status = 200
+
+[[redirects]]
+  from = "/history"
+  to = "/pages/historico-vendas.html"
+  status = 200
+
+[[redirects]]
+  from = "/bills"
+  to = "/pages/contas-a-pagar.html"
+  status = 200
+
+[[redirects]]
+  from = "/import"
+  to = "/pages/importacao-fornecedor.html"
+  status = 200
+
+[[redirects]]
+  from = "/address"
+  to = "/pages/enderecar-produto.html"
+  status = 200
+
+[[redirects]]
+  from = "/new-address"
+  to = "/pages/criar-endereco.html"
+  status = 200
+
+[[redirects]]
+  from = "/settings"
+  to = "/pages/configuracoes.html"
+  status = 200
+
+[[redirects]]
+  from = "/manual"
+  to = "/pages/manual.html"
+  status = 200
+
+[[redirects]]
+  from = "/messages"
+  to = "/pages/mensagens.html"
+  status = 200
+
+[[redirects]]
+  from = "/notices"
+  to = "/pages/avisos.html"
+  status = 200
+
+# Block direct access to /pages/* — only clean URLs allowed
+[[redirects]]
+  from = "/pages/*"
+  to = "/index.html"
+  status = 404
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

@@ -69,9 +69,38 @@
             cursor: pointer;
         }
 
+        #inventoryTable {
+            border-collapse: separate;
+            border-spacing: 0 6px;
+        }
+
+        #inventoryTable thead th {
+            padding: 12px 14px;
+            font-size: 0.78rem;
+            letter-spacing: 0.03em;
+        }
+
+        #inventoryTable thead th,
+        #inventoryTable tbody td {
+            border-right: 1px solid var(--border);
+        }
+        #inventoryTable thead th:last-child,
+        #inventoryTable tbody td:last-child {
+            border-right: none;
+        }
+
+        #inventoryTable tbody td {
+            padding: 12px 14px;
+            vertical-align: middle;
+        }
+
         #inventoryTable tbody tr {
             cursor: pointer;
             transition: background 0.2s;
+            border-bottom: 1px solid var(--border);
+        }
+        #inventoryTable tbody tr:last-child {
+            border-bottom: none;
         }
 
         #inventoryTable tbody tr:hover {
@@ -330,8 +359,8 @@
         }
         .stats-grid .card-stat p {
             color: var(--text-muted);
-            font-size: 0.75rem;
-            font-weight: 600;
+            font-size: 0.7rem;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -412,14 +441,14 @@
             #inventoryTable th,
             #inventoryTable td {
                 white-space: nowrap !important;
-                padding: 8px 8px !important;
+                padding: 10px 10px !important;
                 font-size: 0.7rem !important;
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
             #inventoryTable th {
                 font-size: 0.65rem !important;
-                padding: 8px 8px !important;
+                padding: 10px 10px !important;
             }
             #inventoryTable th:nth-child(2),
             #inventoryTable td:nth-child(2),
@@ -622,21 +651,21 @@
             </header>
 
             <section class="stats-grid">
-                <div class="card-stat" style="background: var(--bg-card); padding: 20px; border-radius: 16px; border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; text-align: center;">
-                    <h3 id="totalStockValue" style="font-size: 1.25rem; color: var(--emerald); line-height: 1.2; margin-bottom: 8px;">R$ 0,00</h3>
-                    <p style="color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Valor Total em Estoque</p>
+                <div class="card-stat">
+                    <h3 id="totalStockValue" style="color: var(--emerald);">R$ 0,00</h3>
+                    <p>Valor Total em Estoque</p>
                 </div>
-                <div class="card-stat" id="stagnantCard" onclick="showStagnantModal()" style="background: var(--bg-card); padding: 20px; border-radius: 16px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; text-align: center;">
-                    <h3 id="stagnantCount" style="font-size: 1.25rem; color: var(--amber); line-height: 1.2; margin-bottom: 8px;">0</h3>
-                    <p style="color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Produtos Parados</p>
+                <div class="card-stat" id="stagnantCard" onclick="showStagnantModal()" style="cursor: pointer;">
+                    <h3 id="stagnantCount" style="color: var(--amber);">0</h3>
+                    <p>Produtos Parados</p>
                 </div>
-                <div class="card-stat" id="lowStockCard" onclick="showLowStockModal()" style="background: var(--bg-card); padding: 20px; border-radius: 16px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; text-align: center;">
-                    <h3 id="lowStockCount" style="font-size: 1.25rem; color: var(--red); line-height: 1.2; margin-bottom: 8px;">0</h3>
-                    <p style="color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Produtos em Baixa</p>
+                <div class="card-stat" id="lowStockCard" onclick="showLowStockModal()" style="cursor: pointer;">
+                    <h3 id="lowStockCount" style="color: var(--red);">0</h3>
+                    <p>Produtos em Baixa</p>
                 </div>
-                <div class="card-stat" style="background: var(--bg-card); padding: 20px; border-radius: 16px; border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; text-align: center;">
-                    <h3 id="totalItemsCount" style="font-size: 1.25rem; color: var(--brand); line-height: 1.2; margin-bottom: 8px;">0</h3>
-                    <p style="color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Total de Itens</p>
+                <div class="card-stat">
+                    <h3 id="totalItemsCount" style="color: var(--brand);">0</h3>
+                    <p>Total de Itens</p>
                 </div>
             </section>
 
@@ -672,17 +701,19 @@
                 <table id="inventoryTable">
                     <thead>
                         <tr>
+                            <th style="width: 70px;">Imagem</th>
                             <th>Produto</th>
                             <th>Categoria</th>
                             <th>Quantidade</th>
-                            <th>Preço Unit.</th>
+                            <th>R$ Venda</th>
+                            <th>R$ Custo</th>
                             <th>Fornecedor</th>
-                            <th>Status</th>
+                            <th>Endereço</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="6" style="text-align: center; padding: 20px; color: var(--text-muted);">Carregando produtos...</td>
+                            <td colspan="8" style="text-align: center; padding: 20px; color: var(--text-muted);">Carregando produtos...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -827,6 +858,27 @@
                             <h3 id="detailPrice" style="font-size: 2.2rem; font-weight: 800; color: var(--emerald);">-</h3>
                             <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 5px;">Preço unitário</p>
                         </div>
+
+                    </div>
+                </div>
+
+                <div style="margin-top: 24px; background: #161920; border-radius: 18px; padding: 20px; border: 1px solid var(--border); width: 100%; box-sizing: border-box;">
+                    <h4 style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-chart-pie" style="color: var(--brand);"></i> Margens e Investimento
+                    </h4>
+                    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;">
+                        <div>
+                            <p style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 4px;">LUCRO UNITÁRIO</p>
+                            <p id="detailUnitProfit" style="font-weight: 800; font-size: 1.5rem; color: var(--brand);">R$ 0,00</p>
+                        </div>
+                        <div>
+                            <p style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 4px;">MARGEM DE LUCRO</p>
+                            <p id="detailProfitMargin" style="font-weight: 800; font-size: 1.5rem; color: var(--brand);">0,00%</p>
+                        </div>
+                        <div>
+                            <p style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 4px;">INVESTIMENTO TOTAL</p>
+                            <p id="detailTotalInvestment" style="font-weight: 800; font-size: 1.5rem; color: var(--emerald);">R$ 0,00</p>
+                        </div>
                     </div>
                 </div>
 
@@ -947,6 +999,17 @@
                         <div id="categoryList" style="display: flex; flex-direction: column; gap: 6px;"></div>
                     </div>
                 </div>
+                <div style="margin-bottom: 24px; padding-top: 16px; border-top: 1px solid var(--border);">
+                    <h4 style="margin: 0 0 12px; font-size: 1rem;"><i class="fa-solid fa-cubes"></i> Total de Itens</h4>
+                    <div style="display: flex; gap: 10px;">
+                        <label id="totalItemsModeUnits" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; border-radius: 10px; border: 2px solid var(--border); cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; background: transparent; color: var(--text-muted);" onclick="setTotalItemsMode('units')">
+                            <i class="fa-solid fa-box"></i> Unidades
+                        </label>
+                        <label id="totalItemsModeSkus" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; border-radius: 10px; border: 2px solid var(--border); cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; background: transparent; color: var(--text-muted);" onclick="setTotalItemsMode('skus')">
+                            <i class="fa-solid fa-hashtag"></i> SKUs
+                        </label>
+                    </div>
+                </div>
                 <div style="display: flex; gap: 10px; justify-content: flex-end;">
                     <button type="button" class="btn btn-outline" onclick="document.getElementById('stockSettingsModal').style.display='none'" style="padding: 10px 24px;">Fechar</button>
                 </div>
@@ -1019,15 +1082,54 @@
             let stagnantProducts = [];
             let lowStockProducts = [];
 
+            function getTotalItemsMode() {
+                return localStorage.getItem('stockTotalItemsMode') || 'units';
+            }
+
+            window.setTotalItemsMode = (mode) => {
+                localStorage.setItem('stockTotalItemsMode', mode);
+                updateTotalItemsLabels(mode);
+                if (allProducts.length) {
+                    calculateMetrics(allProducts, stagnantProducts);
+                }
+            };
+
+            function updateTotalItemsLabels(mode) {
+                const unitsLabel = document.getElementById('totalItemsModeUnits');
+                const skusLabel = document.getElementById('totalItemsModeSkus');
+                if (!unitsLabel || !skusLabel) return;
+                if (mode === 'skus') {
+                    skusLabel.style.borderColor = 'var(--brand)';
+                    skusLabel.style.background = 'rgba(79, 70, 229, 0.08)';
+                    skusLabel.style.color = 'var(--brand)';
+                    unitsLabel.style.borderColor = 'var(--border)';
+                    unitsLabel.style.background = 'transparent';
+                    unitsLabel.style.color = 'var(--text-muted)';
+                } else {
+                    unitsLabel.style.borderColor = 'var(--brand)';
+                    unitsLabel.style.background = 'rgba(79, 70, 229, 0.08)';
+                    unitsLabel.style.color = 'var(--brand)';
+                    skusLabel.style.borderColor = 'var(--border)';
+                    skusLabel.style.background = 'transparent';
+                    skusLabel.style.color = 'var(--text-muted)';
+                }
+            }
+
             function calculateMetrics(products, stagnant) {
                 const totalValue = products.reduce((acc, p) => acc + (Number(p.price) || 0) * (Number(p.quantity) || 0), 0);
                 const lowStock = products.filter(p => (Number(p.quantity) || 0) < 10);
                 lowStockProducts = lowStock;
                 const totalItems = products.reduce((acc, p) => acc + (Number(p.quantity) || 0), 0);
+                const totalSkus = products.length;
+
+                const itemsMode = getTotalItemsMode();
+                const displayValue = itemsMode === 'skus' ? totalSkus : totalItems;
+                const displayLabel = itemsMode === 'skus' ? 'Total de SKUs' : 'Total de Itens';
 
                 document.getElementById('totalStockValue').innerText = `R$ ${totalValue.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 document.getElementById('lowStockCount').innerText = lowStock.length;
-                document.getElementById('totalItemsCount').innerText = totalItems;
+                document.getElementById('totalItemsCount').innerText = displayValue;
+                document.getElementById('totalItemsCount').parentElement.querySelector('p').textContent = displayLabel;
                 document.getElementById('stagnantCount').innerText = stagnant.length;
             }
 
@@ -1177,7 +1279,8 @@
                     const params = {
                         search: searchInput.value,
                         category: categoryFilter.value,
-                        status: statusFilter.value
+                        status: statusFilter.value,
+                        limit: 'all'
                     };
 
                     allProducts = await BuildFlow.getProducts({ limit: 'all' });
@@ -1272,24 +1375,67 @@
                 products.forEach(p => {
                     const row = document.createElement('tr');
                     const loc = BuildFlow.getProductLocation(p);
-                    const isReceiving = loc.aisle === 'RECV';
-                    const statusText = isReceiving ? 'RECEBIMENTO' : 'Endereçado';
-                    const badgeClass = isReceiving ? 'badge-warning' : 'badge-success';
-                    
-                    row.innerHTML = `
-                        <td data-search="${p.name} ${p.sku} ${p.supplier}">
-                            <div style="font-weight: 600;">${p.name}</div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted);">SKU: ${p.sku}</div>
-                        </td>
-                        <td>${p.category}</td>
-                        <td style="font-weight: 700;">
-                            <div>${p.quantity} un</div>
-                            <div style="font-size: 0.7rem; color: var(--pdv-secondary);">${p.reserved || 0} res</div>
-                        </td>
-                        <td style="color: var(--emerald);">R$ ${p.price.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                        <td>${p.supplier}</td>
-                        <td><span class="badge ${badgeClass}">${statusText}</span></td>
+                    const addressText = BuildFlow.formatProductLocationDisplay(p);
+                    const isReceiving = loc.aisle === 'RECV' || addressText === 'RECEBIMENTO';
+                    const badgeClass = isReceiving || addressText === 'Não definida' ? 'badge-warning' : 'badge-success';
+
+                    const imageCell = document.createElement('td');
+                    imageCell.style.cssText = 'width: 70px; text-align: center;';
+                    const imageBox = document.createElement('div');
+                    imageBox.style.cssText = 'width: 44px; height: 44px; margin: 0 auto; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--bg-hover); color: var(--brand); border: 1px solid var(--border);';
+                    if (p.imageUrl) {
+                        const img = document.createElement('img');
+                        img.src = p.imageUrl;
+                        img.alt = p.name || 'Produto';
+                        img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+                        img.onerror = () => {
+                            img.remove();
+                            imageBox.innerHTML = '<i class="fa-solid fa-box-open"></i>';
+                        };
+                        imageBox.appendChild(img);
+                    } else {
+                        imageBox.innerHTML = '<i class="fa-solid fa-box-open"></i>';
+                    }
+                    imageCell.appendChild(imageBox);
+                    row.appendChild(imageCell);
+
+                    const productCell = document.createElement('td');
+                    productCell.dataset.search = `${p.name || ''} ${p.sku || ''} ${p.supplier || ''}`;
+                    productCell.innerHTML = `
+                        <div style="font-weight: 600;">${BuildFlow.escapeHtml(p.name || 'Sem nome')}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">SKU: ${BuildFlow.escapeHtml(p.sku || '---')}</div>
                     `;
+                    row.appendChild(productCell);
+
+                    const categoryCell = document.createElement('td');
+                    categoryCell.textContent = p.category || '—';
+                    row.appendChild(categoryCell);
+
+                    const quantityCell = document.createElement('td');
+                    quantityCell.style.cssText = 'font-weight: 700;';
+                    quantityCell.innerHTML = `
+                        <div>${Number(p.quantity || 0)} un</div>
+                        <div style="font-size: 0.7rem; color: var(--pdv-secondary);">${Number(p.reserved || 0)} res</div>
+                    `;
+                    row.appendChild(quantityCell);
+
+                    const priceCell = document.createElement('td');
+                    priceCell.style.cssText = 'color: var(--emerald);';
+                    priceCell.textContent = `R$ ${Number(p.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                    row.appendChild(priceCell);
+
+                    const costPriceCell = document.createElement('td');
+                    costPriceCell.style.cssText = 'color: var(--text-secondary); font-weight: 600;';
+                    costPriceCell.textContent = `R$ ${Number(p.costPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                    row.appendChild(costPriceCell);
+
+                    const supplierCell = document.createElement('td');
+                    supplierCell.textContent = p.supplier || '—';
+                    row.appendChild(supplierCell);
+
+                    const addressCell = document.createElement('td');
+                    addressCell.innerHTML = `<span class="badge ${badgeClass}">${BuildFlow.escapeHtml(addressText || '—')}</span>`;
+                    row.appendChild(addressCell);
                     
                     row.onclick = () => showProductDetails(p);
                     tableBody.appendChild(row);
@@ -1340,6 +1486,16 @@
                 document.getElementById('detailAvailable').textContent = `${available} un`;
                 
                 document.getElementById('detailPrice').textContent = `R$ ${Number(product.price || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+
+                const unitProfit = Number(product.price || 0) - Number(product.costPrice || 0);
+                const profitMargin = Number(product.costPrice || 0) > 0
+                    ? (unitProfit / Number(product.costPrice || 0)) * 100
+                    : 0;
+                const totalInvestment = Number(product.costPrice || 0) * Number(product.quantity || 0);
+
+                document.getElementById('detailUnitProfit').textContent = `R$ ${unitProfit.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                document.getElementById('detailProfitMargin').textContent = `${profitMargin.toLocaleString('pt-BR', {minimumFractionDigits: 2})}%`;
+                document.getElementById('detailTotalInvestment').textContent = `R$ ${totalInvestment.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 
                 const formatDate = (dateStr) => {
                     if (!dateStr) return '—';
@@ -1601,6 +1757,7 @@
 
             await loadCategories();
             loadProducts();
+            updateTotalItemsLabels(getTotalItemsMode());
 
             async function updateAllProductDates() {
                 try {
@@ -1626,39 +1783,136 @@
 
             await updateAllProductDates();
 
-            document.getElementById('exportStockBtn').addEventListener('click', () => {
+            document.getElementById('exportStockBtn').addEventListener('click', async () => {
                 if (!currentProducts.length) {
                     BuildFlow.showToast('Nenhum produto para exportar', 'warning');
                     return;
                 }
-                const separator = ';';
-                let csv = `Produto${separator}SKU${separator}Categoria${separator}Quantidade${separator}Reservado${separator}Preço Unit.${separator}Fornecedor${separator}Status\n`;
+
+                const result = await Swal.fire({
+                    title: 'Exportar Estoque',
+                    text: 'Escolha o formato do relatório:',
+                    icon: 'question',
+                    showDenyButton: true,
+                    showCancelButton: true,
+                    confirmButtonText: 'HTML (Navegador)',
+                    denyButtonText: 'CSV (Planilha)',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: 'var(--brand)',
+                    denyButtonColor: '#10b981',
+                    cancelButtonColor: '#64748b',
+                    reverseButtons: true
+                });
+
+                if (!result.isConfirmed && !result.isDenied) return;
+
+                const isHtml = result.isConfirmed;
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('pt-BR');
+                const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                if (isHtml) {
+                    let html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Relatório de Estoque - ${dateStr}</title>
+<style>
+body { font-family: 'Segoe UI', Arial, sans-serif; margin: 30px; color: #1a1d23; }
+h1 { font-size: 1.4rem; margin-bottom: 4px; }
+.subtitle { color: #64748b; font-size: 0.85rem; margin-bottom: 24px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+th { background: #4f46e5; color: white; padding: 10px 12px; text-align: left; font-weight: 600; border: 1px solid #4f46e5; }
+td { padding: 8px 12px; border: 1px solid #e2e8f0; }
+tr:nth-child(even) { background: #f8fafc; }
+tr:hover { background: #eef2ff; }
+.qty { text-align: center; font-weight: 600; }
+.price { text-align: right; font-family: monospace; }
+.footer { margin-top: 20px; font-size: 0.75rem; color: #94a3b8; }
+</style>
+</head>
+<body>
+<h1>Relatório de Estoque</h1>
+<p class="subtitle">Exportado em ${dateStr} às ${timeStr} &mdash; ${currentProducts.length} produto(s)</p>
+<table>
+<thead>
+<tr>
+<th>Produto</th>
+<th>SKU</th>
+<th>Categoria</th>
+<th>Qtd</th>
+<th>Reservado</th>
+<th>R$ Venda</th>
+<th>R$ Custo</th>
+<th>Fornecedor</th>
+<th>Endereço</th>
+</tr>
+</thead>
+<tbody>`;
                 currentProducts.forEach(p => {
                     const loc = BuildFlow.getProductLocation(p);
-                    const isReceiving = loc.aisle === 'RECV';
-                    const statusText = isReceiving ? 'RECEBIMENTO' : 'Endereçado';
+                    const addressValue = BuildFlow.formatProductLocationDisplay(p);
                     const price = Number(p.price) || 0;
-                    csv += `${p.name || ''}${separator}${p.sku || ''}${separator}${p.category || ''}${separator}${p.quantity || 0}${separator}${p.reserved || 0}${separator}${price.toFixed(2).replace('.', ',')}${separator}${p.supplier || ''}${separator}${statusText}\n`;
+                    const costPrice = Number(p.costPrice) || 0;
+                    html += `<tr>
+<td>${BuildFlow.escapeHtml(p.name || '')}</td>
+<td style="font-family:monospace">${BuildFlow.escapeHtml(p.sku || '')}</td>
+<td>${BuildFlow.escapeHtml(p.category || '')}</td>
+<td class="qty">${p.quantity || 0}</td>
+<td class="qty">${p.reserved || 0}</td>
+<td class="price">R$ ${price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+<td class="price">R$ ${costPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+<td>${BuildFlow.escapeHtml(p.supplier || '')}</td>
+<td>${BuildFlow.escapeHtml(addressValue)}</td>
+</tr>`;
                 });
+                html += `</tbody>
+</table>
+<p class="footer">BuildFlow ERP — Relatório gerado automaticamente</p>
+</body>
+</html>`;
+
                 const bom = '\uFEFF';
-                const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+                const blob = new Blob([bom + html], { type: 'text/html;charset=utf-8;' });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
-                link.setAttribute('download', `estoque-${new Date().toISOString().slice(0, 10)}.csv`);
+                link.setAttribute('download', `estoque-${now.toISOString().slice(0, 10)}.html`);
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
                 URL.revokeObjectURL(link.href);
+                } else {
+                    const separator = ';';
+                    let csv = `Produto${separator}SKU${separator}Categoria${separator}Quantidade${separator}Reservado${separator}R$ Venda${separator}R$ Custo${separator}Fornecedor${separator}Endereço\n`;
+                    currentProducts.forEach(p => {
+                        const loc = BuildFlow.getProductLocation(p);
+                        const addressValue = BuildFlow.formatProductLocationDisplay(p);
+                        const price = Number(p.price) || 0;
+                        const costPrice = Number(p.costPrice) || 0;
+                        csv += `${p.name || ''}${separator}${p.sku || ''}${separator}${p.category || ''}${separator}${p.quantity || 0}${separator}${p.reserved || 0}${separator}${price.toFixed(2).replace('.', ',')}${separator}${costPrice.toFixed(2).replace('.', ',')}${separator}${p.supplier || ''}${separator}${addressValue}\n`;
+                    });
+                    const bom2 = '\uFEFF';
+                    const blob2 = new Blob([bom2 + csv], { type: 'text/csv;charset=utf-8;' });
+                    const link2 = document.createElement('a');
+                    link2.href = URL.createObjectURL(blob2);
+                    link2.setAttribute('download', `estoque-${now.toISOString().slice(0, 10)}.csv`);
+                    document.body.appendChild(link2);
+                    link2.click();
+                    document.body.removeChild(link2);
+                    URL.revokeObjectURL(link2.href);
+                }
             });
 
             // Configurações do Estoque
             const columnDefs = [
+                { key: 'image', label: 'Imagem' },
                 { key: 'product', label: 'Produto' },
                 { key: 'category', label: 'Categoria' },
                 { key: 'quantity', label: 'Quantidade' },
-                { key: 'price', label: 'Preço Unit.' },
+                { key: 'price', label: 'R$ Venda' },
+                { key: 'costPrice', label: 'R$ Custo' },
                 { key: 'supplier', label: 'Fornecedor' },
-                { key: 'status', label: 'Status' },
+                { key: 'address', label: 'Endereço' },
             ];
 
             function loadColumnSettings() {
@@ -1757,6 +2011,7 @@
                 document.getElementById('stockSettingsModal').style.display = 'flex';
                 renderColumnToggles();
                 renderCategoryManager();
+                updateTotalItemsLabels(getTotalItemsMode());
             });
 
             applyColumnVisibility();
