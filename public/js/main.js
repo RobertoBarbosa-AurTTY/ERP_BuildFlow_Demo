@@ -559,7 +559,15 @@ const BuildFlow = {
     }
   },
 
-  buildNotificationDropdown(container, notifications, { onClearAll, onDismiss } = {}) {
+  async deleteAllNotifications() {
+    try {
+      await this.apiFetch('/dismiss-notification', { method: 'DELETE' });
+    } catch (error) {
+      console.error('Erro ao excluir notificações:', error);
+    }
+  },
+
+  buildNotificationDropdown(container, notifications, { onClearAll } = {}) {
     if (!container) return;
     if (!notifications || notifications.length === 0) {
       container.innerHTML = '<div class="notification-empty">Sem alertas recentes.</div>';
@@ -570,7 +578,7 @@ const BuildFlow = {
     container.innerHTML = `
       <div class="notification-dropdown-header">
         <div>${notificationCount} alerta${notificationCount === 1 ? '' : 's'}</div>
-        <button type="button" class="notification-clear-btn">Marcar todas como lidas</button>
+        <button type="button" class="notification-clear-btn">Excluir tudo</button>
       </div>
       ${notifications
         .map((item) => {
@@ -585,8 +593,6 @@ const BuildFlow = {
             })
             .join('');
 
-          const notificationKey = this.escapeHtml(this.getNotificationKey(item));
-
           return `
             <div class="notification-item" data-href="${item.href || '#'}">
               <div class="notification-item-top">
@@ -595,7 +601,6 @@ const BuildFlow = {
               </div>
               <div class="notification-item-desc">${this.escapeHtml(item.description)}</div>
               ${detailsHtml ? `<div class="notification-item-details">${detailsHtml}</div>` : ''}
-              <button type="button" class="notification-dismiss-btn" data-notification-key="${notificationKey}">Marcar como lida</button>
             </div>`;
         })
         .join('')}
@@ -608,16 +613,6 @@ const BuildFlow = {
         onClearAll();
       });
     }
-
-    container.querySelectorAll('.notification-dismiss-btn').forEach((button) => {
-      button.addEventListener('click', async (event) => {
-        event.stopPropagation();
-        const notificationKey = button.dataset.notificationKey;
-        if (notificationKey && typeof onDismiss === 'function') {
-          onDismiss(notificationKey);
-        }
-      });
-    });
 
     container.querySelectorAll('.notification-item').forEach((item) => {
       item.addEventListener('click', () => {
@@ -654,11 +649,7 @@ const BuildFlow = {
           badge.style.display = notifications.length ? "flex" : "none";
           this.buildNotificationDropdown(dropdown, notifications, {
             onClearAll: async () => {
-              await this.dismissNotifications(notifications);
-              await loadNotifications(true);
-            },
-            onDismiss: async (notificationKey) => {
-              await this.dismissNotificationByKey(notificationKey);
+              await this.deleteAllNotifications();
               await loadNotifications(true);
             },
           });
@@ -996,9 +987,8 @@ const BuildFlow = {
   },
 
   escapeHtml(text) {
-    const div = document.createElement("div");
-    div.textContent = text == null ? "" : String(text);
-    return div.innerHTML;
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    return text == null ? '' : String(text).replace(/[&<>"']/g, c => map[c]);
   },
 
   formatCurrency(value) {

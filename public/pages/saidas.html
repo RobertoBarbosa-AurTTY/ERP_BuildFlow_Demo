@@ -1613,6 +1613,75 @@
         let barcodeLastHandled = '';
         let barcodeLastHandledAt = 0;
 
+        // --- Sincronização em tempo real entre dispositivos ---
+        let deviceId = localStorage.getItem('pdv_device_id');
+        if (!deviceId) {
+            deviceId = (crypto.randomUUID && crypto.randomUUID()) || Math.random().toString(36).slice(2, 10);
+            localStorage.setItem('pdv_device_id', deviceId);
+        }
+        let cartVersion = 0;
+        let syncTimer = null;
+        let pollTimer = null;
+        let _syncingFromRemote = false;
+
+        function scheduleCartSync() {
+            if (_syncingFromRemote) return;
+            if (syncTimer) clearTimeout(syncTimer);
+            syncTimer = setTimeout(syncCartToServer, 500);
+        }
+
+        async function syncCartToServer() {
+            try {
+                cartVersion++;
+                const items = cart.map(item => ({
+                    _id: item._id,
+                    name: item.name,
+                    price: item.price,
+                    qty: item.qty,
+                    discount: item.discount || 0,
+                    discountType: item.discountType || 'percent'
+                }));
+                await BuildFlow.apiFetch('/cart-sync', {
+                    method: 'POST',
+                    body: JSON.stringify({ items, deviceId, version: cartVersion })
+                });
+            } catch (e) {
+                console.error('cart sync error:', e);
+            }
+        }
+
+        async function pollRemoteCart() {
+            try {
+                const data = await BuildFlow.apiFetch('/cart-sync');
+                if (!data || !data.items) return;
+                if (data.version > cartVersion && data.deviceId !== deviceId) {
+                    cartVersion = data.version;
+                    _syncingFromRemote = true;
+                    const remoteCart = [];
+                    for (const item of data.items) {
+                        const product = dbProducts.find(p => BuildFlow.normalizeId(p._id) === BuildFlow.normalizeId(item._id));
+                        if (product) {
+                            remoteCart.push({
+                                ...product,
+                                qty: item.qty,
+                                discount: item.discount || 0,
+                                discountType: item.discountType || 'percent'
+                            });
+                        }
+                    }
+                    cart = remoteCart;
+                    updateCart();
+                    if (remoteCart.length > 0) {
+                        BuildFlow.showToast('Carrinho atualizado de outro dispositivo', 'info');
+                    }
+                    _syncingFromRemote = false;
+                }
+            } catch (e) {
+                // Falha silenciosa no polling
+            }
+        }
+        // --- Fim sincronização ---
+
         // Inicialização
         // --- Funções de Orçamento ---
         async function handleBudget() {
@@ -2589,7 +2658,15 @@
 
             document.getElementById('mobileBudgetBtn')?.addEventListener('click', handleBudget);
             document.getElementById('mobileHistoryBtn')?.addEventListener('click', showHistoryQuickView);
+
+            // Iniciar sincronização em tempo real
+            pollTimer = setInterval(pollRemoteCart, 2000);
         }
+
+        window.addEventListener('beforeunload', () => {
+            if (pollTimer) clearInterval(pollTimer);
+            if (syncTimer) clearTimeout(syncTimer);
+        });
 
         function getFreshProduct(productOrId) {
             const id = typeof productOrId === 'object' ? productOrId._id : productOrId;
@@ -3822,6 +3899,7 @@
             }
             updateTotal();
             updateFabState();
+            scheduleCartSync();
         }
 
         function updateFabState() {

@@ -237,9 +237,9 @@
                 try {
                     const start = document.getElementById('dateStart').value;
                     const end = document.getElementById('dateEnd').value;
-                    const params = {};
-                    if (start) params.start = start;
-                    if (end) params.end = end;
+                    const params = { limit: 'all' };
+                    if (start) params.start = new Date(start + 'T00:00:00').toISOString();
+                    if (end) params.end = new Date(end + 'T23:59:59.999').toISOString();
 
                     allSales = await BuildFlow.getSales(params);
                     updateFutureBadge();

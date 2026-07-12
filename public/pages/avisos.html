@@ -206,8 +206,7 @@
             const deleteAllBtn = document.getElementById('deleteAllMessagesBtn');
             if (deleteAllBtn) {
                 deleteAllBtn.addEventListener('click', async () => {
-                    const notifications = await BuildFlow.getDashboardNotifications();
-                    await BuildFlow.dismissNotifications(notifications);
+                    await BuildFlow.deleteAllNotifications();
                     await renderNotifications();
                 });
             }

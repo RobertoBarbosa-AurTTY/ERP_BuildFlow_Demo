@@ -17,11 +17,10 @@ exports.handler = async (event, context) => {
         const { start, end, status: filterStatus, page = 1, limit = 50 } = event.queryStringParameters || {};
         let query = {};
         
-        if (start && end) {
-          query.createdAt = {
-            $gte: new Date(start),
-            $lte: new Date(end)
-          };
+        if (start || end) {
+          query.createdAt = {};
+          if (start) query.createdAt.$gte = new Date(start);
+          if (end) query.createdAt.$lte = new Date(end);
         }
 
         if (filterStatus) {

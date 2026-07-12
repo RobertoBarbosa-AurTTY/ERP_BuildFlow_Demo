@@ -58,5 +58,24 @@ exports.handler = async (event, context) => {
     }
   }
 
+  if (event.httpMethod === 'DELETE') {
+    try {
+      const db = await getDb();
+      const dismissedCol = db.collection('dismissed_notifications');
+      await dismissedCol.deleteMany({});
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ message: 'Todas as notificações foram excluídas' }),
+      };
+    } catch (error) {
+      console.error('Delete all notifications error:', error);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ message: 'Erro ao excluir notificações', error: error.message }),
+      };
+    }
+  }
+
   return { statusCode: 405, body: JSON.stringify({ message: 'Método não permitido' }) };
 };
