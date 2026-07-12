@@ -14,6 +14,33 @@
       href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
     />
     <style>
+      .period-filter {
+        display: flex;
+        gap: 4px;
+        background: var(--bg-hover);
+        padding: 3px;
+        border-radius: 10px;
+        width: fit-content;
+      }
+      .period-filter button {
+        background: none;
+        border: none;
+        padding: 6px 16px;
+        border-radius: 8px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .period-filter button.active {
+        background: var(--bg-card);
+        color: var(--text-primary);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+      }
+      .period-filter button:hover:not(.active) {
+        color: var(--text-primary);
+      }
       @media (max-width: 1200px) {
         .insights-grid { grid-template-columns: 1fr !important; }
       }
@@ -167,10 +194,18 @@
           <p id="dashboardDateLine">Carregando resumo do dia...</p>
         </header>
 
+          <div style="display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
+            <div class="period-filter">
+              <button data-period="day">Dia</button>
+              <button data-period="week">Semana</button>
+              <button data-period="month" class="active">Mês</button>
+            </div>
+          </div>
+
           <section class="grid-stats">
             <div class="card-stat">
               <div class="stat-info">
-                <p>Faturamento do Mês</p>
+                <p id="revenueLabel">Faturamento do Mês</p>
                 <h3 id="revenueText">Carregando...</h3>
               </div>
               <div class="stat-icon bg-blue-op">
@@ -179,7 +214,7 @@
             </div>
             <div class="card-stat">
               <div class="stat-info">
-                <p>Vendas do Mês</p>
+                <p id="salesCountLabel">Vendas do Mês</p>
                 <h3 id="salesCountText">Carregando...</h3>
               </div>
               <div class="stat-icon bg-emerald-op">
@@ -197,7 +232,7 @@
             </div>
             <div class="card-stat">
               <div class="stat-info">
-                <p>Lucro do Mês (Est.)</p>
+                <p id="profitLabel">Lucro do Mês (Est.)</p>
                 <h3 id="profitText">Carregando...</h3>
               </div>
               <div class="stat-icon bg-violet-op">
@@ -209,7 +244,7 @@
         <div class="dashboard-tables-grid">
           <section class="card-table">
             <div class="table-header">
-              <h3>Vendas Recentes</h3>
+              <h3 id="recentSalesTitle">Vendas Recentes</h3>
               <button
                 class="btn"
                 onclick="location.href = 'pages/historico-vendas.html'"
@@ -252,7 +287,7 @@
 
           <section class="card-table">
             <div class="table-header">
-              <h3>Lançamentos no Estoque</h3>
+              <h3 id="recentProductsTitle">Lançamentos no Estoque</h3>
               <button
                 class="btn"
                 onclick="location.href = 'pages/estoque.html'"
@@ -301,7 +336,7 @@
                 <span style="width:3px;height:18px;border-radius:2px;background:var(--brand);display:inline-block;"></span>
                 Insights de Vendas
               </h3>
-              <p>Comparativo mensal e produtos mais vendidos no período.</p>
+              <p id="insightsSubtitle">Comparativo mensal e produtos mais vendidos no período.</p>
             </div>
           </div>
           <div class="insights-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:20px;">
@@ -309,7 +344,7 @@
             <div style="background:linear-gradient(135deg, rgba(79,70,229,0.06) 0%, transparent 100%);border:1px solid var(--border);border-radius:20px;padding:24px;">
               <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
                 <div>
-                  <p style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Comparativo Mensal</p>
+                  <p id="comparativoLabel" style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Comparativo Mensal</p>
                   <h3 id="insightComparison" style="font-size:2rem;font-weight:800;letter-spacing:-0.02em;margin:0;line-height:1.1;">Carregando...</h3>
                 </div>
                 <div style="width:38px;height:38px;border-radius:10px;background:rgba(79,70,229,0.1);display:flex;align-items:center;justify-content:center;color:var(--brand);font-size:1rem;flex-shrink:0;">
@@ -324,7 +359,7 @@
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
                 <div>
                   <p style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px;">Top 10 Produtos</p>
-                  <h3 style="font-size:1rem;font-weight:700;margin:0;">Mais Vendidos do Mês</h3>
+                  <h3 id="topProdutosLabel" style="font-size:1rem;font-weight:700;margin:0;">Mais Vendidos do Mês</h3>
                 </div>
                 <div style="width:38px;height:38px;border-radius:10px;background:rgba(139,92,246,0.1);display:flex;align-items:center;justify-content:center;color:#8b5cf6;font-size:1rem;flex-shrink:0;">
                   <i class="fa-solid fa-ranking-star"></i>
@@ -475,9 +510,21 @@
         }
       }
 
-      async function loadDashboard() {
+      function getPeriodLabels(period) {
+        switch (period) {
+          case 'day': return { card: 'do Dia', cardProfit: 'do Dia (Est.)', comparativo: 'Comparativo Diário', top: 'Mais Vendidos do Dia', subtitle: 'Comparativo diário e produtos mais vendidos no período.', prevLabel: 'Dia anterior', currentLabel: 'Hoje', tableSuffix: '(Hoje)' };
+          case 'week': return { card: 'da Semana', cardProfit: 'da Semana (Est.)', comparativo: 'Comparativo Semanal', top: 'Mais Vendidos da Semana', subtitle: 'Comparativo semanal e produtos mais vendidos no período.', prevLabel: 'Semana anterior', currentLabel: 'Esta semana', tableSuffix: '(Esta Semana)' };
+          default: return { card: 'do Mês', cardProfit: 'do Mês (Est.)', comparativo: 'Comparativo Mensal', top: 'Mais Vendidos do Mês', subtitle: 'Comparativo mensal e produtos mais vendidos no período.', prevLabel: 'Mês anterior', currentLabel: 'Este mês', tableSuffix: '(Este Mês)' };
+        }
+      }
+
+      let currentPeriod = 'month';
+
+      async function loadDashboard(period) {
+        currentPeriod = period || 'month';
         try {
-          const data = await BuildFlow.getDashboardMetrics();
+          const data = await BuildFlow.getDashboardMetrics(currentPeriod);
+          const labels = getPeriodLabels(currentPeriod);
 
           const todayLabel = new Date().toLocaleDateString("pt-BR", {
             weekday: "long",
@@ -487,6 +534,15 @@
           const dateLine = document.getElementById("dashboardDateLine");
           if (dateLine)
             dateLine.textContent = `Resumo das atividades de hoje, ${todayLabel}.`;
+
+          document.getElementById("revenueLabel").textContent = `Faturamento ${labels.card}`;
+          document.getElementById("salesCountLabel").textContent = `Vendas ${labels.card}`;
+          document.getElementById("profitLabel").textContent = `Lucro ${labels.cardProfit}`;
+          document.getElementById("comparativoLabel").textContent = labels.comparativo;
+          document.getElementById("topProdutosLabel").textContent = labels.top;
+          document.getElementById("insightsSubtitle").textContent = labels.subtitle;
+          document.getElementById("recentSalesTitle").textContent = `Vendas Recentes ${labels.tableSuffix}`;
+          document.getElementById("recentProductsTitle").textContent = `Lançamentos no Estoque ${labels.tableSuffix}`;
 
           setMetricText(
             "revenueText",
@@ -508,7 +564,7 @@
             );
           } else if ((data.salesCount ?? 0) === 0) {
             BuildFlow.showToast(
-              "Sem vendas hoje. Os valores de faturamento aparecem após registrar vendas no PDV.",
+              "Sem vendas no período. Os valores de faturamento aparecem após registrar vendas no PDV.",
               "info",
             );
           }
@@ -559,8 +615,8 @@
           const topProductsEl = document.getElementById("insightTopProducts");
 
           if (data.topProducts && data.topProducts.length > 0) {
-            const monthName = new Date().toLocaleDateString("pt-BR", { month: "long" });
-            const prevMonthName = new Date(new Date().getFullYear(), new Date().getMonth() - 1).toLocaleDateString("pt-BR", { month: "long" });
+            const currentPeriodName = labels.currentLabel;
+            const prevPeriodName = labels.prevLabel;
 
             if (data.revenueChange !== null) {
               const change = parseFloat(data.revenueChange);
@@ -577,14 +633,14 @@
 
               comparisonDetail.innerHTML = `
                 <div style="flex:1;background:rgba(255,255,255,0.03);border-radius:12px;padding:12px 14px;border:1px solid var(--border);">
-                  <p style="font-size:0.6rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin:0 0 4px;">${monthName}</p>
+                  <p style="font-size:0.6rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin:0 0 4px;">${currentPeriodName}</p>
                   <p style="font-size:1.1rem;font-weight:800;margin:0;color:var(--text-primary);">R$ ${(data.revenue || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
                   <div style="margin-top:6px;height:3px;background:var(--bg-hover);border-radius:3px;overflow:hidden;">
                     <div style="width:${currPct}%;height:100%;background:var(--brand);border-radius:3px;"></div>
                   </div>
                 </div>
                 <div style="flex:1;background:rgba(255,255,255,0.03);border-radius:12px;padding:12px 14px;border:1px solid var(--border);">
-                  <p style="font-size:0.6rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin:0 0 4px;">${prevMonthName}</p>
+                  <p style="font-size:0.6rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin:0 0 4px;">${prevPeriodName}</p>
                   <p style="font-size:1.1rem;font-weight:800;margin:0;color:var(--text-secondary);">R$ ${(data.prevRevenue || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
                   <div style="margin-top:6px;height:3px;background:var(--bg-hover);border-radius:3px;overflow:hidden;">
                     <div style="width:${prevPct}%;height:100%;background:var(--text-muted);border-radius:3px;"></div>
@@ -594,7 +650,7 @@
             } else {
               comparisonEl.textContent = "—";
               comparisonEl.style.color = "var(--text-muted)";
-              comparisonDetail.innerHTML = `<div style="flex:1;text-align:center;padding:12px;color:var(--text-muted);font-size:0.8rem;">Sem vendas no mês anterior para comparar.</div>`;
+              comparisonDetail.innerHTML = `<div style="flex:1;text-align:center;padding:12px;color:var(--text-muted);font-size:0.8rem;">Sem vendas no período anterior para comparar.</div>`;
             }
 
             const topRevenue = data.topProducts[0]?.revenue || 1;
@@ -622,7 +678,7 @@
           } else {
             comparisonEl.textContent = "Sem dados";
             comparisonEl.style.color = "var(--text-muted)";
-            comparisonDetail.innerHTML = `<div style="flex:1;text-align:center;padding:12px;color:var(--text-muted);font-size:0.8rem;">Nenhuma venda registrada no mês atual.</div>`;
+            comparisonDetail.innerHTML = `<div style="flex:1;text-align:center;padding:12px;color:var(--text-muted);font-size:0.8rem;">Nenhuma venda registrada no período.</div>`;
             topProductsEl.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:0.85rem;">Nenhum produto vendido no período.</div>';
           }
         } catch (error) {
@@ -767,8 +823,19 @@
         buildDashboardSearchResults({ links: matchedLinks, products });
       }
 
+      function switchPeriod(period) {
+        document.querySelectorAll(".period-filter button").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.period === period);
+        });
+        loadDashboard(period);
+      }
+
       document.addEventListener("DOMContentLoaded", () => {
-        Promise.all([loadDashboard(), loadQuickAccessStats()]);
+        Promise.all([loadDashboard('month'), loadQuickAccessStats()]);
+
+        document.querySelectorAll(".period-filter button").forEach((btn) => {
+          btn.addEventListener("click", () => switchPeriod(btn.dataset.period));
+        });
 
         const searchInput = document.getElementById("dashboardSearchInput");
         const searchBar = document.getElementById("dashboardSearchBar");

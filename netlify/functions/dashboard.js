@@ -9,11 +9,31 @@ exports.handler = async (event, context) => {
 
   try {
     const db = await getDb();
+    const period = event.queryStringParameters?.period || 'month';
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const startOfPrevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    const endOfPrevMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    let currentStart, currentEnd, prevStart, prevEnd;
+
+    if (period === 'day') {
+      currentStart = new Date(today);
+      currentEnd = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+      prevStart = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+      prevEnd = new Date(today);
+    } else if (period === 'week') {
+      currentStart = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000);
+      currentEnd = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+      prevStart = new Date(currentStart.getTime() - 7 * 24 * 60 * 60 * 1000);
+      prevEnd = new Date(currentStart);
+    } else {
+      // month (default)
+      currentStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      currentEnd = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+      prevStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      prevEnd = new Date(today.getFullYear(), today.getMonth(), 1);
+    }
+
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const fourteenDaysFromNow = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
@@ -40,9 +60,9 @@ exports.handler = async (event, context) => {
       // 1. Notificações dispensadas
       db.collection('dismissed_notifications').find({}, { projection: { notificationKey: 1, _id: 0 } }).toArray(),
       
-      // 2. Vendas do mês
+      // 2. Vendas do período
       db.collection('sales').find(
-        { createdAt: { $gte: startOfMonth }, status: 'FINALIZED' },
+        { createdAt: { $gte: currentStart, $lt: currentEnd }, status: 'FINALIZED' },
         { projection: { total: 1, items: 1, _id: 0 } }
       ).toArray(),
       
@@ -77,16 +97,16 @@ exports.handler = async (event, context) => {
         { projection: { _id: 1 } }
       ).toArray(),
       
-      // 7. Vendas recentes (últimas 10)
+      // 7. Vendas recentes do período (últimas 10)
       db.collection('sales')
-        .find({}, { projection: { _id: 1, saleNumber: 1, total: 1, status: 1, createdAt: 1, items: 1 } })
+        .find({ createdAt: { $gte: currentStart, $lt: currentEnd } }, { projection: { _id: 1, saleNumber: 1, total: 1, status: 1, createdAt: 1, items: 1 } })
         .sort({ createdAt: -1 })
         .limit(10)
         .toArray(),
       
-      // 8. Produtos recentes (últimos 10)
+      // 8. Produtos recentes do período (últimos 10)
       db.collection('products')
-        .find({}, { projection: { _id: 1, name: 1, sku: 1, quantity: 1, createdAt: 1 } })
+        .find({ createdAt: { $gte: currentStart, $lt: currentEnd } }, { projection: { _id: 1, name: 1, sku: 1, quantity: 1, price: 1, createdAt: 1 } })
         .sort({ createdAt: -1 })
         .limit(10)
         .toArray(),
@@ -159,9 +179,9 @@ exports.handler = async (event, context) => {
         }).sort({ dueDate: 1 }).limit(10).toArray();
       })(),
 
-      // 16. Vendas do mês anterior (comparativo)
+      // 16. Vendas do período anterior (comparativo)
       db.collection('sales').find(
-        { createdAt: { $gte: startOfPrevMonth, $lt: endOfPrevMonth }, status: 'FINALIZED' },
+        { createdAt: { $gte: prevStart, $lt: prevEnd }, status: 'FINALIZED' },
         { projection: { total: 1, items: 1, _id: 0 } }
       ).toArray()
     ]);
@@ -187,7 +207,7 @@ exports.handler = async (event, context) => {
     const prevRevenue = prevMonthSales.reduce((acc, sale) => acc + (Number(sale.total) || 0), 0);
     const revenueChange = prevRevenue > 0 ? ((revenue - prevRevenue) / prevRevenue * 100).toFixed(1) : null;
 
-    // Top 10 produtos mais vendidos no mês
+    // Top 10 produtos mais vendidos no período
     const productSales = {};
     for (const sale of dailySales) {
       if (sale.items && sale.items.length > 0) {
