@@ -77,6 +77,8 @@
             display: flex; flex-direction: column; gap: 4px;
         }
         .ap-cal-cell--empty { background: transparent; border-color: transparent; }
+        .cal-nav { display: flex; gap: 6px; }
+        .cal-nav .btn-icon { width: 32px; height: 32px; }
         .ap-cal-cell--today { border-color: var(--brand); box-shadow: 0 0 0 2px rgba(79,70,229,0.15); }
         .ap-cal-cell--overdue { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.05); }
         .ap-cal-day { font-weight: 700; font-size: 0.9rem; }
@@ -353,8 +355,8 @@
                                 <th>Fornecedor</th>
                                 <th>Categoria</th>
                                 <th>Vencimento</th>
-                                <th>Valor</th>
-                                <th>Status</th>
+                                <th style="text-align:right;">Valor</th>
+                                <th style="white-space:nowrap;">Status</th>
                                 <th>Prazo</th>
                                 <th>Ações</th>
                             </tr>
@@ -368,7 +370,13 @@
 
             <div class="ap-panel" data-panel="calendar" style="display:none;">
                 <section class="card-table">
-                    <div class="table-header"><h3 id="calendarTitle">Calendário de Vencimentos</h3></div>
+                    <div class="table-header">
+                        <h3 id="calendarTitle">Calendário de Vencimentos</h3>
+                        <div class="cal-nav">
+                            <button type="button" class="btn-icon" id="calPrev" title="Mês anterior"><i class="fa-solid fa-chevron-left"></i></button>
+                            <button type="button" class="btn-icon" id="calNext" title="Próximo mês"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </div>
                     <div class="ap-cal-grid" id="calendarGrid"></div>
                 </section>
             </div>
@@ -456,6 +464,14 @@
                                 <option value="weekly">Semanal</option>
                                 <option value="yearly">Anual</option>
                             </select>
+                        </div>
+                    </div>
+                    <div class="form-group full" id="installmentFields">
+                        <label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:0.875rem;">
+                            <input type="checkbox" id="fieldInstallmentCheck"> Parcelado (gera múltiplos boletos)
+                        </label>
+                        <div id="installmentCountFields" style="display:none;margin-top:10px;">
+                            <input class="form-input" id="fieldInstallmentCount" type="number" min="2" max="120" value="2" placeholder="Nº de parcelas" style="max-width:160px;">
                         </div>
                     </div>
                     <div class="form-group full">

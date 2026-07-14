@@ -48,15 +48,25 @@ function nextDueDate(currentDueDate, frequency) {
   return addDays(base, 30);
 }
 
-async function buildSummary(collection, today) {
+async function buildSummary(collection, today, extraQuery = {}) {
   const weekEnd = endOfDay(addDays(today, 7));
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
   const monthEnd = endOfDay(new Date(today.getFullYear(), today.getMonth() + 1, 0));
 
-  const openBills = await collection
-    .find({ status: { $ne: "cancelled" }, paidDate: { $in: [null, undefined] } })
-    .toArray();
+  const isDefault = Object.keys(extraQuery).length === 0;
 
+  let openQuery;
+  if (isDefault) {
+    openQuery = { status: { $ne: "cancelled" }, paidDate: { $in: [null, undefined] } };
+  } else {
+    openQuery = { ...extraQuery };
+    if (!extraQuery.status && !extraQuery.paidDate) {
+      openQuery.status = { $ne: "cancelled" };
+      openQuery.paidDate = { $in: [null, undefined] };
+    }
+  }
+
+  const openBills = await collection.find(openQuery).toArray();
   const enriched = openBills.map((b) => enrichBill(b, today));
 
   const pending = enriched.filter((b) => b.status === "pending");
@@ -66,12 +76,21 @@ async function buildSummary(collection, today) {
   );
   const dueSoon = enriched.filter((b) => b.isDueSoon);
 
-  const paidThisMonth = await collection
-    .find({
+  let paidQuery;
+  if (isDefault) {
+    paidQuery = {
       paidDate: { $gte: monthStart, $lte: monthEnd },
       status: "paid",
-    })
-    .toArray();
+    };
+  } else {
+    paidQuery = {
+      paidDate: { $gte: monthStart, $lte: monthEnd },
+      status: "paid",
+    };
+    if (extraQuery.category) paidQuery.category = extraQuery.category;
+    if (extraQuery.$or) paidQuery.$or = extraQuery.$or;
+  }
+  const paidThisMonth = await collection.find(paidQuery).toArray();
 
   const sum = (items) => items.reduce((acc, item) => acc + (Number(item.amount) || 0), 0);
 
@@ -133,8 +152,48 @@ exports.handler = async (event) => {
   try {
     switch (event.httpMethod) {
       case "GET": {
+        if (params.groupId) {
+          const groupBills = await collection
+            .find({ installmentGroupId: params.groupId })
+            .sort({ installmentNumber: 1 })
+            .toArray();
+          return {
+            statusCode: 200,
+            body: JSON.stringify(groupBills.map((b) => enrichBill(b, today))),
+          };
+        }
+
         if (params.summary === "true") {
-          const summary = await buildSummary(collection, today);
+          const { search: sSearch, status: sStatus, category: sCategory, from: sFrom, to: sTo } = params;
+          const filterQuery = {};
+
+          if (sCategory && sCategory !== "all") filterQuery.category = sCategory;
+          if (sFrom || sTo) {
+            filterQuery.dueDate = {};
+            if (sFrom) filterQuery.dueDate.$gte = startOfDay(new Date(sFrom));
+            if (sTo) filterQuery.dueDate.$lte = endOfDay(new Date(sTo));
+          }
+          if (sStatus === "paid") {
+            filterQuery.status = "paid";
+          } else if (sStatus === "cancelled") {
+            filterQuery.status = "cancelled";
+          } else if (sStatus === "overdue") {
+            filterQuery.status = { $nin: ["paid", "cancelled"] };
+            filterQuery.dueDate = { ...(filterQuery.dueDate || {}), $lt: today };
+          } else if (sStatus === "pending") {
+            filterQuery.status = { $nin: ["paid", "cancelled"] };
+            filterQuery.dueDate = { ...(filterQuery.dueDate || {}), $gte: today };
+          }
+          if (sSearch) {
+            filterQuery.$or = [
+              { description: { $regex: sSearch, $options: "i" } },
+              { supplier: { $regex: sSearch, $options: "i" } },
+              { documentNumber: { $regex: sSearch, $options: "i" } },
+              { barcode: { $regex: sSearch, $options: "i" } },
+            ];
+          }
+
+          const summary = await buildSummary(collection, today, filterQuery);
           return { statusCode: 200, body: JSON.stringify(summary) };
         }
 
@@ -211,7 +270,11 @@ exports.handler = async (event) => {
         }
 
         const now = new Date();
-        const bill = {
+        const installmentNumber = body.installmentNumber ? parseInt(body.installmentNumber, 10) : null;
+        const totalInstallments = body.totalInstallments ? parseInt(body.totalInstallments, 10) : null;
+        const installmentGroupId = body.installmentGroupId || null;
+
+        const baseBill = {
           description: body.description.trim(),
           supplier: (body.supplier || "").trim(),
           category: body.category || "outros",
@@ -225,16 +288,56 @@ exports.handler = async (event) => {
           notes: (body.notes || "").trim(),
           reminderDays: Math.max(0, Math.min(30, Number(body.reminderDays) || 3)),
           recurring: body.recurring?.enabled
-            ? {
-                enabled: true,
-                frequency: body.recurring.frequency || "monthly",
-                endDate: body.recurring.endDate ? startOfDay(new Date(body.recurring.endDate)) : null,
-              }
+            ? { enabled: true, frequency: body.recurring.frequency || "monthly", endDate: body.recurring.endDate ? startOfDay(new Date(body.recurring.endDate)) : null }
             : { enabled: false },
           tags: Array.isArray(body.tags) ? body.tags.slice(0, 10) : [],
           createdBy: user.userId || user.email,
           createdAt: now,
           updatedAt: now,
+        };
+
+        // Installment bulk creation
+        if (totalInstallments > 1 && !installmentNumber) {
+          const groupId = installmentGroupId || new ObjectId().toString();
+          const installmentAmount = totalInstallments > 0 ? Math.round((amount / totalInstallments) * 100) / 100 : amount;
+          const bills = [];
+          for (let i = 1; i <= totalInstallments; i++) {
+            const due = new Date(baseBill.dueDate);
+            due.setMonth(due.getMonth() + (i - 1));
+            bills.push({
+              ...baseBill,
+              amount: installmentAmount,
+              dueDate: due,
+              installmentNumber: i,
+              totalInstallments,
+              installmentGroupId: groupId,
+            });
+          }
+
+          const insertResult = await collection.insertMany(bills);
+          const ids = Object.values(insertResult.insertedIds);
+
+          await db.collection("logs").insertOne({
+            userId: user.userId,
+            action: "CREATE_PAYABLE_BULK",
+            entity: "accounts_payable",
+            entityId: groupId,
+            timestamp: now,
+            details: `Conta "${baseBill.description}" cadastrada em ${totalInstallments}x de R$ ${installmentAmount.toFixed(2)}`,
+          });
+
+          const created = await collection.find({ _id: { $in: ids } }).sort({ installmentNumber: 1 }).toArray();
+          return {
+            statusCode: 201,
+            body: JSON.stringify(created.map((b) => enrichBill(b, today))),
+          };
+        }
+
+        const bill = {
+          ...baseBill,
+          installmentNumber: installmentNumber || (totalInstallments > 1 ? 1 : null),
+          totalInstallments: totalInstallments || null,
+          installmentGroupId: installmentGroupId || null,
         };
 
         const result = await collection.insertOne(bill);
@@ -250,7 +353,7 @@ exports.handler = async (event) => {
 
         return {
           statusCode: 201,
-          body: JSON.stringify({ ...enrichBill({ ...bill, _id: result.insertedId }, today) }),
+          body: JSON.stringify(enrichBill({ ...bill, _id: result.insertedId }, today)),
         };
       }
 
@@ -336,6 +439,9 @@ exports.handler = async (event) => {
           "reminderDays",
           "recurring",
           "tags",
+          "installmentNumber",
+          "totalInstallments",
+          "installmentGroupId",
         ];
         const patch = {};
         for (const key of allowed) {

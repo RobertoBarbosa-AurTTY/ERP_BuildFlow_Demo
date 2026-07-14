@@ -1137,35 +1137,86 @@
                     return;
                 }
 
+                const cats = [...new Set(stagnantProducts.map(p => p.category).filter(Boolean))];
+
                 let listHtml = `
-                    <div style="max-height: 400px; overflow-y: auto;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
-                            <thead>
-                                <tr style="border-bottom: 2px solid var(--border);">
-                                    <th style="text-align: left; padding: 10px;">Produto</th>
-                                    <th style="text-align: center; padding: 10px;">Qtd</th>
-                                    <th style="text-align: right; padding: 10px;">Dias Parados</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${stagnantProducts.map(p => `
-                                    <tr style="border-bottom: 1px solid var(--border);">
-                                        <td style="text-align: left; padding: 10px;">${p.name}</td>
-                                        <td style="text-align: center; padding: 10px;">${p.quantity}</td>
-                                        <td style="text-align: right; padding: 10px; color: var(--amber); font-weight: bold;">${p.daysStagnant} dias</td>
+                    <div>
+                        <div style="display:flex;gap:8px;margin-bottom:12px;">
+                            <input id="stagnantSearch" placeholder="Buscar produto..." style="flex:1;background:var(--bg-hover);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-primary);font-size:0.8rem;">
+                            <select id="stagnantCategory" style="background:var(--bg-hover);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-primary);font-size:0.8rem;">
+                                <option value="all">Todas categorias</option>
+                                ${cats.map(c => `<option value="${c}">${c}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div style="max-height:50vh;overflow-y:auto;">
+                            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;table-layout:fixed;">
+                                <colgroup>
+                                    <col style="width:40px;">
+                                    <col>
+                                    <col style="width:70px;">
+                                    <col style="width:110px;">
+                                </colgroup>
+                                <thead>
+                                    <tr style="border-bottom:2px solid var(--border);">
+                                        <th style="text-align:center;padding:12px 8px;">#</th>
+                                        <th style="text-align:left;padding:12px 10px;">Produto</th>
+                                        <th style="text-align:center;padding:12px 8px;white-space:nowrap;">Qtd</th>
+                                        <th style="text-align:right;padding:12px 10px;white-space:nowrap;">Dias Parados</th>
                                     </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    ${stagnantProducts.map((p, i) => `
+                                        <tr class="ap-stagnant-row" data-index="${i}" data-category="${(p.category || '').replace(/"/g,'&quot;')}" style="border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s;">
+                                            <td style="text-align:center;padding:12px 8px;color:var(--text-muted);font-size:0.75rem;white-space:nowrap;" class="row-num">${i+1}</td>
+                                            <td style="text-align:left;padding:12px 10px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${BuildFlow.escapeHtml(p.name)}</td>
+                                            <td style="text-align:center;padding:12px 8px;white-space:nowrap;">${p.quantity}</td>
+                                            <td style="text-align:right;padding:12px 10px;color:var(--amber);font-weight:bold;white-space:nowrap;">${p.daysStagnant} dias</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 `;
 
                 Swal.fire({
-                    title: 'Produtos Parados',
+                    title: `Produtos Parados (${stagnantProducts.length})`,
                     html: listHtml,
-                    width: '600px',
+                    width: '900px',
                     confirmButtonText: 'Fechar',
-                    confirmButtonColor: 'var(--brand)'
+                    confirmButtonColor: 'var(--brand)',
+                    heightAuto: false,
+                    didOpen: () => {
+                        document.querySelectorAll('.ap-stagnant-row').forEach(row => {
+                            row.addEventListener('mouseenter', () => row.style.background = 'var(--bg-hover)');
+                            row.addEventListener('mouseleave', () => row.style.background = '');
+                            row.addEventListener('click', () => {
+                                const idx = parseInt(row.dataset.index, 10);
+                                const product = stagnantProducts[idx];
+                                if (product) {
+                                    Swal.close();
+                                    setTimeout(() => showProductDetails(product), 120);
+                                }
+                            });
+                        });
+                        const search = document.getElementById('stagnantSearch');
+                        const catSel = document.getElementById('stagnantCategory');
+                        if (!search || !catSel) return;
+                        const filter = () => {
+                            const q = search.value.toLowerCase().trim();
+                            const cv = catSel.value;
+                            let n = 0;
+                            document.querySelectorAll('.ap-stagnant-row').forEach(row => {
+                                const name = row.cells[1].textContent.toLowerCase();
+                                const rc = row.dataset.category;
+                                const match = (!q || name.includes(q)) && (cv === 'all' || rc === cv);
+                                row.style.display = match ? '' : 'none';
+                                if (match) { n++; row.querySelector('.row-num').textContent = n; }
+                            });
+                        };
+                        search.addEventListener('input', filter);
+                        catSel.addEventListener('change', filter);
+                    }
                 });
             }
 
@@ -1175,35 +1226,86 @@
                     return;
                 }
 
+                const cats = [...new Set(lowStockProducts.map(p => p.category).filter(Boolean))];
+
                 let listHtml = `
-                    <div style="max-height: 400px; overflow-y: auto;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
-                            <thead>
-                                <tr style="border-bottom: 2px solid var(--border);">
-                                    <th style="text-align: left; padding: 10px;">Produto</th>
-                                    <th style="text-align: center; padding: 10px;">Qtd</th>
-                                    <th style="text-align: right; padding: 10px;">Valor</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${lowStockProducts.map(p => `
-                                    <tr style="border-bottom: 1px solid var(--border);">
-                                        <td style="text-align: left; padding: 10px;">${p.name}</td>
-                                        <td style="text-align: center; padding: 10px; color: var(--red); font-weight: bold;">${p.quantity}</td>
-                                        <td style="text-align: right; padding: 10px;">R$ ${(Number(p.price) || 0).toFixed(2)}</td>
+                    <div>
+                        <div style="display:flex;gap:8px;margin-bottom:12px;">
+                            <input id="lowSearch" placeholder="Buscar produto..." style="flex:1;background:var(--bg-hover);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-primary);font-size:0.8rem;">
+                            <select id="lowCategory" style="background:var(--bg-hover);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-primary);font-size:0.8rem;">
+                                <option value="all">Todas categorias</option>
+                                ${cats.map(c => `<option value="${c}">${c}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div style="max-height:50vh;overflow-y:auto;">
+                            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;table-layout:fixed;">
+                                <colgroup>
+                                    <col style="width:40px;">
+                                    <col>
+                                    <col style="width:70px;">
+                                    <col style="width:110px;">
+                                </colgroup>
+                                <thead>
+                                    <tr style="border-bottom:2px solid var(--border);">
+                                        <th style="text-align:center;padding:12px 8px;">#</th>
+                                        <th style="text-align:left;padding:12px 10px;">Produto</th>
+                                        <th style="text-align:center;padding:12px 8px;white-space:nowrap;">Qtd</th>
+                                        <th style="text-align:right;padding:12px 10px;white-space:nowrap;">Valor</th>
                                     </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    ${lowStockProducts.map((p, i) => `
+                                        <tr class="ap-low-row" data-index="${i}" data-category="${(p.category || '').replace(/"/g,'&quot;')}" style="border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s;">
+                                            <td style="text-align:center;padding:12px 8px;color:var(--text-muted);font-size:0.75rem;white-space:nowrap;" class="row-num">${i+1}</td>
+                                            <td style="text-align:left;padding:12px 10px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${BuildFlow.escapeHtml(p.name)}</td>
+                                            <td style="text-align:center;padding:12px 8px;color:var(--red);font-weight:bold;white-space:nowrap;">${p.quantity}</td>
+                                            <td style="text-align:right;padding:12px 10px;white-space:nowrap;">R$ ${(Number(p.price) || 0).toFixed(2)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 `;
 
                 Swal.fire({
-                    title: 'Produtos em Baixa (menos de 10 unidades)',
+                    title: `Produtos em Baixa (${lowStockProducts.length})`,
                     html: listHtml,
-                    width: '600px',
+                    width: '900px',
                     confirmButtonText: 'Fechar',
-                    confirmButtonColor: 'var(--brand)'
+                    confirmButtonColor: 'var(--brand)',
+                    heightAuto: false,
+                    didOpen: () => {
+                        document.querySelectorAll('.ap-low-row').forEach(row => {
+                            row.addEventListener('mouseenter', () => row.style.background = 'var(--bg-hover)');
+                            row.addEventListener('mouseleave', () => row.style.background = '');
+                            row.addEventListener('click', () => {
+                                const idx = parseInt(row.dataset.index, 10);
+                                const product = lowStockProducts[idx];
+                                if (product) {
+                                    Swal.close();
+                                    setTimeout(() => showProductDetails(product), 120);
+                                }
+                            });
+                        });
+                        const search = document.getElementById('lowSearch');
+                        const catSel = document.getElementById('lowCategory');
+                        if (!search || !catSel) return;
+                        const filter = () => {
+                            const q = search.value.toLowerCase().trim();
+                            const cv = catSel.value;
+                            let n = 0;
+                            document.querySelectorAll('.ap-low-row').forEach(row => {
+                                const name = row.cells[1].textContent.toLowerCase();
+                                const rc = row.dataset.category;
+                                const match = (!q || name.includes(q)) && (cv === 'all' || rc === cv);
+                                row.style.display = match ? '' : 'none';
+                                if (match) { n++; row.querySelector('.row-num').textContent = n; }
+                            });
+                        };
+                        search.addEventListener('input', filter);
+                        catSel.addEventListener('change', filter);
+                    }
                 });
             };
 
