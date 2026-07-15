@@ -962,6 +962,47 @@
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
+
+        .pdv-caixa-resumo {
+            text-align: left;
+        }
+        .pdv-caixa-resumo .resumo-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--pdv-border);
+            font-size: 0.85rem;
+        }
+        .pdv-caixa-resumo .resumo-row:last-child {
+            border-bottom: none;
+        }
+        .pdv-caixa-resumo .resumo-row .label {
+            color: var(--pdv-text-muted);
+            font-weight: 600;
+        }
+        .pdv-caixa-resumo .resumo-row .value {
+            font-weight: 800;
+            color: var(--pdv-text);
+        }
+        .pdv-caixa-resumo .resumo-row .value.destaque {
+            color: var(--pdv-primary);
+            font-size: 1.1rem;
+        }
+        .pdv-caixa-resumo .resumo-row .value.success {
+            color: var(--pdv-success);
+        }
+        .pdv-caixa-resumo .resumo-row .value.danger {
+            color: var(--pdv-danger);
+        }
+        .pdv-caixa-resumo .resumo-section-title {
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--pdv-text-muted);
+            padding: 12px 0 6px;
+            letter-spacing: 0.06em;
+        }
         /* Modal Styles */
         .modal-overlay {
             position: fixed;
@@ -1464,7 +1505,8 @@
     <div id="pdv-app">
     <div class="mobile-header">
         <div class="mobile-header-info">
-            <span>Caixa: <b>01</b></span>
+            <span id="mobileCaixaStatus">Caixa: <b id="mobileCaixaNumber">---</b></span>
+            <span id="mobileCaixaStatusIcon"><i class="fa-solid fa-circle" style="color:var(--pdv-text-muted);font-size:0.5rem;"></i></span>
         </div>
         <div class="mobile-header-center">
             <span>Data: <b id="currentDateMobile">29/05/2026</b></span>
@@ -1477,14 +1519,18 @@
         <div style="font-weight: 800; font-size: 1.25rem; display: flex; align-items: center; gap: 10px;">
             <i class="fa-solid fa-layer-group text-primary"></i> BuildFlow PDV
         </div>
-        <div class="pdv-header-info">
-            <span>Caixa: <b>01</b></span>
-            <span>Operador: <b>Admin Master</b></span>
+        <div class="pdv-header-info" id="caixaInfoHeader">
+            <span>Terminal: <b id="caixaNumberDisplay">---</b></span>
+            <span id="caixaStatusAberto" style="display:none;">Status: <b style="color:var(--pdv-success);"><i class="fa-solid fa-circle"></i> Aberto</b></span>
+            <span id="caixaStatusFechado">Status: <b style="color:var(--pdv-text-muted);"><i class="fa-solid fa-circle"></i> Fechado</b></span>
             <span>Data: <b id="currentDate">29/05/2026</b></span>
         </div>
-        <div>
+        <div style="display:flex;gap:8px;">
+            <button id="caixaActionBtn" onclick="handleCaixaAction()" style="background: var(--pdv-success); border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight:700; display:flex; align-items:center; gap:6px;">
+                <i class="fa-solid fa-cash-register"></i> <span id="caixaBtnText">Abrir Caixa</span>
+            </button>
             <button onclick="window.location.href='../dashboard.html'" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.75rem;">
-                <i class="fa-solid fa-arrow-left"></i> Voltar ao Menu
+                <i class="fa-solid fa-arrow-left"></i> Voltar
             </button>
         </div>
     </header>
@@ -1584,9 +1630,9 @@
             <i class="fa-solid fa-clock-rotate-left"></i>
             <span>Histórico (F10)</span>
         </button>
-        <button class="footer-btn btn-gray system-btn" id="showReportsBtn">
-            <i class="fa-solid fa-print"></i>
-            <span>Relatórios (F8)</span>
+        <button class="footer-btn btn-orange" id="caixaFooterBtn">
+            <i class="fa-solid fa-cash-register"></i>
+            <span>Caixa (F8)</span>
         </button>
     </footer>
     </div>
@@ -1681,6 +1727,385 @@
             }
         }
         // --- Fim sincronização ---
+
+        // --- Caixa (Abertura/Fechamento) ---
+        let caixaAberto = null;
+        let caixaLoaded = false;
+        let ultimoFechamento = null;
+
+        async function checkCaixaStatus() {
+            try {
+                const result = await BuildFlow.getCaixaStatus();
+                caixaAberto = result && result.status === 'aberto' ? result : null;
+                ultimoFechamento = result && result.ultimoFechamento ? result.ultimoFechamento : null;
+                caixaLoaded = true;
+                updateCaixaUI();
+            } catch (e) {
+                console.error('Erro ao verificar status do caixa:', e);
+                caixaLoaded = true;
+            }
+        }
+
+        function updateCaixaUI() {
+            const caixaNumber = document.getElementById('caixaNumberDisplay');
+            const caixaStatusAberto = document.getElementById('caixaStatusAberto');
+            const caixaStatusFechado = document.getElementById('caixaStatusFechado');
+            const caixaBtnText = document.getElementById('caixaBtnText');
+            const caixaActionBtn = document.getElementById('caixaActionBtn');
+            const mobileCaixaNumber = document.getElementById('mobileCaixaNumber');
+            const mobileCaixaStatusIcon = document.getElementById('mobileCaixaStatusIcon');
+
+            if (caixaAberto) {
+                const caixaLabel = `Terminal ${caixaAberto.numeroCaixa || '01'}`;
+                if (caixaNumber) caixaNumber.textContent = caixaLabel;
+                if (mobileCaixaNumber) mobileCaixaNumber.textContent = caixaLabel;
+                if (caixaStatusAberto) caixaStatusAberto.style.display = 'inline';
+                if (caixaStatusFechado) caixaStatusFechado.style.display = 'none';
+                if (caixaBtnText) caixaBtnText.textContent = 'Fechar Caixa (F8)';
+                if (caixaActionBtn) {
+                    caixaActionBtn.style.background = 'var(--pdv-danger)';
+                }
+                if (mobileCaixaStatusIcon) {
+                    mobileCaixaStatusIcon.innerHTML = '<i class="fa-solid fa-circle" style="color:var(--pdv-success);font-size:0.5rem;"></i>';
+                }
+            } else {
+                if (caixaNumber) caixaNumber.textContent = 'Terminal ---';
+                if (mobileCaixaNumber) mobileCaixaNumber.textContent = '---';
+                if (caixaStatusAberto) caixaStatusAberto.style.display = 'none';
+                if (caixaStatusFechado) caixaStatusFechado.style.display = 'inline';
+                if (caixaBtnText) caixaBtnText.textContent = 'Abrir Caixa (F8)';
+                if (caixaActionBtn) {
+                    caixaActionBtn.style.background = 'var(--pdv-success)';
+                }
+                if (mobileCaixaStatusIcon) {
+                    mobileCaixaStatusIcon.innerHTML = '<i class="fa-solid fa-circle" style="color:var(--pdv-text-muted);font-size:0.5rem;"></i>';
+                }
+            }
+        }
+
+        async function handleCaixaAction() {
+            if (caixaAberto) {
+                await confirmFecharCaixa();
+            } else {
+                await showAbrirCaixaModal();
+            }
+        }
+
+        async function promptSenhaCaixa() {
+            const { value: senha, isConfirmed } = await Swal.fire({
+                ...pdvSwalOptions({
+                    width: '400px',
+                    showCancelButton: true,
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonText: '<i class="fa-solid fa-lock"></i> Confirmar',
+                    confirmButtonColor: 'var(--pdv-primary)'
+                }),
+                title: '<i class="fa-solid fa-shield-halved"></i> Autorização',
+                html: `
+                    <div style="text-align:left;">
+                        <div style="margin-bottom:12px;font-size:0.85rem;color:var(--pdv-text-muted);">Digite sua senha para autorizar a abertura do caixa:</div>
+                        <input type="password" id="swal-senha-caixa" class="pdv-input" placeholder="Sua senha" autocomplete="off" style="font-size:1.15rem;letter-spacing:0.15em;width:100%;">
+                    </div>
+                `,
+                didOpen: () => {
+                    document.getElementById('swal-senha-caixa')?.focus();
+                },
+                preConfirm: () => {
+                    const s = document.getElementById('swal-senha-caixa')?.value;
+                    if (!s) {
+                        Swal.showValidationMessage('Digite sua senha.');
+                        return false;
+                    }
+                    return s;
+                }
+            });
+            if (!isConfirmed || !senha) return null;
+            try {
+                await BuildFlow.verificarSenhaCaixa(senha);
+                return senha;
+            } catch (error) {
+                BuildFlow.showToast(error.message || 'Senha incorreta.', 'danger');
+                return null;
+            }
+        }
+
+        async function showAbrirCaixaModal() {
+            const userData = JSON.parse(localStorage.getItem('user') || '{}');
+            const userName = userData.name || 'Operador';
+            const now = new Date();
+
+            const valorSugerido = ultimoFechamento ? Number(ultimoFechamento.valorFinal) || 0 : 0;
+            const dataUltimoFechamento = ultimoFechamento && ultimoFechamento.dataFechamento
+                ? new Date(ultimoFechamento.dataFechamento).toLocaleDateString('pt-BR') : null;
+            const temUltimoFechamento = ultimoFechamento !== null;
+            const sugestaoPadrao = 100;
+            const numeroCaixa = '01';
+
+            const { value, isConfirmed } = await Swal.fire({
+                ...pdvSwalOptions({ width: '480px' }),
+                title: '<i class="fa-solid fa-cash-register"></i> Abertura de Caixa',
+                html: `
+                    <div class="pdv-sheet" style="text-align:left;">
+                        <div style="padding:20px;border-radius:16px;background:linear-gradient(135deg,var(--pdv-primary),#1d4ed8);margin-bottom:20px;text-align:center;color:#fff;">
+                            <div style="font-size:2rem;margin-bottom:6px;"><i class="fa-solid fa-display"></i></div>
+                            <div style="font-size:1.3rem;font-weight:800;">Terminal ${numeroCaixa}</div>
+                            <div style="font-size:0.75rem;opacity:0.8;margin-top:4px;">${now.toLocaleDateString('pt-BR')}</div>
+                        </div>
+
+                        <div class="pdv-form-block">
+                            <label>Valor inicial em caixa (R$)</label>
+                            <div style="display:flex;gap:6px;margin-bottom:6px;">
+                                <input type="text" id="caixa-valor-inicial" class="pdv-input" inputmode="decimal" autocomplete="off" placeholder="R$ 0,00" value="R$ 0,00" style="flex:1;">
+                                <button type="button" id="btn-sugerir-padrao" title="Sugerir R$ ${sugestaoPadrao.toFixed(2)}" style="padding:8px 12px;border-radius:8px;border:1px solid var(--pdv-border);background:var(--pdv-modal-surface);color:var(--pdv-text);cursor:pointer;font-weight:700;font-size:0.75rem;white-space:nowrap;transition:all 0.15s;">
+                                    <i class="fa-solid fa-wand-magic-sparkles" style="margin-right:4px;"></i> R$ ${sugestaoPadrao}
+                                </button>
+                                ${temUltimoFechamento ? `
+                                <button type="button" id="btn-sugerir-fechamento" title="Usar saldo do último fechamento" style="padding:8px 12px;border-radius:8px;border:1px solid var(--pdv-border);background:var(--pdv-modal-surface);color:var(--pdv-primary);cursor:pointer;font-weight:700;font-size:0.75rem;white-space:nowrap;transition:all 0.15s;">
+                                    <i class="fa-solid fa-rotate-left"></i> R$ ${Number(valorSugerido).toLocaleString('pt-BR', {minimumFractionDigits: 0})}
+                                </button>
+                                ` : ''}
+                            </div>
+                            <div id="caixa-aviso-valor-zero" style="display:none;padding:10px 14px;border-radius:10px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);font-size:0.8rem;color:var(--pdv-secondary);margin-top:4px;">
+                                <i class="fa-solid fa-triangle-exclamation"></i> 
+                                <strong>Atenção:</strong> Caixa sem troco inicial. Você poderá ter problemas para dar troco em dinheiro.
+                            </div>
+                        </div>
+
+                        <div class="pdv-form-block">
+                            <label id="caixa-obs-label">Observação <span id="caixa-obs-obrigatorio" style="color:var(--pdv-danger);font-weight:600;display:none;">*</span></label>
+                            <input type="text" id="caixa-observacao-abrir" class="pdv-input" placeholder="Ex: Troco inicial retirado do cofre" autocomplete="off">
+                        </div>
+
+                        <div style="padding:10px 14px;border-radius:10px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);font-size:0.75rem;color:var(--pdv-text-muted);">
+                            <i class="fa-solid fa-info-circle" style="color:var(--pdv-primary);"></i> 
+                            Ao abrir o caixa, todas as vendas serão registradas nesta sessão até o fechamento.
+                        </div>
+                    </div>
+                `,
+                confirmButtonText: '<i class="fa-solid fa-check"></i> Abrir Caixa',
+                confirmButtonColor: 'var(--pdv-success)',
+                showCancelButton: true,
+                cancelButtonText: 'Cancelar',
+                didOpen: () => {
+                    const elValor = document.getElementById('caixa-valor-inicial');
+                    const elAvisoZero = document.getElementById('caixa-aviso-valor-zero');
+
+                    const formatField = () => {
+                        const n = BuildFlow.parseDiscountInput(elValor.value);
+                        elValor.value = BuildFlow.formatCurrency(n);
+                        atualizarAvisos();
+                    };
+
+                    const setValor = (v) => {
+                        elValor.value = v.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+                        formatField();
+                    };
+
+                    const atualizarAvisos = () => {
+                        const v = BuildFlow.parseDiscountInput(elValor.value);
+                        elAvisoZero.style.display = v === 0 ? 'block' : 'none';
+                        const obrigatorio = document.getElementById('caixa-obs-obrigatorio');
+                        obrigatorio.style.display = v > 0 ? 'inline' : 'none';
+                    };
+
+                    elValor.addEventListener('focus', () => {
+                        const raw = BuildFlow.parseDiscountInput(elValor.value);
+                        elValor.value = raw > 0 ? raw.toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '';
+                    });
+                    elValor.addEventListener('blur', formatField);
+                    elValor.addEventListener('input', atualizarAvisos);
+
+                    document.getElementById('btn-sugerir-padrao')?.addEventListener('click', () => setValor(sugestaoPadrao));
+
+                    const btnFechamento = document.getElementById('btn-sugerir-fechamento');
+                    if (btnFechamento) {
+                        btnFechamento.addEventListener('click', () => setValor(valorSugerido));
+                    }
+
+                    elValor.focus();
+                    atualizarAvisos();
+                },
+                preConfirm: () => {
+                    const valor = BuildFlow.parseDiscountInput(document.getElementById('caixa-valor-inicial').value);
+                    const obs = document.getElementById('caixa-observacao-abrir').value.trim();
+
+                    if (valor > 0 && !obs) {
+                        Swal.showValidationMessage('Informe a origem do valor na observação (obrigatório quando valor > 0).');
+                        return false;
+                    }
+
+                    return { valorInicial: valor, observacao: obs, userName, numeroCaixa };
+                }
+            });
+
+            if (!isConfirmed || !value) return;
+
+            const senha = await promptSenhaCaixa();
+            if (!senha) return;
+
+            try {
+                Swal.showLoading();
+                const result = await BuildFlow.abrirCaixa(value.valorInicial, value.observacao, value.userName, value.numeroCaixa);
+                caixaAberto = result.caixa;
+                updateCaixaUI();
+                BuildFlow.showToast('Caixa aberto com sucesso!', 'success');
+            } catch (error) {
+                BuildFlow.showToast(error.message || 'Erro ao abrir caixa', 'danger');
+            }
+        }
+
+        async function confirmFecharCaixa() {
+            Swal.fire({
+                ...pdvSwalOptions({ width: '480px' }),
+                title: 'Fechamento de Caixa',
+                html: `
+                    <div style="text-align:center;padding:20px;">
+                        <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;color:var(--pdv-primary);"></i>
+                        <p style="margin-top:16px;color:var(--pdv-text-muted);">Calculando resumo do caixa...</p>
+                    </div>
+                `,
+                showConfirmButton: false,
+                showCancelButton: false,
+                allowOutsideClick: false,
+                didOpen: () => calcularResumoFechamento()
+            });
+        }
+
+        async function calcularResumoFechamento() {
+            try {
+                const sales = await BuildFlow.getSales({ limit: 'all' });
+                const dataAbertura = new Date(caixaAberto.dataAbertura);
+                const agora = new Date();
+
+                let totalVendas = 0;
+                let totalDinheiro = 0;
+                let totalCartaoCredito = 0;
+                let totalCartaoDebito = 0;
+                let totalPIX = 0;
+                let totalDescontos = 0;
+                let numeroVendas = 0;
+
+                for (const sale of Array.isArray(sales) ? sales : []) {
+                    const createdAt = new Date(sale.createdAt);
+                    if (createdAt < dataAbertura || createdAt > agora) continue;
+                    if (sale.status !== 'FINALIZED') continue;
+
+                    totalVendas += Number(sale.total) || 0;
+                    totalDescontos += Number(sale.totalDiscount) || 0;
+                    numeroVendas++;
+
+                    switch (sale.paymentMethod) {
+                        case 'Dinheiro':
+                            totalDinheiro += Number(sale.total) || 0;
+                            break;
+                        case 'Cartão de Crédito':
+                            totalCartaoCredito += Number(sale.total) || 0;
+                            break;
+                        case 'Cartão de Débito':
+                            totalCartaoDebito += Number(sale.total) || 0;
+                            break;
+                        case 'PIX':
+                            totalPIX += Number(sale.total) || 0;
+                            break;
+                    }
+                }
+
+                const valorInicial = Number(caixaAberto.valorInicial) || 0;
+                const valorFinal = valorInicial + totalVendas;
+
+                const formatMoney = (v) => BuildFlow.formatCurrency(Number(v) || 0);
+
+                const html = `
+                    <div class="pdv-caixa-resumo">
+                        <div class="resumo-section-title"><i class="fa-solid fa-cash-register"></i> Resumo do Caixa</div>
+                        <div class="resumo-row">
+                            <span class="label">Valor Inicial</span>
+                            <span class="value">${formatMoney(valorInicial)}</span>
+                        </div>
+                        <div class="resumo-row">
+                            <span class="label">Total de Vendas</span>
+                            <span class="value destaque">${formatMoney(totalVendas)}</span>
+                        </div>
+                        <div class="resumo-row" style="border-top:2px solid var(--pdv-border);padding-top:12px;margin-top:4px;">
+                            <span class="label" style="font-weight:800;">Valor Final em Caixa</span>
+                            <span class="value destaque" style="font-size:1.3rem;">${formatMoney(valorFinal)}</span>
+                        </div>
+                        
+                        <div class="resumo-section-title"><i class="fa-solid fa-receipt"></i> Vendas</div>
+                        <div class="resumo-row">
+                            <span class="label">Número de Vendas</span>
+                            <span class="value">${numeroVendas}</span>
+                        </div>
+                        <div class="resumo-row">
+                            <span class="label">Total Descontos</span>
+                            <span class="value danger">-${formatMoney(totalDescontos)}</span>
+                        </div>
+                        
+                        <div class="resumo-section-title"><i class="fa-solid fa-credit-card"></i> Por Pagamento</div>
+                        <div class="resumo-row">
+                            <span class="label"><i class="fa-solid fa-money-bill-wave" style="color:var(--pdv-success);width:20px;"></i> Dinheiro</span>
+                            <span class="value success">${formatMoney(totalDinheiro)}</span>
+                        </div>
+                        <div class="resumo-row">
+                            <span class="label"><i class="fa-solid fa-credit-card" style="color:#6366f1;width:20px;"></i> Cartão de Crédito</span>
+                            <span class="value">${formatMoney(totalCartaoCredito)}</span>
+                        </div>
+                        <div class="resumo-row">
+                            <span class="label"><i class="fa-solid fa-credit-card" style="color:#f59e0b;width:20px;"></i> Cartão de Débito</span>
+                            <span class="value">${formatMoney(totalCartaoDebito)}</span>
+                        </div>
+                        <div class="resumo-row">
+                            <span class="label"><i class="fa-solid fa-qrcode" style="color:#06b6d4;width:20px;"></i> PIX</span>
+                            <span class="value">${formatMoney(totalPIX)}</span>
+                        </div>
+                        
+                        <div class="pdv-form-block" style="margin-top:16px;">
+                            <label>Observação de fechamento (opcional)</label>
+                            <input type="text" id="caixa-obs-fechar" class="pdv-input" placeholder="Ex: Caixa fechado no final do expediente" autocomplete="off">
+                        </div>
+                    </div>
+                `;
+
+                Swal.update({
+                    title: '<i class="fa-solid fa-cash-register"></i> Fechar Caixa',
+                    html,
+                    showConfirmButton: true,
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="fa-solid fa-check"></i> Confirmar Fechamento',
+                    confirmButtonColor: 'var(--pdv-danger)',
+                    cancelButtonText: 'Cancelar',
+                    preConfirm: async () => {
+                        const obs = document.getElementById('caixa-obs-fechar')?.value?.trim() || '';
+                        Swal.showLoading();
+                        try {
+                            const finalResult = await BuildFlow.fecharCaixa(obs);
+                            caixaAberto = null;
+                            updateCaixaUI();
+                            BuildFlow.showToast('Caixa fechado com sucesso!', 'success');
+                            return finalResult;
+                        } catch (error) {
+                            Swal.showValidationMessage(error.message || 'Erro ao fechar caixa');
+                            return false;
+                        }
+                    }
+                });
+            } catch (error) {
+                const errMsg = error.message || 'Erro ao calcular resumo do caixa';
+                if (Swal.isVisible()) {
+                    Swal.update({
+                        title: 'Erro',
+                        html: `<p style="color:var(--pdv-danger);">${BuildFlow.escapeHtml(errMsg)}</p>`,
+                        showConfirmButton: true,
+                        confirmButtonText: 'Fechar',
+                        showCancelButton: false
+                    });
+                } else {
+                    BuildFlow.showToast(errMsg, 'danger');
+                }
+            }
+        }
+
+        // --- Fim Caixa ---
 
         // Inicialização
         // --- Funções de Orçamento ---
@@ -2324,10 +2749,10 @@
             const mobileDate = document.getElementById('currentDateMobile');
             if (mobileDate) mobileDate.innerText = now.toLocaleDateString('pt-BR');
 
-            // Carregar produtos do Banco de Dados
+            // Carregar produtos do Banco de Dados (sempre carregar para quando o caixa abrir)
             try {
                 dbProducts = await BuildFlow.getProducts({ limit: 'all' });
-                await renderCategories(); // Renderizar categorias dinamicamente
+                await renderCategories();
                 reconcileCartWithStock();
                 renderProducts('all');
             } catch (error) {
@@ -2335,12 +2760,24 @@
             }
 
             updateTotal();
+
+            // Verificar status do caixa
+            await checkCaixaStatus();
+
+            // Se caixa estiver fechado, solicitar abertura
+            if (!caixaAberto && caixaLoaded) {
+                await showAbrirCaixaModal();
+                await checkCaixaStatus();
+                if (caixaAberto) {
+                    BuildFlow.showToast('Caixa aberto! PDV liberado para vendas.', 'success');
+                }
+            }
             
             // Event Listeners
             document.getElementById('showProductsBtn').addEventListener('click', showProductsQuickView);
             document.getElementById('showHistoryBtn').addEventListener('click', showHistoryQuickView);
             document.getElementById('showFilterBtn').addEventListener('click', showProductFilterQuickView);
-            document.getElementById('showReportsBtn').addEventListener('click', openReportsPage);
+            document.getElementById('caixaFooterBtn').addEventListener('click', handleCaixaAction);
             document.getElementById('showKitsBtn').addEventListener('click', showKitsQuickView);
 
             // Removido o código que selecionava cat-btn hard-coded, pois agora renderizamos dinamicamente
@@ -2401,7 +2838,7 @@
                 }
                 if (e.key === 'F8') {
                     e.preventDefault();
-                    openReportsPage();
+                    handleCaixaAction();
                 }
                 if (e.key === 'F10') {
                     e.preventDefault();
@@ -2829,6 +3266,12 @@
         }
 
         async function finalizeSale(status = 'FINALIZED') {
+            if (!caixaAberto) {
+                await showAbrirCaixaModal();
+                await checkCaixaStatus();
+                if (!caixaAberto) return;
+            }
+
             if (cart.length === 0) {
                 BuildFlow.showToast('O carrinho está vazio!', 'warning');
                 return;
@@ -3797,6 +4240,11 @@
         }
 
         async function addToCart(product, qty = 1) {
+            if (!caixaAberto) {
+                await showAbrirCaixaModal();
+                await checkCaixaStatus();
+                if (!caixaAberto) return false;
+            }
             const fresh = getFreshProduct(product) || product;
             const pid = BuildFlow.normalizeId(fresh._id);
             const addQty = Math.max(1, parseInt(qty, 10) || 1);

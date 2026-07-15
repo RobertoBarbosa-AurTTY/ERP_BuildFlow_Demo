@@ -253,7 +253,6 @@
                     <input type="text" placeholder="Buscar...">
                 </div>
                 <div class="nav-actions">
-                    <div class="action-btn"><i class="fa-regular fa-bell"></i></div>
                     <div class="user-profile">
                         <div class="user-avatar">AD</div>
                         <div class="user-info">
@@ -512,8 +511,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             BuildFlow.checkAuth();
-            BuildFlow.initGlobalNotifications();
-            
             // Global state
             let currentStep = 1;
             let selectedSupplier = 'fortlev';

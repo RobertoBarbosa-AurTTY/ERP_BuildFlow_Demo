@@ -86,11 +86,6 @@
   to = "/pages/mensagens.html"
   status = 200
 
-[[redirects]]
-  from = "/notices"
-  to = "/pages/avisos.html"
-  status = 200
-
 # Block direct access to /pages/* — only clean URLs allowed
 [[redirects]]
   from = "/pages/*"

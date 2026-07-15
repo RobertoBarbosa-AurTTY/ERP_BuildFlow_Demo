@@ -624,19 +624,6 @@
       showDayBills(day);
     });
 
-    els.notifyBtn?.addEventListener("click", () => {
-      if ("Notification" in window) {
-        Notification.requestPermission().then((p) => {
-          Swal.fire({
-            icon: p === "granted" ? "success" : "info",
-            title: p === "granted" ? "Notificações ativadas" : "Permissão não concedida",
-            timer: 2000,
-            showConfirmButton: false,
-          });
-        });
-      }
-    });
-
     els.modalOverlay?.addEventListener("click", (e) => {
       if (e.target === els.modalOverlay) closeModal();
     });
@@ -672,7 +659,6 @@
       "filterFrom",
       "filterTo",
       "newBillBtn",
-      "notifyBtn",
       "modalOverlay",
       "modalTitle",
       "modalClose",

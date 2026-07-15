@@ -574,7 +574,12 @@ async function seed() {
       console.log("✅ Endereços de armazém iniciais inseridos");
     }
 
-    // 7. Configurações da Empresa
+    // 7. Coleção de Caixa (Abertura/Fechamento)
+    const caixa = db.collection("caixa");
+    await caixa.createIndex({ dataAbertura: -1 });
+    await caixa.createIndex({ status: 1 });
+
+    // 8. Configurações da Empresa
     const settings = db.collection("settings");
     const settingsExist = await settings.findOne({});
     if (!settingsExist) {
@@ -583,7 +588,6 @@ async function seed() {
         cnpj: "12.345.678/0001-90",
         address: "Av. Principal, 1000 - São Paulo/SP",
         theme: "dark",
-        notifications: true,
       });
       console.log("✅ Configurações iniciais criadas");
     }

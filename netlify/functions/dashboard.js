@@ -40,7 +40,6 @@ exports.handler = async (event, context) => {
 
     // PARALELIZAR TODAS AS CONSULTAS PARA MÁXIMA VELOCIDADE
     const [
-      dismissedNotifications,
       dailySales,
       productsColStats,
       lowStockProducts,
@@ -57,19 +56,16 @@ exports.handler = async (event, context) => {
       dueSoonPayables,
       prevMonthSales
     ] = await Promise.all([
-      // 1. Notificações dispensadas
-      db.collection('dismissed_notifications').find({}, { projection: { notificationKey: 1, _id: 0 } }).toArray(),
-      
-      // 2. Vendas do período
+      // 1. Vendas do período
       db.collection('sales').find(
         { createdAt: { $gte: currentStart, $lt: currentEnd }, status: 'FINALIZED' },
         { projection: { total: 1, items: 1, _id: 0 } }
       ).toArray(),
       
-      // 3. Estatísticas de produtos (count)
+      // 2. Estatísticas de produtos (count)
       db.collection('products').countDocuments(),
       
-      // 4. Produtos com estoque baixo
+      // 3. Produtos com estoque baixo
       db.collection('products').find({
         $expr: {
           $lte: [
@@ -81,7 +77,7 @@ exports.handler = async (event, context) => {
         projection: { name: 1, sku: 1, quantity: 1, minStock: 1, maxStock: 1, perishable: 1, expiryDate: 1, validade: 1, expirationDate: 1 }
       }).toArray(),
       
-      // 5. Produtos com excesso de estoque
+      // 4. Produtos com excesso de estoque
       db.collection('products').find({
         $expr: {
           $and: [
@@ -91,38 +87,38 @@ exports.handler = async (event, context) => {
         }
       }).toArray(),
       
-      // 6. Entradas nas últimas 24h
+      // 5. Entradas nas últimas 24h
       db.collection('products').find(
         { createdAt: { $gte: oneDayAgo } },
         { projection: { _id: 1 } }
       ).toArray(),
       
-      // 7. Vendas recentes do período (últimas 10)
+      // Vendas recentes do período (últimas 10)
       db.collection('sales')
         .find({ createdAt: { $gte: currentStart, $lt: currentEnd } }, { projection: { _id: 1, saleNumber: 1, total: 1, status: 1, createdAt: 1, items: 1 } })
         .sort({ createdAt: -1 })
         .limit(10)
         .toArray(),
       
-      // 8. Produtos recentes do período (últimos 10)
+      // Produtos recentes do período (últimos 10)
       db.collection('products')
         .find({ createdAt: { $gte: currentStart, $lt: currentEnd } }, { projection: { _id: 1, name: 1, sku: 1, quantity: 1, price: 1, createdAt: 1 } })
         .sort({ createdAt: -1 })
         .limit(10)
         .toArray(),
       
-      // 9. Vendas pendentes (reservadas há mais de 24h)
+      // Vendas pendentes (reservadas há mais de 24h)
       db.collection('sales').find(
         { status: 'RESERVED', createdAt: { $lte: oneDayAgo } },
         { projection: { _id: 1, saleNumber: 1, createdAt: 1 } }
       ).toArray(),
       
-      // 10. Movimentações recentes (últimos 7 dias) - apenas sku
+      // Movimentações recentes (últimos 7 dias) - apenas sku
       db.collection('movimentacoes_estoque')
         .find({ timestamp: { $gte: sevenDaysAgo } }, { projection: { sku: 1, _id: 0 } })
         .toArray(),
       
-      // 11. Produtos parados (sem movimento nos últimos 7 dias)
+      // Produtos parados (sem movimento nos últimos 7 dias)
       (async () => {
         const movements = await db.collection('movimentacoes_estoque')
           .find({ timestamp: { $gte: sevenDaysAgo } }, { projection: { sku: 1, _id: 0 } })
@@ -140,7 +136,7 @@ exports.handler = async (event, context) => {
         ).limit(10).toArray();
       })(),
       
-      // 12. Produtos próximos ao vencimento (próximos 14 dias)
+      // Produtos próximos ao vencimento (próximos 14 dias)
       db.collection('products').find({
         $or: [
           { expiryDate: { $gte: today, $lte: fourteenDaysFromNow } },
@@ -151,13 +147,13 @@ exports.handler = async (event, context) => {
         projection: { name: 1, sku: 1, quantity: 1, minStock: 1, maxStock: 1, perishable: 1, expiryDate: 1, validade: 1, expirationDate: 1 }
       }).toArray(),
       
-      // 13. Movimentações de estoque recentes (últimas 24h)
+      // Movimentações de estoque recentes (últimas 24h)
       db.collection('movimentacoes_estoque')
         .find({ timestamp: { $gte: oneDayAgo } })
         .sort({ timestamp: -1 })
         .toArray(),
 
-      // 14. Contas a pagar vencidas
+      // Contas a pagar vencidas
       db.collection('accounts_payable').find({
         status: { $nin: ['paid', 'cancelled'] },
         paidDate: { $in: [null, undefined] },
@@ -166,7 +162,7 @@ exports.handler = async (event, context) => {
         projection: { description: 1, supplier: 1, amount: 1, dueDate: 1, _id: 1 }
       }).sort({ dueDate: 1 }).limit(10).toArray(),
 
-      // 15. Contas a pagar com vencimento próximo (3 dias)
+      // Contas a pagar com vencimento próximo (3 dias)
       (async () => {
         const threeDaysFromNow = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
         threeDaysFromNow.setHours(23, 59, 59, 999);
@@ -179,7 +175,7 @@ exports.handler = async (event, context) => {
         }).sort({ dueDate: 1 }).limit(10).toArray();
       })(),
 
-      // 16. Vendas do período anterior (comparativo)
+      // Vendas do período anterior (comparativo)
       db.collection('sales').find(
         { createdAt: { $gte: prevStart, $lt: prevEnd }, status: 'FINALIZED' },
         { projection: { total: 1, items: 1, _id: 0 } }
@@ -225,60 +221,6 @@ exports.handler = async (event, context) => {
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10);
 
-    // Preparar notificações
-    const dismissedKeys = new Set(dismissedNotifications.map(item => item.notificationKey));
-    
-    const notifications = [];
-    if (lowStockProducts.length) {
-      notifications.push({
-        title: 'Produtos em baixa',
-        description: `${lowStockProducts.length} produto(s) no limite mínimo de estoque`,
-        href: '/pages/estoque.html',
-        count: lowStockProducts.length,
-        items: lowStockProducts.slice(0, 5)
-      });
-    }
-    if (idleStockProducts.length) {
-      notifications.push({
-        title: 'Estoque parado/inativo',
-        description: `${idleStockProducts.length} produto(s) sem movimento nos últimos 7 dias`,
-        href: '/pages/auditoria-estoque.html',
-        count: idleStockProducts.length,
-        items: idleStockProducts.slice(0, 5)
-      });
-    }
-    if (pendingSales.length) {
-      notifications.push({
-        title: 'Vendas paradas há mais de 24h',
-        description: `${pendingSales.length} venda(s) reservada(s) aguardando conclusão`,
-        href: '/pages/historico-vendas.html',
-        count: pendingSales.length
-      });
-    }
-    if (overduePayables.length) {
-      const totalOverdue = overduePayables.reduce((acc, b) => acc + (Number(b.amount) || 0), 0);
-      notifications.push({
-        title: 'Contas a pagar vencidas',
-        description: `${overduePayables.length} boleto(s) em atraso — total R$ ${totalOverdue.toFixed(2).replace('.', ',')}`,
-        href: '/pages/contas-a-pagar.html',
-        count: overduePayables.length,
-        items: overduePayables.slice(0, 5)
-      });
-    }
-    if (dueSoonPayables.length) {
-      notifications.push({
-        title: 'Vencimentos próximos',
-        description: `${dueSoonPayables.length} conta(s) vencem nos próximos 3 dias`,
-        href: '/pages/contas-a-pagar.html',
-        count: dueSoonPayables.length,
-        items: dueSoonPayables.slice(0, 5)
-      });
-    }
-
-    const activeNotifications = notifications.filter(item => !dismissedKeys.has(
-      `${item.title}||${item.description}`
-    ));
-
     return {
       statusCode: 200,
       body: JSON.stringify({
@@ -289,7 +231,6 @@ exports.handler = async (event, context) => {
         estimatedProfit,
         recentSales,
         recentProducts,
-        notifications: activeNotifications,
         prevRevenue,
         revenueChange,
         topProducts,

@@ -530,162 +530,6 @@ const BuildFlow = {
     });
   },
 
-  async getDashboardNotifications() {
-    try {
-      return await this.apiFetch("/notifications");
-    } catch {
-      return [];
-    }
-  },
-
-  getNotificationKey(notification) {
-    return `${notification.title || ''}||${notification.description || ''}`;
-  },
-
-  async dismissNotificationByKey(key) {
-    try {
-      await this.apiFetch('/dismiss-notification', {
-        method: 'POST',
-        body: JSON.stringify({ notificationKey: key }),
-      });
-    } catch (error) {
-      console.error('Erro ao descartar notificação:', error);
-    }
-  },
-
-  async dismissNotifications(notifications) {
-    for (const item of (notifications || [])) {
-      await this.dismissNotificationByKey(this.getNotificationKey(item));
-    }
-  },
-
-  async deleteAllNotifications() {
-    try {
-      await this.apiFetch('/dismiss-notification', { method: 'DELETE' });
-    } catch (error) {
-      console.error('Erro ao excluir notificações:', error);
-    }
-  },
-
-  buildNotificationDropdown(container, notifications, { onClearAll } = {}) {
-    if (!container) return;
-    if (!notifications || notifications.length === 0) {
-      container.innerHTML = '<div class="notification-empty">Sem alertas recentes.</div>';
-      return;
-    }
-
-    const notificationCount = notifications.length;
-    container.innerHTML = `
-      <div class="notification-dropdown-header">
-        <div>${notificationCount} alerta${notificationCount === 1 ? '' : 's'}</div>
-        <button type="button" class="notification-clear-btn">Excluir tudo</button>
-      </div>
-      ${notifications
-        .map((item) => {
-          const detailsHtml = (item.items || [])
-            .map((product) => {
-              const expiryText = product.expiryDate
-                ? ` • Validade: ${new Date(product.expiryDate).toLocaleDateString('pt-BR')}`
-                : '';
-              const perishableText = product.perishable ? 'Perecível' : 'Não perecível';
-              const thresholds = `Min: ${product.minStock || 0} / Max: ${product.maxStock || 0}`;
-              return `<div class="notification-detail-row"><strong>${this.escapeHtml(product.name || 'Produto')}</strong> (${this.escapeHtml(product.sku || '---')}) • ${Number(product.quantity || 0)} un • ${this.escapeHtml(perishableText)}${expiryText} • ${this.escapeHtml(thresholds)}</div>`;
-            })
-            .join('');
-
-          return `
-            <div class="notification-item" data-href="${item.href || '#'}">
-              <div class="notification-item-top">
-                <span class="notification-item-title">${this.escapeHtml(item.title)}</span>
-                <span class="notification-item-count">${item.count || ''}</span>
-              </div>
-              <div class="notification-item-desc">${this.escapeHtml(item.description)}</div>
-              ${detailsHtml ? `<div class="notification-item-details">${detailsHtml}</div>` : ''}
-            </div>`;
-        })
-        .join('')}
-    `;
-
-    const clearBtn = container.querySelector('.notification-clear-btn');
-    if (clearBtn && typeof onClearAll === 'function') {
-      clearBtn.addEventListener('click', (event) => {
-        event.stopPropagation();
-        onClearAll();
-      });
-    }
-
-    container.querySelectorAll('.notification-item').forEach((item) => {
-      item.addEventListener('click', () => {
-        const href = item.dataset.href;
-        if (href && href !== '#') {
-          window.location.href = href;
-        }
-      });
-    });
-  },
-
-  async initNotificationBell() {
-    const bellButtons = document.querySelectorAll(".action-btn .fa-bell");
-    bellButtons.forEach((icon) => {
-      const actionBtn = icon.closest(".action-btn");
-      if (!actionBtn) return;
-      if (actionBtn.dataset.notificationAttached) return;
-
-      const badge = document.createElement("span");
-      badge.className = "notification-badge";
-      actionBtn.appendChild(badge);
-
-      const dropdown = document.createElement("div");
-      dropdown.className = "notification-dropdown";
-      actionBtn.appendChild(dropdown);
-
-      const loadNotifications = async (reload) => {
-        try {
-          if (reload) {
-            localStorage.removeItem('buildflow_dashboard_cache');
-          }
-          const notifications = await this.getDashboardNotifications();
-          badge.textContent = notifications.length > 9 ? "9+" : String(notifications.length);
-          badge.style.display = notifications.length ? "flex" : "none";
-          this.buildNotificationDropdown(dropdown, notifications, {
-            onClearAll: async () => {
-              await this.deleteAllNotifications();
-              await loadNotifications(true);
-            },
-          });
-        } catch (error) {
-          dropdown.innerHTML = '<div class="notification-empty">Erro ao carregar notificações.</div>';
-          badge.style.display = "none";
-        }
-      };
-
-      // Carregar a contagem de notificações assim que o componente é inicializado
-      loadNotifications();
-
-      actionBtn.addEventListener("click", async (event) => {
-        event.stopPropagation();
-        if (dropdown.classList.contains("active")) {
-          dropdown.classList.remove("active");
-          return;
-        }
-        await loadNotifications();
-        dropdown.classList.add("active");
-      });
-
-      document.addEventListener("click", (event) => {
-        if (!actionBtn.contains(event.target)) {
-          dropdown.classList.remove("active");
-        }
-      });
-
-      actionBtn.dataset.notificationAttached = "1";
-    });
-  },
-
-  initGlobalNotifications() {
-    this.initNotificationBell();
-  },
-
   initUserMenu() {
     document.querySelectorAll(".user-profile").forEach((profile) => {
       if (profile.dataset.userMenuAttached) return;
@@ -1602,6 +1446,36 @@ const BuildFlow = {
     return await this.apiFetch(path);
   },
 
+  // Caixa (Abertura/Fechamento)
+  async getCaixaStatus() {
+    return await this.apiFetch('/caixa?status=aberto');
+  },
+
+  async abrirCaixa(valorInicial, observacao = '', userName = '', numeroCaixa = '01') {
+    return await this.apiFetch('/caixa', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'abrir', valorInicial, observacao, userName, numeroCaixa })
+    });
+  },
+
+  async verificarSenhaCaixa(password) {
+    return await this.apiFetch('/caixa', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'verificar-senha', password })
+    });
+  },
+
+  async fecharCaixa(observacao = '') {
+    return await this.apiFetch('/caixa', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'fechar', observacao })
+    });
+  },
+
+  async getCaixaHistory() {
+    return await this.apiFetch('/caixa');
+  },
+
   async getStockMovements(params = {}) {
     const query = new URLSearchParams(params).toString();
     const path = query ? `/stock-movements?${query}` : "/stock-movements";
@@ -1791,7 +1665,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   BuildFlow.checkAuth();
   BuildFlow.applyTheme();
   BuildFlow.initGlobalSearch();
-  BuildFlow.initGlobalNotifications();
   BuildFlow.initUserMenu();
 });
 

@@ -1225,24 +1225,6 @@ input[type=number] {
     color: white;
 }
 
-.notification-badge {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    min-width: 18px;
-    height: 18px;
-    border-radius: 999px;
-    background: #ef4444;
-    color: #fff;
-    font-size: 0.7rem;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 0 5px;
-    font-weight: 700;
-    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.12);
-}
-
 .user-profile {
     position: relative;
     cursor: pointer;
@@ -1297,137 +1279,6 @@ input[type=number] {
 
 .user-dropdown-item.danger i {
     color: var(--red);
-}
-
-.notification-dropdown {
-    position: absolute;
-    top: calc(100% + 10px);
-    right: 0;
-    width: 360px;
-    max-width: calc(100vw - 32px);
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.12);
-    z-index: 200;
-    display: none;
-    min-height: 120px;
-    max-height: 500px;
-    overflow-y: auto;
-    overflow-x: hidden;
-}
-
-.notification-dropdown.active {
-    display: block;
-}
-
-.notification-item,
-.notification-empty {
-    width: 100%;
-    text-align: left;
-    border: none;
-    background: transparent;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 16px;
-    color: var(--text-primary);
-    cursor: pointer;
-}
-
-.notification-item {
-    border-bottom: 1px solid var(--border);
-}
-
-.notification-item:last-child {
-    border-bottom: none;
-}
-
-.notification-item:hover {
-    background: var(--bg-hover);
-}
-
-.notification-item-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-}
-
-.notification-dropdown-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px;
-    border-bottom: 1px solid var(--border);
-    gap: 12px;
-    color: var(--text-primary);
-}
-
-.notification-clear-btn {
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text-secondary);
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-size: 0.78rem;
-    cursor: pointer;
-    transition: background 0.2s ease, color 0.2s ease;
-}
-
-.notification-clear-btn:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-}
-
-.notification-item-count {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 4px 8px;
-}
-
-.notification-dismiss-btn {
-    align-self: flex-end;
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    font-size: 0.75rem;
-    padding: 6px 10px;
-    cursor: pointer;
-    border-radius: 999px;
-    transition: background 0.2s ease, color 0.2s ease;
-}
-
-.notification-dismiss-btn:hover {
-    background: rgba(148, 163, 184, 0.12);
-    color: var(--text-primary);
-}
-
-.notification-item-title {
-    font-weight: 700;
-}
-
-.notification-item-desc {
-    font-size: 0.82rem;
-    color: var(--text-muted);
-}
-
-.notification-item-details {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 8px;
-}
-
-.notification-detail-row {
-    font-size: 0.8rem;
-    color: var(--text-primary);
-    background: var(--bg-page);
-    padding: 10px 12px;
-    border-radius: 12px;
 }
 
 .user-profile {
@@ -2464,8 +2315,7 @@ tr:last-child td {
 
     .user-info, 
     .user-profile span,
-    .action-btn:has(.fa-moon),
-    .action-btn:has(.fa-bell) { 
+    .action-btn:has(.fa-moon) { 
         display: none !important;
     }
 
