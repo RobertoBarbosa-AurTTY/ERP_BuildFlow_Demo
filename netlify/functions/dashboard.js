@@ -10,28 +10,41 @@ exports.handler = async (event, context) => {
   try {
     const db = await getDb();
     const period = event.queryStringParameters?.period || 'month';
+    const tzOffset = parseInt(event.queryStringParameters?.tzOffset) || 0;
+    const selectedDate = event.queryStringParameters?.date;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const localEpoch = now.getTime() - tzOffset * 60000;
+    const localDate = new Date(localEpoch);
+    const localMidnightEpoch = Date.UTC(localDate.getUTCFullYear(), localDate.getUTCMonth(), localDate.getUTCDate());
+    const todayStart = new Date(localMidnightEpoch + tzOffset * 60000);
 
     let currentStart, currentEnd, prevStart, prevEnd;
 
     if (period === 'day') {
-      currentStart = new Date(today);
-      currentEnd = new Date(today.getTime() + 24 * 60 * 60 * 1000);
-      prevStart = new Date(today.getTime() - 24 * 60 * 60 * 1000);
-      prevEnd = new Date(today);
+      let dayStart;
+      if (selectedDate) {
+        const [y, m, d] = selectedDate.split('-').map(Number);
+        dayStart = new Date(Date.UTC(y, m - 1, d) + tzOffset * 60000);
+      } else {
+        dayStart = new Date(todayStart);
+      }
+      currentStart = new Date(dayStart);
+      currentEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+      prevStart = new Date(dayStart.getTime() - 24 * 60 * 60 * 1000);
+      prevEnd = new Date(dayStart);
     } else if (period === 'week') {
-      currentStart = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000);
-      currentEnd = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+      currentStart = new Date(todayStart.getTime() - 6 * 24 * 60 * 60 * 1000);
+      currentEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
       prevStart = new Date(currentStart.getTime() - 7 * 24 * 60 * 60 * 1000);
       prevEnd = new Date(currentStart);
     } else {
       // month (default)
-      currentStart = new Date(today.getFullYear(), today.getMonth(), 1);
-      currentEnd = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-      prevStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-      prevEnd = new Date(today.getFullYear(), today.getMonth(), 1);
+      const monthStart = (y, m) => Date.UTC(y, m, 1) + tzOffset * 60000;
+      currentStart = new Date(monthStart(todayStart.getFullYear(), todayStart.getMonth()));
+      currentEnd = new Date(monthStart(todayStart.getFullYear(), todayStart.getMonth() + 1));
+      prevStart = new Date(monthStart(todayStart.getFullYear(), todayStart.getMonth() - 1));
+      prevEnd = new Date(monthStart(todayStart.getFullYear(), todayStart.getMonth()));
     }
 
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -139,9 +152,9 @@ exports.handler = async (event, context) => {
       // Produtos próximos ao vencimento (próximos 14 dias)
       db.collection('products').find({
         $or: [
-          { expiryDate: { $gte: today, $lte: fourteenDaysFromNow } },
-          { validade: { $gte: today, $lte: fourteenDaysFromNow } },
-          { expirationDate: { $gte: today, $lte: fourteenDaysFromNow } }
+          { expiryDate: { $gte: todayStart, $lte: fourteenDaysFromNow } },
+          { validade: { $gte: todayStart, $lte: fourteenDaysFromNow } },
+          { expirationDate: { $gte: todayStart, $lte: fourteenDaysFromNow } }
         ]
       }, {
         projection: { name: 1, sku: 1, quantity: 1, minStock: 1, maxStock: 1, perishable: 1, expiryDate: 1, validade: 1, expirationDate: 1 }
@@ -157,7 +170,7 @@ exports.handler = async (event, context) => {
       db.collection('accounts_payable').find({
         status: { $nin: ['paid', 'cancelled'] },
         paidDate: { $in: [null, undefined] },
-        dueDate: { $lt: today }
+        dueDate: { $lt: todayStart }
       }, {
         projection: { description: 1, supplier: 1, amount: 1, dueDate: 1, _id: 1 }
       }).sort({ dueDate: 1 }).limit(10).toArray(),
@@ -169,7 +182,7 @@ exports.handler = async (event, context) => {
         return db.collection('accounts_payable').find({
           status: { $nin: ['paid', 'cancelled'] },
           paidDate: { $in: [null, undefined] },
-          dueDate: { $gte: today, $lte: threeDaysFromNow }
+          dueDate: { $gte: todayStart, $lte: threeDaysFromNow }
         }, {
           projection: { description: 1, supplier: 1, amount: 1, dueDate: 1, _id: 1 }
         }).sort({ dueDate: 1 }).limit(10).toArray();

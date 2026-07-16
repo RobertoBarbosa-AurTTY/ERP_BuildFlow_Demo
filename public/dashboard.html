@@ -41,6 +41,223 @@
       .period-filter button:hover:not(.active) {
         color: var(--text-primary);
       }
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(4px);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+      }
+      .modal-overlay.active {
+        display: flex;
+      }
+      .calendar-popup {
+        background: var(--bg-card);
+        border-radius: 16px;
+        width: 320px;
+        max-width: 90vw;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        animation: modalIn 0.2s ease-out;
+        overflow: hidden;
+      }
+      @keyframes modalIn {
+        from { transform: scale(0.9); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+      }
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 20px 0;
+      }
+      .modal-header h3 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+      .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.4rem;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+      }
+      .modal-close:hover { color: var(--text-primary); }
+
+      .calendar-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 20px 8px;
+      }
+      .cal-nav-btn {
+        background: none;
+        border: none;
+        font-size: 1.4rem;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 6px;
+        line-height: 1;
+      }
+      .cal-nav-btn:hover {
+        color: var(--text-primary);
+        background: var(--bg-hover);
+      }
+      .cal-month-year {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+
+      .cal-weekdays {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        padding: 4px 16px 0;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      .cal-days {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        padding: 8px 16px;
+        gap: 2px;
+      }
+      .cal-day {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.82rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.12s;
+        user-select: none;
+      }
+      .cal-day:hover {
+        background: var(--bg-hover);
+      }
+      .cal-day.other-month {
+        color: var(--text-muted);
+        opacity: 0.35;
+      }
+      .cal-day.today {
+        font-weight: 700;
+        color: var(--primary);
+        border: 1.5px solid var(--primary);
+      }
+      .cal-day.today.selected {
+        border: 1.5px solid var(--primary);
+        background: var(--primary);
+        color: #fff;
+      }
+
+      .cal-day.selected {
+        background: var(--primary);
+        color: #fff;
+        font-weight: 700;
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(99,102,241,0.35);
+      }
+      .cal-day.selected:hover {
+        opacity: 0.9;
+        background: var(--primary);
+        color: #fff;
+      }
+
+      .cal-footer {
+        display: flex;
+        gap: 8px;
+        padding: 8px 20px 18px;
+      }
+      .cal-btn {
+        flex: 1;
+        padding: 9px 0;
+        border-radius: 10px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.12s;
+      }
+      .cal-btn-today {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+        border: 1px solid var(--border);
+      }
+      .caixa-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+      .caixa-badge.caixa-open {
+        background: rgba(22,163,74,0.12);
+        color: #16a34a;
+        border: 1px solid rgba(22,163,74,0.25);
+      }
+      .caixa-badge.caixa-open::before {
+        content: '';
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #16a34a;
+      }
+      .caixa-badge.caixa-closed {
+        background: rgba(220,38,38,0.1);
+        color: #dc2626;
+        border: 1px solid rgba(220,38,38,0.2);
+      }
+      .caixa-badge.caixa-closed::before {
+        content: '';
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #dc2626;
+      }
+      .caixa-badge.caixa-loading {
+        background: var(--bg-hover);
+        color: var(--text-muted);
+        border: 1px solid var(--border);
+      }
+      .cal-btn-today:hover {
+        background: var(--border);
+      }
+      .cal-btn-confirm {
+        background: var(--bg-hover);
+        color: var(--text-muted);
+        border: 1px solid var(--border);
+        cursor: default;
+      }
+      .cal-btn-confirm.active {
+        background: #16a34a;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+      }
+      .cal-btn-confirm.active:hover {
+        opacity: 0.9;
+      }
+      @media (max-width: 500px) {
+        .calendar-popup { width: 95vw; }
+      }
       @media (max-width: 1200px) {
         .insights-grid { grid-template-columns: 1fr !important; }
       }
@@ -187,7 +404,10 @@
 
         <header class="page-header">
           <h2>Bem-vindo de volta, <span>Admin</span></h2>
-          <p id="dashboardDateLine">Carregando resumo do dia...</p>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <p id="dashboardDateLine">Carregando resumo do dia...</p>
+            <span id="caixaStatusBadge" class="caixa-badge caixa-loading">Caixa...</span>
+          </div>
         </header>
 
           <div style="display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
@@ -195,6 +415,28 @@
               <button data-period="day">Dia</button>
               <button data-period="week">Semana</button>
               <button data-period="month" class="active">Mês</button>
+            </div>
+          </div>
+
+          <div class="modal-overlay" id="dayPickerOverlay">
+            <div class="modal-popup calendar-popup">
+              <div class="modal-header">
+                <h3>Selecionar Dia</h3>
+                <button class="modal-close" id="dayPickerClose">&times;</button>
+              </div>
+              <div class="calendar-nav">
+                <button class="cal-nav-btn" id="calPrev">&#8249;</button>
+                <span class="cal-month-year" id="calMonthYear">Julho 2026</span>
+                <button class="cal-nav-btn" id="calNext">&#8250;</button>
+              </div>
+              <div class="cal-weekdays">
+                <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+              </div>
+              <div class="cal-days" id="calDays"></div>
+              <div class="cal-footer">
+                <button class="cal-btn cal-btn-today" id="dayPickerToday">Hoje</button>
+                <button class="cal-btn cal-btn-confirm" id="dayPickerConfirm">Confirmar</button>
+              </div>
             </div>
           </div>
 
@@ -472,6 +714,24 @@
         if (el) el.innerText = value;
       }
 
+      async function loadCaixaStatus() {
+        try {
+          const result = await BuildFlow.getCaixaStatus();
+          const badge = document.getElementById('caixaStatusBadge');
+          if (result && result.status === 'aberto') {
+            badge.className = 'caixa-badge caixa-open';
+            badge.textContent = `Caixa Aberto · Terminal ${result.numeroCaixa || '01'}`;
+          } else {
+            badge.className = 'caixa-badge caixa-closed';
+            badge.textContent = 'Caixa Fechado';
+          }
+        } catch {
+          const badge = document.getElementById('caixaStatusBadge');
+          badge.className = 'caixa-badge caixa-closed';
+          badge.textContent = 'Caixa Fechado';
+        }
+      }
+
       async function loadQuickAccessStats() {
         try {
           const today = new Date();
@@ -481,7 +741,7 @@
           const [summary, addrs, sales] = await Promise.all([
             BuildFlow.getWmsSummary(),
             BuildFlow.getWarehouseAddresses().catch(() => null),
-            BuildFlow.getSales({ start: todayStart.toISOString(), end: todayEnd.toISOString() }).catch(() => []),
+            BuildFlow.getSales({ start: todayStart.toISOString(), end: todayEnd.toISOString(), status: 'FINALIZED' }).catch(() => []),
           ]);
 
           setMetricText("qaPriceMeta", `${summary.total} produto(s) no banco`);
@@ -516,10 +776,11 @@
 
       let currentPeriod = 'month';
 
-      async function loadDashboard(period) {
+      async function loadDashboard(period, selectedDate) {
         currentPeriod = period || 'month';
         try {
-          const data = await BuildFlow.getDashboardMetrics(currentPeriod);
+          const tzOffset = new Date().getTimezoneOffset();
+          const data = await BuildFlow.getDashboardMetrics(currentPeriod, tzOffset, selectedDate);
           const labels = getPeriodLabels(currentPeriod);
 
           const todayLabel = new Date().toLocaleDateString("pt-BR", {
@@ -823,14 +1084,121 @@
         document.querySelectorAll(".period-filter button").forEach((btn) => {
           btn.classList.toggle("active", btn.dataset.period === period);
         });
-        loadDashboard(period);
+        if (period !== 'day') {
+          document.getElementById('dayPickerOverlay').classList.remove('active');
+          loadDashboard(period);
+        }
+      }
+
+      const calState = { year: 0, month: 0, selected: null };
+
+      function renderCalendar() {
+        const daysEl = document.getElementById('calDays');
+        const titleEl = document.getElementById('calMonthYear');
+        const { year, month, selected } = calState;
+        const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+        titleEl.textContent = `${months[month]} ${year}`;
+
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const lastDate = new Date(year, month + 1, 0).getDate();
+        const prevLastDate = new Date(year, month, 0).getDate();
+
+        let html = '';
+        for (let i = firstDay - 1; i >= 0; i--) {
+          html += `<div class="cal-day other-month">${prevLastDate - i}</div>`;
+        }
+        for (let d = 1; d <= lastDate; d++) {
+          const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          const isToday = dateStr === todayStr;
+          const isSelected = dateStr === selected;
+          let cls = 'cal-day';
+          if (isToday) cls += ' today';
+          if (isSelected) cls += ' selected';
+          html += `<div class="${cls}" data-date="${dateStr}">${d}</div>`;
+        }
+        const totalCells = firstDay + lastDate;
+        const remaining = (7 - (totalCells % 7)) % 7;
+        for (let i = 1; i <= remaining; i++) {
+          html += `<div class="cal-day other-month">${i}</div>`;
+        }
+        daysEl.innerHTML = html;
+
+        document.getElementById('dayPickerConfirm').className = 'cal-btn cal-btn-confirm' + (selected ? ' active' : '');
+      }
+
+      function openDayPicker() {
+        const today = new Date();
+        calState.year = today.getFullYear();
+        calState.month = today.getMonth();
+        calState.selected = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+        renderCalendar();
+        document.getElementById('dayPickerOverlay').classList.add('active');
+        document.getElementById('dayPickerConfirm').className = 'cal-btn cal-btn-confirm active';
+      }
+
+      function closeDayPicker() {
+        document.getElementById('dayPickerOverlay').classList.remove('active');
+      }
+
+      function loadDay(dateStr) {
+        closeDayPicker();
+        document.querySelectorAll(".period-filter button").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.period === 'day');
+        });
+        loadDashboard('day', dateStr);
       }
 
       document.addEventListener("DOMContentLoaded", () => {
-        Promise.all([loadDashboard('month'), loadQuickAccessStats()]);
+        Promise.all([loadDashboard('month'), loadQuickAccessStats(), loadCaixaStatus()]);
 
         document.querySelectorAll(".period-filter button").forEach((btn) => {
-          btn.addEventListener("click", () => switchPeriod(btn.dataset.period));
+          btn.addEventListener("click", () => {
+            if (btn.dataset.period === 'day') {
+              openDayPicker();
+            } else {
+              switchPeriod(btn.dataset.period);
+            }
+          });
+        });
+
+        const overlay = document.getElementById('dayPickerOverlay');
+        overlay.addEventListener('click', (e) => {
+          if (e.target === e.currentTarget) closeDayPicker();
+        });
+        document.getElementById('dayPickerClose').addEventListener('click', closeDayPicker);
+
+        document.getElementById('calPrev').addEventListener('click', () => {
+          calState.month--;
+          if (calState.month < 0) { calState.month = 11; calState.year--; }
+          renderCalendar();
+        });
+        document.getElementById('calNext').addEventListener('click', () => {
+          calState.month++;
+          if (calState.month > 11) { calState.month = 0; calState.year++; }
+          renderCalendar();
+        });
+
+        document.getElementById('calDays').addEventListener('click', (e) => {
+          const dayEl = e.target.closest('.cal-day');
+          if (!dayEl || dayEl.classList.contains('other-month')) return;
+          const dateStr = dayEl.dataset.date;
+          calState.selected = dateStr;
+          document.querySelectorAll('.cal-day').forEach(el => el.classList.remove('selected'));
+          dayEl.classList.add('selected');
+          document.getElementById('dayPickerConfirm').className = 'cal-btn cal-btn-confirm active';
+        });
+
+        document.getElementById('dayPickerToday').addEventListener('click', () => {
+          const today = new Date();
+          const ds = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+          loadDay(ds);
+        });
+
+        document.getElementById('dayPickerConfirm').addEventListener('click', () => {
+          if (calState.selected) loadDay(calState.selected);
         });
 
         const searchInput = document.getElementById("dashboardSearchInput");

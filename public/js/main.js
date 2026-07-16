@@ -1528,8 +1528,8 @@ const BuildFlow = {
     return `buildflow_dashboard_cache_${period}`;
   },
 
-  async getDashboardMetrics(period = 'month') {
-    const cacheKey = this.getDashboardMetricsCacheKey(period);
+  async getDashboardMetrics(period = 'month', tzOffset, selectedDate) {
+    const cacheKey = this.getDashboardMetricsCacheKey(period + (selectedDate || ''));
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
       try {
@@ -1537,7 +1537,7 @@ const BuildFlow = {
         if (Date.now() < expiry) return data;
       } catch { /* ignore */ }
     }
-    const data = await this.fetchAndCacheMetrics(period);
+    const data = await this.fetchAndCacheMetrics(period, tzOffset, selectedDate);
     localStorage.setItem(cacheKey, JSON.stringify({ data, expiry: Date.now() + 30000 }));
     return data;
   },
@@ -1564,8 +1564,11 @@ const BuildFlow = {
     return { ...defaults, ...saved };
   },
 
-  async fetchAndCacheMetrics(period = 'month') {
-    return await this.apiFetch(`/dashboard?period=${period}`);
+  async fetchAndCacheMetrics(period = 'month', tzOffset, selectedDate) {
+    const tz = tzOffset ?? new Date().getTimezoneOffset();
+    let url = `/dashboard?period=${period}&tzOffset=${tz}`;
+    if (selectedDate) url += `&date=${selectedDate}`;
+    return await this.apiFetch(url);
   },
 
   async getWmsSummary() {

@@ -2749,29 +2749,27 @@
             const mobileDate = document.getElementById('currentDateMobile');
             if (mobileDate) mobileDate.innerText = now.toLocaleDateString('pt-BR');
 
-            // Carregar produtos do Banco de Dados (sempre carregar para quando o caixa abrir)
-            try {
-                dbProducts = await BuildFlow.getProducts({ limit: 'all' });
-                await renderCategories();
-                reconcileCartWithStock();
-                renderProducts('all');
-            } catch (error) {
-                BuildFlow.showToast('Erro ao carregar produtos do banco', 'danger');
-            }
+            // Disparar carregamento de produtos (não aguarda ainda)
+            const productPromise = BuildFlow.getProducts({ limit: 'all' })
+                .catch(() => { BuildFlow.showToast('Erro ao carregar produtos', 'danger'); return []; });
 
-            updateTotal();
-
-            // Verificar status do caixa
+            // Verificar status do caixa (rápido) — executa enquanto produtos carregam
             await checkCaixaStatus();
 
-            // Se caixa estiver fechado, solicitar abertura
+            // Se caixa estiver fechado, abrir modal IMEDIATAMENTE (produtos ainda carregando em paralelo)
             if (!caixaAberto && caixaLoaded) {
                 await showAbrirCaixaModal();
-                await checkCaixaStatus();
                 if (caixaAberto) {
                     BuildFlow.showToast('Caixa aberto! PDV liberado para vendas.', 'success');
                 }
             }
+
+            // Aguardar produtos terminarem e renderizar
+            dbProducts = await productPromise;
+            await renderCategories();
+            reconcileCartWithStock();
+            renderProducts('all');
+            updateTotal();
             
             // Event Listeners
             document.getElementById('showProductsBtn').addEventListener('click', showProductsQuickView);
