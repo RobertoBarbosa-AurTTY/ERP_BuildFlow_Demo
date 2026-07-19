@@ -1,7 +1,7 @@
-// AgilERP - Global API and Auth Management
+// BuildFlow - Global API and Auth Management
 const API_BASE = "/api";
 
-const AgilERP = {
+const BuildFlow = {
   // Autenticação
   async login(email, password) {
     try {
@@ -523,7 +523,7 @@ const AgilERP = {
   },
 
   initUserMenu() {
-    document.querySelectorAll(".user-profile").forEach((profile) => {
+    document.querySelectorAll(".sidebar-user").forEach((profile) => {
       if (profile.dataset.userMenuAttached) return;
 
       const dropdown = document.createElement("div");
@@ -908,7 +908,7 @@ const AgilERP = {
     const s = this.normalizeSaleRecord(sale);
     if (!s || !jsPDF) return;
 
-    const storeName = settings.storeName || "AgilERP";
+    const storeName = settings.storeName || "BuildFlow";
     const footer = settings.footerMessage || "Obrigado pela preferência!";
 
     if (type === "thermal") {
@@ -1310,7 +1310,7 @@ const AgilERP = {
     return {
       getValue() {
         const type = getTypeFn();
-        let num = AgilERP.parseDiscountInput(el.dataset.rawValue ?? el.value);
+        let num = BuildFlow.parseDiscountInput(el.dataset.rawValue ?? el.value);
         if (type === "percent") num = Math.min(100, num);
         return num;
       },
@@ -1499,6 +1499,44 @@ const AgilERP = {
     });
   },
 
+  async getCaixas() {
+    return await this.apiFetch("/caixas");
+  },
+
+  async createCaixa(data) {
+    return await this.apiFetch("/caixas", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  async deleteCaixa(id) {
+    return await this.apiFetch("/caixas", {
+      method: "DELETE",
+      body: JSON.stringify({ id }),
+    });
+  },
+
+  async getRetiradasCaixa(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    const path = query ? `/retiradas-caixa?${query}` : "/retiradas-caixa";
+    return await this.apiFetch(path);
+  },
+
+  async registrarRetiradaCaixa(data) {
+    return await this.apiFetch("/retiradas-caixa", {
+      method: "POST",
+      body: JSON.stringify({ action: "registrar", ...data }),
+    });
+  },
+
+  async removerRetiradaCaixa(id) {
+    return await this.apiFetch("/retiradas-caixa", {
+      method: "DELETE",
+      body: JSON.stringify({ id }),
+    });
+  },
+
   async updateWarehouseAddress(id, data) {
     return await this.apiFetch("/warehouse-addresses", {
       method: "PUT",
@@ -1517,7 +1555,7 @@ const AgilERP = {
 
   // Dashboard
   getDashboardMetricsCacheKey(period) {
-    return `agilerp_dashboard_cache_${period}`;
+    return `buildflow_dashboard_cache_${period}`;
   },
 
   async getDashboardMetrics(period = 'month', tzOffset, selectedDate) {
@@ -1537,8 +1575,8 @@ const AgilERP = {
   // Configurações
   getSettings() {
     const defaults = {
-        storeName: "AgilERP",
-        companyName: "AgilERP & Logística S.A.",
+        storeName: "BuildFlow",
+        companyName: "BuildFlow & Logística S.A.",
         companyCnpj: "12.345.678/0001-90",
         address: "Av. Principal, 1000 - São Paulo/SP",
         autoPrint: false,
@@ -1551,8 +1589,15 @@ const AgilERP = {
         darkMode: true,
         pushNotifications: true,
         systemSounds: false,
+        caixaNumber: "01",
+        caixaDefaultOpening: 0,
+        caixaRequirePassword: true,
+        caixaAutoClose: false,
+        caixaAutoCloseTime: "18:00",
+        caixaCloseAlert: true,
+        caixaCloseAlertMinutes: 30,
     };
-    const saved = JSON.parse(localStorage.getItem("agilerp_settings")) || {};
+    const saved = JSON.parse(localStorage.getItem("buildflow_settings")) || {};
     return { ...defaults, ...saved };
   },
 
@@ -1657,10 +1702,10 @@ const AgilERP = {
 
 // Auto-init
 document.addEventListener("DOMContentLoaded", async () => {
-  AgilERP.checkAuth();
-  AgilERP.applyTheme();
-  AgilERP.initGlobalSearch();
-  AgilERP.initUserMenu();
+  BuildFlow.checkAuth();
+  BuildFlow.applyTheme();
+  BuildFlow.initGlobalSearch();
+  BuildFlow.initUserMenu();
 });
 
 // Animation CSS
@@ -1675,15 +1720,14 @@ document.head.appendChild(style);
 
 // Inicialização e Listeners Online/Offline
 window.addEventListener("online", () => {
-  AgilERP.showToast("Você está online!", "success");
+  BuildFlow.showToast("Você está online!", "success");
 });
 
 window.addEventListener("offline", () => {
-  AgilERP.showToast(
+  BuildFlow.showToast(
     "Você está offline. Algumas funcionalidades podem não estar disponíveis.",
     "warning",
   );
 });
 
-window.AgilERP = AgilERP;
-window.BuildFlow = AgilERP;
+window.BuildFlow = BuildFlow;

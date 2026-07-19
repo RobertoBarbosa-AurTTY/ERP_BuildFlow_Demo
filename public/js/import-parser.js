@@ -516,8 +516,8 @@
     parseImportFile,
   };
 
-  if (typeof AgilERP !== "undefined") {
-    Object.assign(AgilERP, api);
+  if (typeof BuildFlow !== "undefined") {
+    Object.assign(BuildFlow, api);
   }
   window.ImportParser = api;
 })();

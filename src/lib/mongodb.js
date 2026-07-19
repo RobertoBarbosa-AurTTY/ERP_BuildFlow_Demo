@@ -17,30 +17,15 @@ async function getDb() {
   }
 
   if (cachedClient && cachedDb) {
-    try {
-      if (!cachedClient.topology || !cachedClient.topology.isConnected()) {
-        console.log('Topology closed, resetting cache');
-        try { await cachedClient.close(); } catch {}
-        cachedClient = null;
-        cachedDb = null;
-      } else {
-        return cachedDb;
-      }
-    } catch {
-      return cachedDb;
-    }
+    return cachedDb;
   }
 
   if (!cachedClient) {
     cachedClient = new MongoClient(uri, {
-      maxPoolSize: 10,
-      minPoolSize: 2,
-      maxIdleTimeMS: 30000,
-      serverSelectionTimeoutMS: 15000,
-      connectTimeoutMS: 15000,
-      heartbeatFrequencyMS: 10000,
-      socketTimeoutMS: 45000,
-      compressors: ['zlib'],
+      maxPoolSize: 3,
+      serverSelectionTimeoutMS: 3000,
+      connectTimeoutMS: 3000,
+      socketTimeoutMS: 30000,
       retryWrites: true,
       retryReads: true,
     });
@@ -49,7 +34,6 @@ async function getDb() {
   try {
     await cachedClient.connect();
   } catch (err) {
-    console.error('MongoDB connect failed, resetting cache:', err.message);
     try { await cachedClient.close(); } catch {}
     cachedClient = null;
     cachedDb = null;

@@ -1,7 +1,7 @@
 {
-  "name": "agilerp",
+  "name": "buildflow",
   "version": "1.0.0",
-  "description": "AgilERP with Serverless and MongoDB Atlas",
+  "description": "BuildFlow with Serverless and MongoDB Atlas",
   "main": "index.js",
   "scripts": {
     "build": "echo 'No build step required'",

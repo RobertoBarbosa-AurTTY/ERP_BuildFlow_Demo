@@ -1,8 +1,10 @@
-// AgilERP ERP - Configurações
+// BuildFlow ERP - Configurações
 document.addEventListener('DOMContentLoaded', () => {
     loadSettings();
     loadProfile();
     loadUnits();
+    loadCaixas();
+    loadPDVSettings();
 
     document.getElementById('saveCompanyBtn')?.addEventListener('click', saveCompanySettings);
     document.getElementById('savePrintBtn')?.addEventListener('click', savePrintSettings);
@@ -12,7 +14,20 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         saveUnitSettings();
     });
+    document.getElementById('saveCaixaBtn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        saveCaixa();
+    });
+    document.getElementById('savePDVBtn')?.addEventListener('click', savePDVSettings);
     document.getElementById('exportBackupBtn')?.addEventListener('click', exportDatabaseBackup);
+
+    const caixaAutoCloseEl = document.getElementById('caixaAutoClose');
+    if (caixaAutoCloseEl) {
+        caixaAutoCloseEl.addEventListener('change', () => {
+            const row = document.getElementById('caixaAutoCloseRow');
+            if (row) row.style.display = caixaAutoCloseEl.checked ? '' : 'none';
+        });
+    }
 });
 
 function loadProfile() {
@@ -34,7 +49,7 @@ async function saveProfile() {
     const newPassword = document.getElementById('profileNewPassword').value;
 
     if (!name) {
-        AgilERP.showToast('Informe seu nome.', 'warning');
+        BuildFlow.showToast('Informe seu nome.', 'warning');
         return;
     }
 
@@ -52,7 +67,7 @@ async function saveProfile() {
     }
 
     if (requiresPassword && !currentPassword) {
-        AgilERP.showToast('Confirme sua senha atual para alterar email ou senha.', 'warning');
+        BuildFlow.showToast('Confirme sua senha atual para alterar email ou senha.', 'warning');
         return;
     }
 
@@ -61,7 +76,7 @@ async function saveProfile() {
     }
 
     try {
-        const result = await AgilERP.apiFetch('/auth-update', {
+        const result = await BuildFlow.apiFetch('/auth-update', {
             method: 'POST',
             body: JSON.stringify(body)
         });
@@ -75,14 +90,14 @@ async function saveProfile() {
 
         document.getElementById('profileCurrentPassword').value = '';
         document.getElementById('profileNewPassword').value = '';
-        AgilERP.showToast('Perfil atualizado com sucesso!', 'success');
+        BuildFlow.showToast('Perfil atualizado com sucesso!', 'success');
     } catch (error) {
-        AgilERP.showToast(error.message || 'Erro ao atualizar perfil.', 'danger');
+        BuildFlow.showToast(error.message || 'Erro ao atualizar perfil.', 'danger');
     }
 }
 
 function loadSettings() {
-    const settings = AgilERP.getSettings();
+    const settings = BuildFlow.getSettings();
     
     document.getElementById('storeName').value = settings.storeName;
     document.getElementById('companyName').value = settings.companyName;
@@ -107,17 +122,17 @@ function saveCompanySettings() {
     const companyCnpj = document.getElementById('companyCnpj').value;
 
     if (!storeName) {
-        AgilERP.showToast('O nome da loja é obrigatório para as impressões!', 'warning');
+        BuildFlow.showToast('O nome da loja é obrigatório para as impressões!', 'warning');
         return;
     }
 
-    const settings = JSON.parse(localStorage.getItem('agilerp_settings')) || {};
+    const settings = JSON.parse(localStorage.getItem('buildflow_settings')) || {};
     settings.storeName = storeName;
     settings.companyName = companyName;
     settings.companyCnpj = companyCnpj;
 
-    localStorage.setItem('agilerp_settings', JSON.stringify(settings));
-    AgilERP.showToast('Configurações da empresa salvas!', 'success');
+    localStorage.setItem('buildflow_settings', JSON.stringify(settings));
+    BuildFlow.showToast('Configurações da empresa salvas!', 'success');
 }
 
 function savePrintSettings() {
@@ -129,7 +144,7 @@ function savePrintSettings() {
     const receiptLegalNote = document.getElementById('receiptLegalNote').value;
     const proconNumber = document.getElementById('proconNumber').value;
 
-    const settings = JSON.parse(localStorage.getItem('agilerp_settings')) || {};
+    const settings = JSON.parse(localStorage.getItem('buildflow_settings')) || {};
     settings.autoPrint = autoPrint;
     settings.useQz = useQz;
     settings.printType = printType;
@@ -138,17 +153,17 @@ function savePrintSettings() {
     settings.receiptLegalNote = receiptLegalNote;
     settings.proconNumber = proconNumber;
 
-    localStorage.setItem('agilerp_settings', JSON.stringify(settings));
-    AgilERP.showToast('Preferências de impressão salvas!', 'success');
+    localStorage.setItem('buildflow_settings', JSON.stringify(settings));
+    BuildFlow.showToast('Preferências de impressão salvas!', 'success');
 }
 
 async function loadUnits() {
     try {
-        const units = await AgilERP.getUnits();
+        const units = await BuildFlow.getUnits();
         renderUnits(units);
     } catch (error) {
         console.error('Erro ao carregar unidades:', error);
-        AgilERP.showToast('Não foi possível carregar unidades.', 'danger');
+        BuildFlow.showToast('Não foi possível carregar unidades.', 'danger');
     }
 }
 
@@ -163,8 +178,8 @@ function renderUnits(units) {
     container.innerHTML = units.map(unit => `
         <div class="settings-row">
             <div class="info">
-                <p>${AgilERP.escapeHtml(unit.name)}</p>
-                <span>${AgilERP.escapeHtml(unit.address || 'Endereço não informado')}</span>
+                <p>${BuildFlow.escapeHtml(unit.name)}</p>
+                <span>${BuildFlow.escapeHtml(unit.address || 'Endereço não informado')}</span>
             </div>
             <div style="display:flex; align-items:center; gap:12px;">
                 <span style="font-size:0.8rem; color: var(--text-muted);">${unit.active ? 'Ativa' : 'Inativa'}</span>
@@ -179,36 +194,116 @@ async function saveUnitSettings() {
     const unitActive = document.getElementById('unitActive').checked;
 
     if (!unitName) {
-        AgilERP.showToast('Informe o nome da unidade.', 'warning');
+        BuildFlow.showToast('Informe o nome da unidade.', 'warning');
         return;
     }
 
     try {
-        await AgilERP.createUnit({
+        await BuildFlow.createUnit({
             name: unitName,
             address: unitAddress,
             active: unitActive
         });
-        AgilERP.showToast('Unidade cadastrada com sucesso!', 'success');
+        BuildFlow.showToast('Unidade cadastrada com sucesso!', 'success');
         document.getElementById('unitName').value = '';
         document.getElementById('unitAddress').value = '';
         document.getElementById('unitActive').checked = true;
         loadUnits();
     } catch (error) {
-        AgilERP.showToast(error.message || 'Erro ao salvar unidade.', 'danger');
+        BuildFlow.showToast(error.message || 'Erro ao salvar unidade.', 'danger');
     }
 }
 
 function saveUISettings() {
+    const darkMode = document.getElementById('darkMode').checked;
     const pushNotifications = document.getElementById('pushNotifications').checked;
     const systemSounds = document.getElementById('systemSounds').checked;
 
-    const settings = JSON.parse(localStorage.getItem('agilerp_settings')) || {};
+    const settings = JSON.parse(localStorage.getItem('buildflow_settings')) || {};
+    settings.darkMode = darkMode;
     settings.pushNotifications = pushNotifications;
     settings.systemSounds = systemSounds;
 
-    localStorage.setItem('agilerp_settings', JSON.stringify(settings));
-    AgilERP.showToast('Preferências de interface salvas!', 'success');
+    localStorage.setItem('buildflow_settings', JSON.stringify(settings));
+    BuildFlow.applyTheme();
+    BuildFlow.showToast('Preferências de interface salvas!', 'success');
+}
+
+async function loadCaixas() {
+    try {
+        const caixas = await BuildFlow.getCaixas();
+        renderCaixas(caixas);
+    } catch (error) {
+        console.error('Erro ao carregar caixas:', error);
+    }
+}
+
+function renderCaixas(caixas) {
+    const container = document.getElementById('caixaList');
+    if (!container) return;
+    if (!caixas || !caixas.length) {
+        container.innerHTML = '<div class="settings-row"><div class="info"><p>Nenhum caixa cadastrado ainda.</p><span>Cadastre os caixas/terminais que serão usados no PDV.</span></div></div>';
+        return;
+    }
+
+    container.innerHTML = caixas.map(caixa => `
+        <div class="settings-row">
+            <div class="info">
+                <p>${BuildFlow.escapeHtml(caixa.name)}</p>
+                <span>${caixa.active ? 'Ativo' : 'Inativo'}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span style="font-size:0.8rem; color: var(--text-muted);">${caixa.number || caixa.name}</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function saveCaixa() {
+    const name = document.getElementById('caixaName').value.trim();
+
+    if (!name) {
+        BuildFlow.showToast('Informe o nome do caixa.', 'warning');
+        return;
+    }
+
+    try {
+        await BuildFlow.createCaixa({ name, active: true });
+        BuildFlow.showToast('Caixa cadastrado com sucesso!', 'success');
+        document.getElementById('caixaName').value = '';
+        loadCaixas();
+    } catch (error) {
+        BuildFlow.showToast(error.message || 'Erro ao salvar caixa.', 'danger');
+    }
+}
+
+function loadPDVSettings() {
+    const settings = BuildFlow.getSettings();
+
+    if (document.getElementById('caixaDefaultOpening')) document.getElementById('caixaDefaultOpening').value = settings.caixaDefaultOpening || 0;
+    if (document.getElementById('caixaRequirePassword')) document.getElementById('caixaRequirePassword').checked = settings.caixaRequirePassword !== false;
+    if (document.getElementById('caixaAutoClose')) {
+        document.getElementById('caixaAutoClose').checked = settings.caixaAutoClose === true;
+        const row = document.getElementById('caixaAutoCloseRow');
+        if (row) row.style.display = settings.caixaAutoClose ? '' : 'none';
+    }
+    if (document.getElementById('caixaAutoCloseTime')) document.getElementById('caixaAutoCloseTime').value = settings.caixaAutoCloseTime || '18:00';
+}
+
+function savePDVSettings() {
+    const caixaDefaultOpening = parseFloat(document.getElementById('caixaDefaultOpening').value) || 0;
+    const caixaRequirePassword = document.getElementById('caixaRequirePassword').checked;
+    const caixaAutoClose = document.getElementById('caixaAutoClose').checked;
+    const caixaAutoCloseTime = document.getElementById('caixaAutoCloseTime').value || '18:00';
+
+    const settings = JSON.parse(localStorage.getItem('buildflow_settings')) || {};
+    settings.caixaDefaultOpening = caixaDefaultOpening;
+    settings.caixaRequirePassword = caixaRequirePassword;
+    settings.caixaAutoClose = caixaAutoClose;
+    settings.caixaAutoCloseTime = caixaAutoCloseTime;
+
+    localStorage.setItem('buildflow_settings', JSON.stringify(settings));
+    BuildFlow.showToast('Configurações do PDV salvas com sucesso!', 'success');
 }
 
 async function exportDatabaseBackup() {
@@ -230,12 +325,12 @@ async function exportDatabaseBackup() {
     if (!password) return;
 
     try {
-        await AgilERP.apiFetch('/auth-verify', {
+        await BuildFlow.apiFetch('/auth-verify', {
             method: 'POST',
             body: JSON.stringify({ password })
         });
     } catch (error) {
-        AgilERP.showToast('Senha incorreta!', 'danger');
+        BuildFlow.showToast('Senha incorreta!', 'danger');
         return;
     }
 
@@ -248,7 +343,7 @@ async function exportDatabaseBackup() {
         }
 
         const response = await fetch('/api/export-db?format=json', {
-            headers: AgilERP.getAuthHeaders()
+            headers: BuildFlow.getAuthHeaders()
         });
 
         if (!response.ok) {
@@ -258,7 +353,7 @@ async function exportDatabaseBackup() {
 
         const disposition = response.headers.get('Content-Disposition') || '';
         const filenameMatch = disposition.match(/filename="?(.+?)"?$/);
-        const filename = filenameMatch ? filenameMatch[1] : `agilerp-backup-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+        const filename = filenameMatch ? filenameMatch[1] : `buildflow-backup-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
 
         const blob = await response.blob();
 
@@ -271,9 +366,9 @@ async function exportDatabaseBackup() {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
 
-        AgilERP.showToast('Backup exportado com sucesso!', 'success');
+        BuildFlow.showToast('Backup exportado com sucesso!', 'success');
     } catch (error) {
-        AgilERP.showToast(error.message || 'Erro ao exportar backup.', 'danger');
+        BuildFlow.showToast(error.message || 'Erro ao exportar backup.', 'danger');
     } finally {
         if (btn) {
             btn.disabled = false;

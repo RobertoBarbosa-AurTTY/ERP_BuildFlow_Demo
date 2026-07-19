@@ -49,7 +49,7 @@ async function resetDatabase() {
     const deleteResult = await users.deleteMany({ role: { $ne: 'Admin' } });
     console.log(`Removidos ${deleteResult.deletedCount} usuários não administradores.`);
 
-    const adminEmail = 'admin@agilerp.com.br';
+    const adminEmail = 'admin@buildflow.com.br';
     const existingAdmin = await users.findOne({ email: adminEmail });
     if (!existingAdmin) {
       const hashedPassword = await bcrypt.hash('admin123', 10);
@@ -61,7 +61,7 @@ async function resetDatabase() {
         permissions: ['all'],
         createdAt: new Date()
       });
-      console.log('Usuário administrador criado: admin@agilerp.com.br / admin123');
+      console.log('Usuário administrador criado: admin@buildflow.com.br / admin123');
     } else {
       console.log('Usuário administrador existente mantido:', adminEmail);
     }

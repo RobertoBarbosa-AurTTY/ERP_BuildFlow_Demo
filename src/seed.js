@@ -29,14 +29,14 @@ async function seed() {
       const hashedPassword = await bcrypt.hash("admin123", 10);
       await users.insertOne({
         name: "Administrador Master",
-        email: "admin@agilerp.com.br",
+        email: "admin@buildflow.com.br",
         password: hashedPassword,
         role: "Admin",
         permissions: ["all"],
         createdAt: new Date(),
       });
       console.log(
-        "✅ Usuário Admin criado (admin@agilerp.com.br / admin123)",
+        "✅ Usuário Admin criado (admin@buildflow.com.br / admin123)",
       );
     }
 
@@ -579,12 +579,17 @@ async function seed() {
     await caixa.createIndex({ dataAbertura: -1 });
     await caixa.createIndex({ status: 1 });
 
-    // 8. Configurações da Empresa
+    // 8. Coleção de Retiradas de Caixa
+    const retiradasCaixa = db.collection("retiradas_caixa");
+    await retiradasCaixa.createIndex({ caixaId: 1 });
+    await retiradasCaixa.createIndex({ createdAt: -1 });
+
+    // 9. Configurações da Empresa
     const settings = db.collection("settings");
     const settingsExist = await settings.findOne({});
     if (!settingsExist) {
       await settings.insertOne({
-        companyName: "AgilERP & Logística S.A.",
+        companyName: "BuildFlow & Logística S.A.",
         cnpj: "12.345.678/0001-90",
         address: "Av. Principal, 1000 - São Paulo/SP",
         theme: "dark",

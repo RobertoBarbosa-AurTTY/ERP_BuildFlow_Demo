@@ -141,6 +141,15 @@ exports.handler = async (event, context) => {
 
           const sales = await salesCol.find(salesQuery).toArray();
 
+          const retiradasCol = db.collection('retiradas_caixa');
+          const retiradas = await retiradasCol.find({
+            caixaId: aberto._id,
+            createdAt: {
+              $gte: aberto.dataAbertura,
+              $lte: new Date()
+            }
+          }).toArray();
+
           let totalVendas = 0;
           let totalDinheiro = 0;
           let totalCartaoCredito = 0;
@@ -172,7 +181,12 @@ exports.handler = async (event, context) => {
             }
           }
 
-          const valorFinal = Number(aberto.valorInicial) + totalVendas;
+          let totalRetiradas = 0;
+          for (const ret of retiradas) {
+            totalRetiradas += Number(ret.valor) || 0;
+          }
+
+          const valorFinal = Number(aberto.valorInicial) + totalVendas - totalRetiradas;
 
           const update = {
             $set: {
@@ -185,6 +199,7 @@ exports.handler = async (event, context) => {
               totalCartaoDebito,
               totalPIX,
               totalDescontos,
+              totalRetiradas,
               numeroVendas,
               observacao: observacao || aberto.observacao || '',
               updatedAt: new Date()
@@ -199,7 +214,7 @@ exports.handler = async (event, context) => {
             entity: 'caixa',
             entityId: aberto._id,
             timestamp: new Date(),
-            details: `Caixa fechado. Total de vendas: R$ ${totalVendas.toFixed(2)}, Nº vendas: ${numeroVendas}`
+            details: `Caixa fechado. Total de vendas: R$ ${totalVendas.toFixed(2)}${totalRetiradas > 0 ? `, Retiradas: R$ ${totalRetiradas.toFixed(2)}` : ''}, Nº vendas: ${numeroVendas}`
           });
 
           const registroFinal = await caixa.findOne({ _id: aberto._id });
@@ -212,6 +227,7 @@ exports.handler = async (event, context) => {
               resumo: {
                 valorInicial: aberto.valorInicial,
                 totalVendas,
+                totalRetiradas,
                 valorFinal,
                 numeroVendas,
                 totalDinheiro,

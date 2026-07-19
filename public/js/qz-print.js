@@ -39,7 +39,7 @@ const QzPrint = {
         if (!this._connected) {
             const ok = await this.connect();
             if (!ok) {
-                AgilERP.showToast('qz.io não está rodando. Instale qz-tray e tente novamente.', 'danger');
+                BuildFlow.showToast('qz.io não está rodando. Instale qz-tray e tente novamente.', 'danger');
                 return false;
             }
         }
@@ -48,11 +48,11 @@ const QzPrint = {
         try {
             printer = await qz.printers.getDefault();
         } catch (e) {
-            AgilERP.showToast('Nenhuma impressora encontrada no sistema.', 'danger');
+            BuildFlow.showToast('Nenhuma impressora encontrada no sistema.', 'danger');
             return false;
         }
         if (!printer) {
-            AgilERP.showToast('Nenhuma impressora encontrada no sistema.', 'danger');
+            BuildFlow.showToast('Nenhuma impressora encontrada no sistema.', 'danger');
             return false;
         }
 
@@ -81,7 +81,7 @@ const QzPrint = {
             ]);
             return true;
         } catch (e) {
-            AgilERP.showToast('Erro ao imprimir via qz.io: ' + e.message, 'danger');
+            BuildFlow.showToast('Erro ao imprimir via qz.io: ' + e.message, 'danger');
             return false;
         }
     }
