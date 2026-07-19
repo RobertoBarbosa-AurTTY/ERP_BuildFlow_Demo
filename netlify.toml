@@ -10,7 +10,17 @@
   to = "/.netlify/functions/:splat"
   status = 200
 
-# Clean URLs
+# Clean URLs — English, no .html
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/login"
+  to = "/index.html"
+  status = 200
+
 [[redirects]]
   from = "/dashboard"
   to = "/dashboard.html"
@@ -37,7 +47,7 @@
   status = 200
 
 [[redirects]]
-  from = "/shelf-tag"
+  from = "/shelf-label"
   to = "/pages/etiqueta-prateleira.html"
   status = 200
 
@@ -47,7 +57,7 @@
   status = 200
 
 [[redirects]]
-  from = "/history"
+  from = "/sales-history"
   to = "/pages/historico-vendas.html"
   status = 200
 
@@ -86,12 +96,13 @@
   to = "/pages/mensagens.html"
   status = 200
 
-# Block direct access to /pages/* — only clean URLs allowed
+# Block direct access to /pages/*
 [[redirects]]
   from = "/pages/*"
   to = "/index.html"
   status = 404
 
+# SPA fallback
 [[redirects]]
   from = "/*"
   to = "/index.html"

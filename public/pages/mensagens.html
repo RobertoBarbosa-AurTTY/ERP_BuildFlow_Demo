@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BuildFlow - Mensagens</title>
+    <title>AgilERP - Mensagens</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
@@ -43,7 +43,7 @@
                 <i class="fa-solid fa-envelope fa-3x"></i>
                 <h1>Mensagens</h1>
                 <p>O recurso de mensagens ainda está em desenvolvimento. Em breve você poderá acompanhar conversas e avisos internos.</p>
-                <button onclick="window.location.href='../dashboard.html'">Voltar ao Dashboard</button>
+                <button onclick="window.location.href='/dashboard'">Voltar ao Dashboard</button>
             </div>
         </main>
     </div>
@@ -51,9 +51,9 @@
     <script src="../js/main.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            BuildFlow.checkAuth();
-            BuildFlow.applyTheme();
-            BuildFlow.initGlobalSearch();
+            AgilERP.checkAuth();
+            AgilERP.applyTheme();
+            AgilERP.initGlobalSearch();
         });
     </script>
 </body>

@@ -1,7 +1,7 @@
-// BuildFlow ERP - Global API and Auth Management
+// AgilERP - Global API and Auth Management
 const API_BASE = "/api";
 
-const BuildFlow = {
+const AgilERP = {
   // Autenticação
   async login(email, password) {
     try {
@@ -73,9 +73,7 @@ const BuildFlow = {
     document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     localStorage.removeItem("user");
     localStorage.removeItem("token");
-    window.location.href = window.location.pathname.includes("/pages/")
-      ? "../index.html"
-      : "index.html";
+    window.location.href = "/";
   },
 
   getAuthHeaders(includeJson = false) {
@@ -326,12 +324,9 @@ const BuildFlow = {
       localStorage.removeItem("user");
       localStorage.removeItem("token");
       if (
-        !window.location.pathname.endsWith("index.html") &&
-        window.location.pathname !== "/"
+        !["/", "/login"].includes(window.location.pathname)
       ) {
-        window.location.href = window.location.pathname.includes("/pages/")
-          ? "../index.html"
-          : "index.html";
+        window.location.href = "/";
       }
       throw new Error("Sessão expirada. Faça login novamente.");
     }
@@ -347,12 +342,9 @@ const BuildFlow = {
     const user = localStorage.getItem("user");
     if (
       !user &&
-      !window.location.pathname.endsWith("index.html") &&
-      window.location.pathname !== "/"
+      !["/", "/login"].includes(window.location.pathname)
     ) {
-      window.location.href = window.location.pathname.includes("/pages/")
-        ? "../index.html"
-        : "index.html";
+      window.location.href = "/";
     }
     return user ? JSON.parse(user) : null;
   },
@@ -374,32 +366,32 @@ const BuildFlow = {
       {
         title: "Dashboard",
         desc: "Visão geral do sistema",
-        href: "/dashboard.html",
+        href: "/dashboard",
       },
       {
         title: "Estoque",
         desc: "Consultar produtos e quantidades",
-        href: "/pages/estoque.html",
+        href: "/stock",
       },
       {
         title: "Entradas",
         desc: "Registrar produtos no estoque",
-        href: "/pages/entradas.html",
+        href: "/receiving",
       },
       {
         title: "Histórico de Vendas",
         desc: "Ver vendas e reservas",
-        href: "/pages/historico-vendas.html",
+        href: "/sales-history",
       },
       {
         title: "Contas a Pagar",
         desc: "Boletos, vencimentos e alertas financeiros",
-        href: "/pages/contas-a-pagar.html",
+        href: "/bills",
       },
       {
         title: "Configurações",
         desc: "Ajustar preferências do sistema",
-        href: "/pages/configuracoes.html",
+        href: "/settings",
       },
     ];
   },
@@ -448,7 +440,7 @@ const BuildFlow = {
           .slice(0, 8)
           .map(
             (product) =>
-              `<button type="button" class="search-result-item" data-href="/pages/estoque.html?productId=${encodeURIComponent(product._id || product.id)}"><strong>${this.escapeHtml(
+              `<button type="button" class="search-result-item" data-href="/stock?productId=${encodeURIComponent(product._id || product.id)}"><strong>${this.escapeHtml(
                 product.name,
               )}</strong><span>${this.escapeHtml(product.sku || "")} · ${this.escapeHtml(
                 product.supplier || "Fornecedor desconhecido",
@@ -537,7 +529,7 @@ const BuildFlow = {
       const dropdown = document.createElement("div");
       dropdown.className = "user-dropdown";
       dropdown.innerHTML = `
-        <button type="button" class="user-dropdown-item" data-href="pages/configuracoes.html">
+        <button type="button" class="user-dropdown-item" data-href="/settings">
           <i class="fa-solid fa-sliders"></i> Configurações
         </button>
         <button type="button" class="user-dropdown-item danger" data-action="logout">
@@ -916,7 +908,7 @@ const BuildFlow = {
     const s = this.normalizeSaleRecord(sale);
     if (!s || !jsPDF) return;
 
-    const storeName = settings.storeName || "BuildFlow ERP";
+    const storeName = settings.storeName || "AgilERP";
     const footer = settings.footerMessage || "Obrigado pela preferência!";
 
     if (type === "thermal") {
@@ -1318,7 +1310,7 @@ const BuildFlow = {
     return {
       getValue() {
         const type = getTypeFn();
-        let num = BuildFlow.parseDiscountInput(el.dataset.rawValue ?? el.value);
+        let num = AgilERP.parseDiscountInput(el.dataset.rawValue ?? el.value);
         if (type === "percent") num = Math.min(100, num);
         return num;
       },
@@ -1525,7 +1517,7 @@ const BuildFlow = {
 
   // Dashboard
   getDashboardMetricsCacheKey(period) {
-    return `buildflow_dashboard_cache_${period}`;
+    return `agilerp_dashboard_cache_${period}`;
   },
 
   async getDashboardMetrics(period = 'month', tzOffset, selectedDate) {
@@ -1545,8 +1537,8 @@ const BuildFlow = {
   // Configurações
   getSettings() {
     const defaults = {
-        storeName: "BuildFlow ERP",
-        companyName: "BuildFlow ERP & Logística S.A.",
+        storeName: "AgilERP",
+        companyName: "AgilERP & Logística S.A.",
         companyCnpj: "12.345.678/0001-90",
         address: "Av. Principal, 1000 - São Paulo/SP",
         autoPrint: false,
@@ -1560,7 +1552,7 @@ const BuildFlow = {
         pushNotifications: true,
         systemSounds: false,
     };
-    const saved = JSON.parse(localStorage.getItem("buildflow_settings")) || {};
+    const saved = JSON.parse(localStorage.getItem("agilerp_settings")) || {};
     return { ...defaults, ...saved };
   },
 
@@ -1665,10 +1657,10 @@ const BuildFlow = {
 
 // Auto-init
 document.addEventListener("DOMContentLoaded", async () => {
-  BuildFlow.checkAuth();
-  BuildFlow.applyTheme();
-  BuildFlow.initGlobalSearch();
-  BuildFlow.initUserMenu();
+  AgilERP.checkAuth();
+  AgilERP.applyTheme();
+  AgilERP.initGlobalSearch();
+  AgilERP.initUserMenu();
 });
 
 // Animation CSS
@@ -1683,14 +1675,15 @@ document.head.appendChild(style);
 
 // Inicialização e Listeners Online/Offline
 window.addEventListener("online", () => {
-  BuildFlow.showToast("Você está online!", "success");
+  AgilERP.showToast("Você está online!", "success");
 });
 
 window.addEventListener("offline", () => {
-  BuildFlow.showToast(
+  AgilERP.showToast(
     "Você está offline. Algumas funcionalidades podem não estar disponíveis.",
     "warning",
   );
 });
 
-window.BuildFlow = BuildFlow;
+window.AgilERP = AgilERP;
+window.BuildFlow = AgilERP;

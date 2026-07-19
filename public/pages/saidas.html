@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>BuildFlow - Saídas</title>
+    <title>AgilERP - Saídas</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
@@ -1511,13 +1511,13 @@
         <div class="mobile-header-center">
             <span>Data: <b id="currentDateMobile">29/05/2026</b></span>
         </div>
-        <button class="mobile-header-exit" onclick="window.location.href='../dashboard.html'">
+        <button class="mobile-header-exit" onclick="window.location.href='/dashboard'">
             <i class="fa-solid fa-right-from-bracket"></i> Sair
         </button>
     </div>
     <header class="pdv-header">
         <div style="font-weight: 800; font-size: 1.25rem; display: flex; align-items: center; gap: 10px;">
-            <i class="fa-solid fa-layer-group text-primary"></i> BuildFlow PDV
+            <i class="fa-solid fa-layer-group text-primary"></i> AgilERP PDV
         </div>
         <div class="pdv-header-info" id="caixaInfoHeader">
             <span>Terminal: <b id="caixaNumberDisplay">---</b></span>
@@ -1529,7 +1529,7 @@
             <button id="caixaActionBtn" onclick="handleCaixaAction()" style="background: var(--pdv-success); border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight:700; display:flex; align-items:center; gap:6px;">
                 <i class="fa-solid fa-cash-register"></i> <span id="caixaBtnText">Abrir Caixa</span>
             </button>
-            <button onclick="window.location.href='../dashboard.html'" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.75rem;">
+            <button onclick="window.location.href='/dashboard'" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.75rem;">
                 <i class="fa-solid fa-arrow-left"></i> Voltar
             </button>
         </div>
@@ -1687,7 +1687,7 @@
                     discount: item.discount || 0,
                     discountType: item.discountType || 'percent'
                 }));
-                await BuildFlow.apiFetch('/cart-sync', {
+                await AgilERP.apiFetch('/cart-sync', {
                     method: 'POST',
                     body: JSON.stringify({ items, deviceId, version: cartVersion })
                 });
@@ -1698,14 +1698,14 @@
 
         async function pollRemoteCart() {
             try {
-                const data = await BuildFlow.apiFetch('/cart-sync');
+                const data = await AgilERP.apiFetch('/cart-sync');
                 if (!data || !data.items) return;
                 if (data.version > cartVersion && data.deviceId !== deviceId) {
                     cartVersion = data.version;
                     _syncingFromRemote = true;
                     const remoteCart = [];
                     for (const item of data.items) {
-                        const product = dbProducts.find(p => BuildFlow.normalizeId(p._id) === BuildFlow.normalizeId(item._id));
+                        const product = dbProducts.find(p => AgilERP.normalizeId(p._id) === AgilERP.normalizeId(item._id));
                         if (product) {
                             remoteCart.push({
                                 ...product,
@@ -1718,7 +1718,7 @@
                     cart = remoteCart;
                     updateCart();
                     if (remoteCart.length > 0) {
-                        BuildFlow.showToast('Carrinho atualizado de outro dispositivo', 'info');
+                        AgilERP.showToast('Carrinho atualizado de outro dispositivo', 'info');
                     }
                     _syncingFromRemote = false;
                 }
@@ -1735,7 +1735,7 @@
 
         async function checkCaixaStatus() {
             try {
-                const result = await BuildFlow.getCaixaStatus();
+                const result = await AgilERP.getCaixaStatus();
                 caixaAberto = result && result.status === 'aberto' ? result : null;
                 ultimoFechamento = result && result.ultimoFechamento ? result.ultimoFechamento : null;
                 caixaLoaded = true;
@@ -1821,10 +1821,10 @@
             });
             if (!isConfirmed || !senha) return null;
             try {
-                await BuildFlow.verificarSenhaCaixa(senha);
+                await AgilERP.verificarSenhaCaixa(senha);
                 return senha;
             } catch (error) {
-                BuildFlow.showToast(error.message || 'Senha incorreta.', 'danger');
+                AgilERP.showToast(error.message || 'Senha incorreta.', 'danger');
                 return null;
             }
         }
@@ -1891,8 +1891,8 @@
                     const elAvisoZero = document.getElementById('caixa-aviso-valor-zero');
 
                     const formatField = () => {
-                        const n = BuildFlow.parseDiscountInput(elValor.value);
-                        elValor.value = BuildFlow.formatCurrency(n);
+                        const n = AgilERP.parseDiscountInput(elValor.value);
+                        elValor.value = AgilERP.formatCurrency(n);
                         atualizarAvisos();
                     };
 
@@ -1902,14 +1902,14 @@
                     };
 
                     const atualizarAvisos = () => {
-                        const v = BuildFlow.parseDiscountInput(elValor.value);
+                        const v = AgilERP.parseDiscountInput(elValor.value);
                         elAvisoZero.style.display = v === 0 ? 'block' : 'none';
                         const obrigatorio = document.getElementById('caixa-obs-obrigatorio');
                         obrigatorio.style.display = v > 0 ? 'inline' : 'none';
                     };
 
                     elValor.addEventListener('focus', () => {
-                        const raw = BuildFlow.parseDiscountInput(elValor.value);
+                        const raw = AgilERP.parseDiscountInput(elValor.value);
                         elValor.value = raw > 0 ? raw.toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '';
                     });
                     elValor.addEventListener('blur', formatField);
@@ -1926,7 +1926,7 @@
                     atualizarAvisos();
                 },
                 preConfirm: () => {
-                    const valor = BuildFlow.parseDiscountInput(document.getElementById('caixa-valor-inicial').value);
+                    const valor = AgilERP.parseDiscountInput(document.getElementById('caixa-valor-inicial').value);
                     const obs = document.getElementById('caixa-observacao-abrir').value.trim();
 
                     if (valor > 0 && !obs) {
@@ -1945,12 +1945,12 @@
 
             try {
                 Swal.showLoading();
-                const result = await BuildFlow.abrirCaixa(value.valorInicial, value.observacao, value.userName, value.numeroCaixa);
+                const result = await AgilERP.abrirCaixa(value.valorInicial, value.observacao, value.userName, value.numeroCaixa);
                 caixaAberto = result.caixa;
                 updateCaixaUI();
-                BuildFlow.showToast('Caixa aberto com sucesso!', 'success');
+                AgilERP.showToast('Caixa aberto com sucesso!', 'success');
             } catch (error) {
-                BuildFlow.showToast(error.message || 'Erro ao abrir caixa', 'danger');
+                AgilERP.showToast(error.message || 'Erro ao abrir caixa', 'danger');
             }
         }
 
@@ -1973,7 +1973,7 @@
 
         async function calcularResumoFechamento() {
             try {
-                const sales = await BuildFlow.getSales({ limit: 'all' });
+                const sales = await AgilERP.getSales({ limit: 'all' });
                 const dataAbertura = new Date(caixaAberto.dataAbertura);
                 const agora = new Date();
 
@@ -2013,7 +2013,7 @@
                 const valorInicial = Number(caixaAberto.valorInicial) || 0;
                 const valorFinal = valorInicial + totalVendas;
 
-                const formatMoney = (v) => BuildFlow.formatCurrency(Number(v) || 0);
+                const formatMoney = (v) => AgilERP.formatCurrency(Number(v) || 0);
 
                 const html = `
                     <div class="pdv-caixa-resumo">
@@ -2078,10 +2078,10 @@
                         const obs = document.getElementById('caixa-obs-fechar')?.value?.trim() || '';
                         Swal.showLoading();
                         try {
-                            const finalResult = await BuildFlow.fecharCaixa(obs);
+                            const finalResult = await AgilERP.fecharCaixa(obs);
                             caixaAberto = null;
                             updateCaixaUI();
-                            BuildFlow.showToast('Caixa fechado com sucesso!', 'success');
+                            AgilERP.showToast('Caixa fechado com sucesso!', 'success');
                             return finalResult;
                         } catch (error) {
                             Swal.showValidationMessage(error.message || 'Erro ao fechar caixa');
@@ -2094,13 +2094,13 @@
                 if (Swal.isVisible()) {
                     Swal.update({
                         title: 'Erro',
-                        html: `<p style="color:var(--pdv-danger);">${BuildFlow.escapeHtml(errMsg)}</p>`,
+                        html: `<p style="color:var(--pdv-danger);">${AgilERP.escapeHtml(errMsg)}</p>`,
                         showConfirmButton: true,
                         confirmButtonText: 'Fechar',
                         showCancelButton: false
                     });
                 } else {
-                    BuildFlow.showToast(errMsg, 'danger');
+                    AgilERP.showToast(errMsg, 'danger');
                 }
             }
         }
@@ -2111,7 +2111,7 @@
         // --- Funções de Orçamento ---
         async function handleBudget() {
             if (cart.length === 0) {
-                BuildFlow.showToast('O carrinho está vazio para gerar orçamento!', 'warning');
+                AgilERP.showToast('O carrinho está vazio para gerar orçamento!', 'warning');
                 return;
             }
 
@@ -2136,10 +2136,10 @@
             };
 
             const { jsPDF } = window.jspdf;
-            const settings = BuildFlow.getSettings();
+            const settings = AgilERP.getSettings();
 
             if (settings.autoPrint) {
-                BuildFlow.showToast('Orçamento gerado com sucesso!', 'success');
+                AgilERP.showToast('Orçamento gerado com sucesso!', 'success');
                 if (settings.printType === 'a4') {
                     const doc = new jsPDF();
                     const margin = 14;
@@ -2487,7 +2487,7 @@
 
                 if (settings.useQz && window.QzPrint) { QzPrint.printPdf(doc.output('arraybuffer')); } else { window.open(doc.output('bloburl'), '_blank'); }
             }
-            BuildFlow.showToast('Orçamento gerado com sucesso!', 'success');
+            AgilERP.showToast('Orçamento gerado com sucesso!', 'success');
         }
 
         async function renderCategories() {
@@ -2495,7 +2495,7 @@
             
             let categories = [];
             try {
-                categories = await BuildFlow.apiFetch('/categories') || [];
+                categories = await AgilERP.apiFetch('/categories') || [];
             } catch (e) {
                 // ignore
             }
@@ -2565,12 +2565,12 @@
             let totalPages = 1;
 
             do {
-                const response = await BuildFlow.apiFetch(`/sales?status=FINALIZED&limit=all`);
+                const response = await AgilERP.apiFetch(`/sales?status=FINALIZED&limit=all`);
                 const sales = Array.isArray(response?.data) ? response.data : [];
 
                 sales.forEach(sale => {
                     (sale.items || []).forEach(item => {
-                        const productKey = BuildFlow.normalizeId(item.id || item._id || item.productId || item.name);
+                        const productKey = AgilERP.normalizeId(item.id || item._id || item.productId || item.name);
                         const qty = Math.max(0, Number(item.qty) || 0);
                         if (!productKey || qty < 1) return;
                         ranking.set(productKey, (ranking.get(productKey) || 0) + qty);
@@ -2587,12 +2587,12 @@
 
         function compareProducts(a, b) {
             if (currentProductSort === 'best_sellers') {
-                const soldA = productSalesRank.get(BuildFlow.normalizeId(a._id)) || 0;
-                const soldB = productSalesRank.get(BuildFlow.normalizeId(b._id)) || 0;
+                const soldA = productSalesRank.get(AgilERP.normalizeId(a._id)) || 0;
+                const soldB = productSalesRank.get(AgilERP.normalizeId(b._id)) || 0;
                 if (soldA !== soldB) return soldB - soldA;
             } else if (currentProductSort === 'stock_desc') {
-                const stockA = BuildFlow.getProductAvailableStock(a);
-                const stockB = BuildFlow.getProductAvailableStock(b);
+                const stockA = AgilERP.getProductAvailableStock(a);
+                const stockB = AgilERP.getProductAvailableStock(b);
                 if (stockA !== stockB) return stockB - stockA;
             } else if (currentProductSort === 'recent_updates') {
                 const recentA = getProductRecencyTimestamp(a);
@@ -2646,7 +2646,7 @@
             });
             if (localProduct) return localProduct;
 
-            const searchedProducts = await BuildFlow.getProducts({ search: code, limit: 'all' });
+            const searchedProducts = await AgilERP.getProducts({ search: code, limit: 'all' });
             return searchedProducts.find(product => {
                 const barcode = normalizeBarcodeInput(product.barcode);
                 const sku = normalizeBarcodeInput(product.sku);
@@ -2679,7 +2679,7 @@
             try {
                 const product = await findProductByBarcode(code);
                 if (!product) {
-                    BuildFlow.showToast(`Código não encontrado: ${code}`, 'warning');
+                    AgilERP.showToast(`Código não encontrado: ${code}`, 'warning');
                     return;
                 }
 
@@ -2689,7 +2689,7 @@
                 });
             } catch (error) {
                 console.error('Erro na leitura do código de barras:', error);
-                BuildFlow.showToast('Erro ao localizar produto pelo código de barras.', 'danger');
+                AgilERP.showToast('Erro ao localizar produto pelo código de barras.', 'danger');
             } finally {
                 barcodeProcessing = false;
             }
@@ -2750,8 +2750,8 @@
             if (mobileDate) mobileDate.innerText = now.toLocaleDateString('pt-BR');
 
             // Disparar carregamento de produtos (não aguarda ainda)
-            const productPromise = BuildFlow.getProducts({ limit: 'all' })
-                .catch(() => { BuildFlow.showToast('Erro ao carregar produtos', 'danger'); return []; });
+            const productPromise = AgilERP.getProducts({ limit: 'all' })
+                .catch(() => { AgilERP.showToast('Erro ao carregar produtos', 'danger'); return []; });
 
             // Verificar status do caixa (rápido) — executa enquanto produtos carregam
             await checkCaixaStatus();
@@ -2760,7 +2760,7 @@
             if (!caixaAberto && caixaLoaded) {
                 await showAbrirCaixaModal();
                 if (caixaAberto) {
-                    BuildFlow.showToast('Caixa aberto! PDV liberado para vendas.', 'success');
+                    AgilERP.showToast('Caixa aberto! PDV liberado para vendas.', 'success');
                 }
             }
 
@@ -2798,7 +2798,7 @@
                             cart = [];
                             globalDiscount = 0;
                             updateCart();
-                            BuildFlow.showToast('Venda cancelada com sucesso.', 'info');
+                            AgilERP.showToast('Venda cancelada com sucesso.', 'info');
                         }
                     });
                 }
@@ -2840,7 +2840,7 @@
                 }
                 if (e.key === 'F10') {
                     e.preventDefault();
-                    window.location.href = 'historico-vendas.html';
+                    window.location.href = '/sales-history';
                 }
                 if (e.key === 'Escape') {
                     closeModal('editItemModal');
@@ -2885,7 +2885,7 @@
 
                     // 3. Busca na API
                     try {
-                        const results = await BuildFlow.getProducts({ search: code, limit: 'all' });
+                        const results = await AgilERP.getProducts({ search: code, limit: 'all' });
                         if (results && results.length > 0) {
                             product = results.find(p => {
                                 const b = normalizeBarcodeInput(p.barcode);
@@ -2897,7 +2897,7 @@
                         }
                     } catch (e) {}
 
-                    BuildFlow.showToast(`Nada encontrado para: ${raw}`, 'warning');
+                    AgilERP.showToast(`Nada encontrado para: ${raw}`, 'warning');
                 };
                 mobileSkuInput.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') {
@@ -2917,7 +2917,7 @@
                 if (scanBtn) {
                     scanBtn.addEventListener('click', () => {
                         if (!navigator.mediaDevices?.getUserMedia) {
-                            BuildFlow.showToast('Scanner não suportado. Digite o código manualmente.', 'warning');
+                            AgilERP.showToast('Scanner não suportado. Digite o código manualmente.', 'warning');
                             return;
                         }
 
@@ -3023,7 +3023,7 @@
                                     } catch (err2) {
                                         quaggaRunning = false;
                                         Swal.close();
-                                        BuildFlow.showToast('Câmera não encontrada. Digite o código manualmente.', 'warning');
+                                        AgilERP.showToast('Câmera não encontrada. Digite o código manualmente.', 'warning');
                                         return;
                                     }
                                 }
@@ -3105,7 +3105,7 @@
 
         function getFreshProduct(productOrId) {
             const id = typeof productOrId === 'object' ? productOrId._id : productOrId;
-            return BuildFlow.findProductById(dbProducts, id);
+            return AgilERP.findProductById(dbProducts, id);
         }
 
         function reconcileCartWithStock() {
@@ -3120,13 +3120,13 @@
                 return true;
             });
             if (removed.length) {
-                BuildFlow.showToast(`${removed.join(', ')} removido(s) do carrinho (produto não encontrado).`, 'warning');
+                AgilERP.showToast(`${removed.join(', ')} removido(s) do carrinho (produto não encontrado).`, 'warning');
                 updateCart();
             }
         }
 
         function getCartSaleSummary() {
-            return BuildFlow.computeSaleSummary(
+            return AgilERP.computeSaleSummary(
                 cart.map(i => ({
                     id: i._id,
                     name: i.name,
@@ -3146,7 +3146,7 @@
             const summary = getCartSaleSummary();
             return {
                 items: summary.items.map(i => ({
-                    id: BuildFlow.normalizeId(i.id || i._id),
+                    id: AgilERP.normalizeId(i.id || i._id),
                     name: i.name,
                     sku: i.sku,
                     qty: i.qty,
@@ -3182,7 +3182,7 @@
                     <div class="pdv-sheet pdv-cash-panel">
                         <div class="pdv-cash-total-due">
                             <span>Total a pagar</span>
-                            <strong id="cash-total-due">${BuildFlow.formatCurrency(due)}</strong>
+                            <strong id="cash-total-due">${AgilERP.formatCurrency(due)}</strong>
                         </div>
                         <div class="pdv-form-block">
                             <label>Valor recebido</label>
@@ -3190,7 +3190,7 @@
                         </div>
                         <div class="pdv-cash-change-box" id="cash-change-box">
                             <span>Troco</span>
-                            <strong id="cash-change-value">${BuildFlow.formatCurrency(0)}</strong>
+                            <strong id="cash-change-value">${AgilERP.formatCurrency(0)}</strong>
                         </div>
                         <p class="pdv-cash-hint" id="cash-hint">Informe o valor que o cliente pagou em dinheiro.</p>
                     </div>
@@ -3206,13 +3206,13 @@
                     const hint = document.getElementById('cash-hint');
 
                     const updateChange = () => {
-                        const received = BuildFlow.parseDiscountInput(receivedEl.value);
+                        const received = AgilERP.parseDiscountInput(receivedEl.value);
                         const change = Math.max(0, received - due);
                         const missing = due - received;
-                        changeEl.textContent = BuildFlow.formatCurrency(change);
+                        changeEl.textContent = AgilERP.formatCurrency(change);
                         if (received > 0 && received < due) {
                             box.classList.add('insufficient');
-                            hint.textContent = `Faltam ${BuildFlow.formatCurrency(missing)} para cobrir o total.`;
+                            hint.textContent = `Faltam ${AgilERP.formatCurrency(missing)} para cobrir o total.`;
                         } else {
                             box.classList.remove('insufficient');
                             hint.textContent = received >= due
@@ -3223,18 +3223,18 @@
 
                     receivedEl.addEventListener('input', updateChange);
                     receivedEl.addEventListener('blur', () => {
-                        const n = BuildFlow.parseDiscountInput(receivedEl.value);
-                        receivedEl.value = n > 0 ? BuildFlow.formatCurrency(n) : '';
+                        const n = AgilERP.parseDiscountInput(receivedEl.value);
+                        receivedEl.value = n > 0 ? AgilERP.formatCurrency(n) : '';
                     });
                     receivedEl.focus();
                 },
                 preConfirm: () => {
-                    const received = BuildFlow.parseDiscountInput(
+                    const received = AgilERP.parseDiscountInput(
                         document.getElementById('cash-amount-received').value
                     );
                     if (received < due) {
                         Swal.showValidationMessage(
-                            `Valor insuficiente. Faltam ${BuildFlow.formatCurrency(due - received)}.`
+                            `Valor insuficiente. Faltam ${AgilERP.formatCurrency(due - received)}.`
                         );
                         return false;
                     }
@@ -3251,7 +3251,7 @@
 
         async function showStockValidationErrors(validation, title = 'Estoque insuficiente') {
             const list = (validation.errors || [])
-                .map(e => `<li style="margin-bottom:8px;text-align:left;">${BuildFlow.escapeHtml(e.message)}</li>`)
+                .map(e => `<li style="margin-bottom:8px;text-align:left;">${AgilERP.escapeHtml(e.message)}</li>`)
                 .join('');
             await Swal.fire({
                 ...pdvSwalOptions({ width: '480px' }),
@@ -3271,25 +3271,25 @@
             }
 
             if (cart.length === 0) {
-                BuildFlow.showToast('O carrinho está vazio!', 'warning');
+                AgilERP.showToast('O carrinho está vazio!', 'warning');
                 return;
             }
 
             try {
-                dbProducts = await BuildFlow.getProducts({ limit: 'all' });
+                dbProducts = await AgilERP.getProducts({ limit: 'all' });
             } catch {
-                BuildFlow.showToast('Não foi possível validar o estoque. Tente novamente.', 'danger');
+                AgilERP.showToast('Não foi possível validar o estoque. Tente novamente.', 'danger');
                 return;
             }
 
-            const stockCheck = BuildFlow.validateCartAgainstStock(cart, dbProducts);
+            const stockCheck = AgilERP.validateCartAgainstStock(cart, dbProducts);
             if (!stockCheck.ok) {
                 await showStockValidationErrors(stockCheck);
                 return;
             }
             if (stockCheck.warnings && stockCheck.warnings.length > 0) {
                 const list = stockCheck.warnings.map(w =>
-                    `<li style="margin-bottom:8px;text-align:left;">${BuildFlow.escapeHtml(w.message)}</li>`
+                    `<li style="margin-bottom:8px;text-align:left;">${AgilERP.escapeHtml(w.message)}</li>`
                 ).join('');
                 const confirm = await Swal.fire({
                     ...pdvSwalOptions({ width: '520px' }),
@@ -3339,15 +3339,15 @@
             try {
                 const saleData = buildSaleDataFromCart(status, paymentMethod, paymentDetails);
 
-                const response = await BuildFlow.createSale(saleData);
-                const newSaleId = BuildFlow.normalizeId(response.saleId || response.id || response._id);
+                const response = await AgilERP.createSale(saleData);
+                const newSaleId = AgilERP.normalizeId(response.saleId || response.id || response._id);
                 
                 if (status === 'RESERVED') {
-                    BuildFlow.showToast('Reserva efetuada com sucesso!', 'success');
+                    AgilERP.showToast('Reserva efetuada com sucesso!', 'success');
                 } else {
-                    BuildFlow.showToast('Venda finalizada com sucesso!', 'success');
+                    AgilERP.showToast('Venda finalizada com sucesso!', 'success');
                     
-                    const settings = BuildFlow.getSettings();
+                    const settings = AgilERP.getSettings();
                     if (settings.autoPrint) {
                         const saleForPrint = response.sale || {
                             ...saleData,
@@ -3355,7 +3355,7 @@
                             saleNumber: response.saleNumber,
                             createdAt: new Date()
                         };
-                        BuildFlow.printSalePdf(
+                        AgilERP.printSalePdf(
                             saleForPrint,
                             settings.printType || 'thermal',
                             window.jspdf.jsPDF,
@@ -3381,7 +3381,7 @@
                                 saleNumber: response.saleNumber,
                                 createdAt: new Date()
                             };
-                            BuildFlow.printSalePdf(
+                            AgilERP.printSalePdf(
                                 saleForPrint,
                                 'thermal',
                                 window.jspdf.jsPDF,
@@ -3395,7 +3395,7 @@
                 globalDiscount = 0;
                 updateCart();
                 
-                dbProducts = await BuildFlow.getProducts({ limit: 'all' });
+                dbProducts = await AgilERP.getProducts({ limit: 'all' });
                 invalidateProductSalesRank();
                 if (currentProductSort === 'best_sellers') {
                     try {
@@ -3417,7 +3417,7 @@
                         confirmButtonText: 'Entendi'
                     });
                 } else {
-                    BuildFlow.showToast(msg, 'danger');
+                    AgilERP.showToast(msg, 'danger');
                 }
             }
         }
@@ -3460,8 +3460,8 @@
                 <div class="pdv-payment-methods">
                     ${methods.map((m, i) => `
                         <label class="pdv-payment-option">
-                            <input type="radio" name="pdv-pay-method" value="${BuildFlow.escapeHtml(m.id)}" ${i === 0 ? 'checked' : ''}>
-                            <span><i class="fa-solid ${m.icon}"></i> ${BuildFlow.escapeHtml(m.label)}</span>
+                            <input type="radio" name="pdv-pay-method" value="${AgilERP.escapeHtml(m.id)}" ${i === 0 ? 'checked' : ''}>
+                            <span><i class="fa-solid ${m.icon}"></i> ${AgilERP.escapeHtml(m.label)}</span>
                         </label>
                     `).join('')}
                 </div>
@@ -3488,16 +3488,16 @@
         }
 
         function buildProductSheetHtml(p) {
-            const loc = BuildFlow.formatProductLocationDisplay(p);
-            const name = BuildFlow.escapeHtml(p.name);
-            const sku = BuildFlow.escapeHtml(p.sku || 'N/A');
-            const cat = BuildFlow.escapeHtml(p.category || 'Geral');
-            const locHtml = BuildFlow.escapeHtml(loc);
-            const available = BuildFlow.getProductAvailableStock(p);
+            const loc = AgilERP.formatProductLocationDisplay(p);
+            const name = AgilERP.escapeHtml(p.name);
+            const sku = AgilERP.escapeHtml(p.sku || 'N/A');
+            const cat = AgilERP.escapeHtml(p.category || 'Geral');
+            const locHtml = AgilERP.escapeHtml(loc);
+            const available = AgilERP.getProductAvailableStock(p);
             const reserved = Math.max(0, Number(p.reserved) || 0);
             const physical = Math.max(0, Number(p.quantity) || 0);
             const lowStock = available < 10;
-            const price = BuildFlow.formatCurrency(p.price);
+            const price = AgilERP.formatCurrency(p.price);
 
             return `
                 <div class="pdv-sheet">
@@ -3517,7 +3517,7 @@
                         </div>
                         <div class="pdv-sheet-field">
                             <label>Código de barras</label>
-                            <span class="pdv-sheet-field-value">${BuildFlow.escapeHtml(p.barcode || 'Sem código de barras')}</span>
+                            <span class="pdv-sheet-field-value">${AgilERP.escapeHtml(p.barcode || 'Sem código de barras')}</span>
                         </div>
                         <div class="pdv-sheet-field">
                             <label>Categoria</label>
@@ -3563,8 +3563,8 @@
 
             const lookupHtml = lookupValue ? `
                 <div style="margin:0 0 12px;padding:10px 12px;border-radius:12px;background:rgba(37,99,235,0.12);border:1px solid rgba(96,165,250,0.28);text-align:left;">
-                    <strong style="display:block;font-size:0.8rem;color:var(--pdv-primary);margin-bottom:4px;">${BuildFlow.escapeHtml(lookupSource || 'Busca automática')}</strong>
-                    <span style="font-size:0.85rem;color:var(--pdv-text-muted);">Código identificado: ${BuildFlow.escapeHtml(lookupValue)}</span>
+                    <strong style="display:block;font-size:0.8rem;color:var(--pdv-primary);margin-bottom:4px;">${AgilERP.escapeHtml(lookupSource || 'Busca automática')}</strong>
+                    <span style="font-size:0.85rem;color:var(--pdv-text-muted);">Código identificado: ${AgilERP.escapeHtml(lookupValue)}</span>
                 </div>
             ` : '';
 
@@ -3590,7 +3590,7 @@
 
         async function showProductsQuickView() {
             try {
-                const products = await BuildFlow.getProducts({ limit: 'all' });
+                const products = await AgilERP.getProducts({ limit: 'all' });
 
                 await Swal.fire({
                     ...pdvSwalOptions({ width: '720px' }),
@@ -3612,11 +3612,11 @@
                                 </thead>
                                 <tbody>
                                     ${products.map(p => {
-                                        const id = BuildFlow.escapeHtml(BuildFlow.normalizeId(p._id));
-                                        const name = BuildFlow.escapeHtml(p.name);
-                                        const sku = BuildFlow.escapeHtml(p.sku || '');
-                                        const barcode = BuildFlow.escapeHtml(p.barcode || '');
-                                        const loc = BuildFlow.escapeHtml(BuildFlow.formatProductLocationDisplay(p));
+                                        const id = AgilERP.escapeHtml(AgilERP.normalizeId(p._id));
+                                        const name = AgilERP.escapeHtml(p.name);
+                                        const sku = AgilERP.escapeHtml(p.sku || '');
+                                        const barcode = AgilERP.escapeHtml(p.barcode || '');
+                                        const loc = AgilERP.escapeHtml(AgilERP.formatProductLocationDisplay(p));
                                         const qtyClass = (p.quantity ?? 0) < 10 ? 'var(--pdv-danger)' : 'var(--pdv-success)';
                                         return `
                                         <tr data-product-id="${id}" data-barcode="${barcode}" class="pdv-product-row" style="cursor:pointer">
@@ -3626,7 +3626,7 @@
                                                 ${loc !== 'Não definida' ? `<br><small style="color:var(--pdv-primary)"><i class="fa-solid fa-location-dot"></i> ${loc}</small>` : ''}
                                             </td>
                                             <td style="font-weight:700;color:${qtyClass}">${p.quantity ?? 0}</td>
-                                            <td style="font-weight:700;color:var(--pdv-primary)">${BuildFlow.formatCurrency(p.price)}</td>
+                                            <td style="font-weight:700;color:var(--pdv-primary)">${AgilERP.formatCurrency(p.price)}</td>
                                         </tr>`;
                                     }).join('')}
                                 </tbody>
@@ -3646,7 +3646,7 @@
                         document.querySelectorAll('.pdv-product-row').forEach(row => {
                             row.addEventListener('click', () => {
                                 const selectedProduct = products.find(prod => (
-                                    BuildFlow.normalizeId(prod._id) === BuildFlow.normalizeId(row.getAttribute('data-product-id'))
+                                    AgilERP.normalizeId(prod._id) === AgilERP.normalizeId(row.getAttribute('data-product-id'))
                                 ));
                                 if (selectedProduct) {
                                     showProductSheetModal(selectedProduct, { backToList: true });
@@ -3656,14 +3656,14 @@
                     }
                 });
             } catch (error) {
-                BuildFlow.showToast('Erro ao consultar produtos', 'danger');
+                AgilERP.showToast('Erro ao consultar produtos', 'danger');
             }
         }
 
         window.showProductDetails = async (productId) => {
             try {
-                const products = await BuildFlow.getProducts({ limit: 'all' });
-                const p = products.find(prod => BuildFlow.normalizeId(prod._id) === BuildFlow.normalizeId(productId));
+                const products = await AgilERP.getProducts({ limit: 'all' });
+                const p = products.find(prod => AgilERP.normalizeId(prod._id) === AgilERP.normalizeId(productId));
                 if (!p) return;
 
                 Swal.fire({
@@ -3685,13 +3685,13 @@
                     }
                 });
             } catch (error) {
-                BuildFlow.showToast('Erro ao abrir ficha do produto', 'danger');
+                AgilERP.showToast('Erro ao abrir ficha do produto', 'danger');
             }
         };
 
         async function showHistoryQuickView() {
             try {
-                const sales = await BuildFlow.getSales();
+                const sales = await AgilERP.getSales();
                 let tableHtml = `
                     <div class="modal-table-container">
                         <table class="modal-table">
@@ -3705,15 +3705,15 @@
                             </thead>
                             <tbody>
                                 ${sales.slice(0, 15).map(s => {
-                                    const id = BuildFlow.escapeHtml(BuildFlow.normalizeId(s._id));
-                                    const num = BuildFlow.escapeHtml(s.saleNumber || String(s._id).slice(-6));
+                                    const id = AgilERP.escapeHtml(AgilERP.normalizeId(s._id));
+                                    const num = AgilERP.escapeHtml(s.saleNumber || String(s._id).slice(-6));
                                     const status = s.status || 'N/A';
                                     const statusBg = status === 'FINALIZED' ? 'var(--pdv-success)' : status === 'CANCELLED' ? 'var(--pdv-danger)' : 'var(--pdv-secondary)';
                                     return `
                                     <tr data-sale-id="${id}" class="pdv-sale-row" style="cursor:pointer">
                                         <td style="font-family:monospace;font-weight:700">${num}</td>
                                         <td>${new Date(s.createdAt).toLocaleDateString('pt-BR')}</td>
-                                        <td style="font-weight:700;color:var(--pdv-primary)">${BuildFlow.formatCurrency(s.total)}</td>
+                                        <td style="font-weight:700;color:var(--pdv-primary)">${AgilERP.formatCurrency(s.total)}</td>
                                         <td><span class="badge" style="background:${statusBg};color:white;padding:4px 8px;border-radius:6px;font-size:0.65rem;font-weight:800">${status}</span></td>
                                     </tr>`;
                                 }).join('')}
@@ -3736,48 +3736,48 @@
                     }
                 });
             } catch (error) {
-                BuildFlow.showToast('Erro ao consultar histórico', 'danger');
+                AgilERP.showToast('Erro ao consultar histórico', 'danger');
             }
         }
 
         window.showSaleDetails = async (saleId) => {
             try {
-                const sales = await BuildFlow.getSales();
-                const s = sales.find(sale => BuildFlow.normalizeId(sale._id) === BuildFlow.normalizeId(saleId));
+                const sales = await AgilERP.getSales();
+                const s = sales.find(sale => AgilERP.normalizeId(sale._id) === AgilERP.normalizeId(saleId));
                 if (!s) {
-                    BuildFlow.showToast('Venda não encontrada.', 'warning');
+                    AgilERP.showToast('Venda não encontrada.', 'warning');
                     return;
                 }
 
-                const safeSaleId = BuildFlow.escapeHtml(BuildFlow.normalizeId(s._id));
-                const saleLabel = BuildFlow.escapeHtml(
-                    s.saleNumber != null ? String(s.saleNumber) : BuildFlow.normalizeId(s._id).slice(-6)
+                const safeSaleId = AgilERP.escapeHtml(AgilERP.normalizeId(s._id));
+                const saleLabel = AgilERP.escapeHtml(
+                    s.saleNumber != null ? String(s.saleNumber) : AgilERP.normalizeId(s._id).slice(-6)
                 );
-                const normalized = BuildFlow.normalizeSaleRecord(s);
+                const normalized = AgilERP.normalizeSaleRecord(s);
                 const items = normalized.items || [];
                 let itemsHtml = items.map(item => {
                     const qty = Number(item.qty) || 0;
                     const discLine = item.discountAmount > 0
-                        ? `<br><small style="color:var(--pdv-secondary)">Desc. ${BuildFlow.escapeHtml(item.discountLabel || '')}: -${BuildFlow.formatCurrency(item.discountAmount)}</small>`
+                        ? `<br><small style="color:var(--pdv-secondary)">Desc. ${AgilERP.escapeHtml(item.discountLabel || '')}: -${AgilERP.formatCurrency(item.discountAmount)}</small>`
                         : '';
                     return `
                     <div class="pdv-sale-item-row">
-                        <span>${qty}x ${BuildFlow.escapeHtml(item.name || 'Produto')}${discLine}</span>
-                        <span style="font-weight:700">${BuildFlow.formatCurrency(item.lineTotal)}</span>
+                        <span>${qty}x ${AgilERP.escapeHtml(item.name || 'Produto')}${discLine}</span>
+                        <span style="font-weight:700">${AgilERP.formatCurrency(item.lineTotal)}</span>
                     </div>
                 `;
                 }).join('');
 
                 let totalsHtml = '';
                 if (normalized.itemsDiscountTotal > 0) {
-                    totalsHtml += `<div class="pdv-sale-item-row"><span>Desconto nos itens</span><span>-${BuildFlow.formatCurrency(normalized.itemsDiscountTotal)}</span></div>`;
+                    totalsHtml += `<div class="pdv-sale-item-row"><span>Desconto nos itens</span><span>-${AgilERP.formatCurrency(normalized.itemsDiscountTotal)}</span></div>`;
                 }
                 if (normalized.globalDiscountAmount > 0) {
-                    totalsHtml += `<div class="pdv-sale-item-row"><span>Desconto na venda</span><span>-${BuildFlow.formatCurrency(normalized.globalDiscountAmount)}</span></div>`;
+                    totalsHtml += `<div class="pdv-sale-item-row"><span>Desconto na venda</span><span>-${AgilERP.formatCurrency(normalized.globalDiscountAmount)}</span></div>`;
                 }
                 if (normalized.amountPaid != null) {
-                    totalsHtml += `<div class="pdv-sale-item-row"><span>Valor recebido</span><span>${BuildFlow.formatCurrency(normalized.amountPaid)}</span></div>`;
-                    totalsHtml += `<div class="pdv-sale-item-row"><span>Troco</span><span>${BuildFlow.formatCurrency(normalized.change || 0)}</span></div>`;
+                    totalsHtml += `<div class="pdv-sale-item-row"><span>Valor recebido</span><span>${AgilERP.formatCurrency(normalized.amountPaid)}</span></div>`;
+                    totalsHtml += `<div class="pdv-sale-item-row"><span>Troco</span><span>${AgilERP.formatCurrency(normalized.change || 0)}</span></div>`;
                 }
 
                 if (!itemsHtml) {
@@ -3796,13 +3796,13 @@
                                 </div>
                                 <div class="pdv-sale-kv">
                                     <label>Pagamento</label>
-                                    <span>${BuildFlow.escapeHtml(s.paymentMethod || 'Não informado')}</span>
+                                    <span>${AgilERP.escapeHtml(s.paymentMethod || 'Não informado')}</span>
                                 </div>
                             </div>
                             <div class="pdv-sale-items">${itemsHtml}${totalsHtml}</div>
                             <div class="pdv-sale-total">
                                 <span>Total</span>
-                                <strong>${BuildFlow.formatCurrency(normalized.total)}</strong>
+                                <strong>${AgilERP.formatCurrency(normalized.total)}</strong>
                             </div>
                             <div class="pdv-sale-actions">
                                 <button type="button" class="pdv-btn-inline pdv-btn-inline--muted" onclick="window.printSale('${safeSaleId}', 'thermal')">
@@ -3819,25 +3819,25 @@
                 });
             } catch (error) {
                 console.error(error);
-                BuildFlow.showToast(error.message || 'Erro ao carregar detalhes da venda', 'danger');
+                AgilERP.showToast(error.message || 'Erro ao carregar detalhes da venda', 'danger');
             }
         };
 
         window.printSale = async (saleId, type) => {
             try {
-                const sales = await BuildFlow.getSales();
-                const sale = sales.find(s => BuildFlow.normalizeId(s._id) === BuildFlow.normalizeId(saleId));
+                const sales = await AgilERP.getSales();
+                const sale = sales.find(s => AgilERP.normalizeId(s._id) === AgilERP.normalizeId(saleId));
                 if (!sale) {
-                    BuildFlow.showToast('Venda não encontrada para impressão', 'danger');
+                    AgilERP.showToast('Venda não encontrada para impressão', 'danger');
                     return;
                 }
 
                 const { jsPDF } = window.jspdf;
-                const settings = BuildFlow.getSettings();
-                BuildFlow.printSalePdf(sale, type, jsPDF, settings);
+                const settings = AgilERP.getSettings();
+                AgilERP.printSalePdf(sale, type, jsPDF, settings);
             } catch (error) {
                 console.error('Erro na impressão:', error);
-                BuildFlow.showToast('Erro ao gerar documento de impressão', 'danger');
+                AgilERP.showToast('Erro ao gerar documento de impressão', 'danger');
             }
         };
 
@@ -3888,16 +3888,16 @@
 
             currentProductSort = selectedSort;
             renderProducts(getActiveCategory());
-            BuildFlow.showToast(`Filtro aplicado: ${getCurrentSortLabel()}.`, 'info');
+            AgilERP.showToast(`Filtro aplicado: ${getCurrentSortLabel()}.`, 'info');
         }
 
         function openReportsPage() {
-            window.location.href = 'relatorios.html';
+            window.location.href = '/reports';
         }
 
         async function showKitsQuickView() {
             try {
-                const products = await BuildFlow.getProducts({ limit: 'all' });
+                const products = await AgilERP.getProducts({ limit: 'all' });
                 const kitProducts = products.filter(isKitProduct).sort((a, b) => {
                     const recentDiff = getProductRecencyTimestamp(b) - getProductRecencyTimestamp(a);
                     if (recentDiff !== 0) return recentDiff;
@@ -3942,16 +3942,16 @@
                                 </thead>
                                 <tbody>
                                     ${kitProducts.map(product => {
-                                        const id = BuildFlow.escapeHtml(BuildFlow.normalizeId(product._id));
-                                        const available = BuildFlow.getProductAvailableStock(product);
+                                        const id = AgilERP.escapeHtml(AgilERP.normalizeId(product._id));
+                                        const available = AgilERP.getProductAvailableStock(product);
                                         return `
                                             <tr data-product-id="${id}" class="pdv-kit-row" style="cursor:pointer">
                                                 <td>
-                                                    <strong>${BuildFlow.escapeHtml(product.name || 'Kit')}</strong>
-                                                    ${(product.sku || product.barcode) ? `<br><small style="color:var(--pdv-text-muted)">${BuildFlow.escapeHtml(product.sku || product.barcode)}</small>` : ''}
+                                                    <strong>${AgilERP.escapeHtml(product.name || 'Kit')}</strong>
+                                                    ${(product.sku || product.barcode) ? `<br><small style="color:var(--pdv-text-muted)">${AgilERP.escapeHtml(product.sku || product.barcode)}</small>` : ''}
                                                 </td>
                                                 <td style="font-weight:700;color:${available < 1 ? 'var(--pdv-danger)' : 'var(--pdv-success)'}">${available}</td>
-                                                <td style="font-weight:700;color:var(--pdv-primary)">${BuildFlow.formatCurrency(product.price)}</td>
+                                                <td style="font-weight:700;color:var(--pdv-primary)">${AgilERP.formatCurrency(product.price)}</td>
                                             </tr>
                                         `;
                                     }).join('')}
@@ -3972,7 +3972,7 @@
                         document.querySelectorAll('.pdv-kit-row').forEach(row => {
                             row.addEventListener('click', () => {
                                 const selectedProduct = kitProducts.find(product => (
-                                    BuildFlow.normalizeId(product._id) === BuildFlow.normalizeId(row.getAttribute('data-product-id'))
+                                    AgilERP.normalizeId(product._id) === AgilERP.normalizeId(row.getAttribute('data-product-id'))
                                 ));
                                 if (selectedProduct) {
                                     showProductSheetModal(selectedProduct);
@@ -3983,7 +3983,7 @@
                 });
             } catch (error) {
                 console.error('Erro ao consultar kits:', error);
-                BuildFlow.showToast('Erro ao consultar kits do PDV.', 'danger');
+                AgilERP.showToast('Erro ao consultar kits do PDV.', 'danger');
             }
         }
 
@@ -3991,13 +3991,13 @@
             const item = cart[index];
             let currentDiscountType = item.discountType || 'percent';
             const fresh = getFreshProduct(item) || item;
-            const available = BuildFlow.getProductAvailableStock(fresh);
-            const others = BuildFlow.getCartQtyForProduct(cart, item._id, index);
+            const available = AgilERP.getProductAvailableStock(fresh);
+            const others = AgilERP.getCartQtyForProduct(cart, item._id, index);
             const maxQty = Math.max(0, available - others);
 
             Swal.fire({
                 ...pdvSwalOptions({ width: '420px' }),
-                title: BuildFlow.escapeHtml(item.name || 'Editar item'),
+                title: AgilERP.escapeHtml(item.name || 'Editar item'),
                 html: `
                     <div class="pdv-sheet">
                         <div class="pdv-form-block">
@@ -4027,7 +4027,7 @@
                 confirmButtonColor: 'var(--pdv-primary)',
                 denyButtonColor: 'var(--pdv-danger)',
                 didOpen: () => {
-                    window._pdvItemDiscountField = BuildFlow.initPdvDiscountField(
+                    window._pdvItemDiscountField = AgilERP.initPdvDiscountField(
                         'swal-edit-discount',
                         () => currentDiscountType,
                         item.discount || 0
@@ -4037,7 +4037,7 @@
                     const qty = parseInt(document.getElementById('swal-edit-qty').value, 10);
                     const discount = window._pdvItemDiscountField
                         ? window._pdvItemDiscountField.getValue()
-                        : BuildFlow.parseDiscountInput(document.getElementById('swal-edit-discount')?.value);
+                        : AgilERP.parseDiscountInput(document.getElementById('swal-edit-discount')?.value);
                     if (qty < 1) {
                         Swal.showValidationMessage('Quantidade inválida');
                         return false;
@@ -4046,7 +4046,7 @@
                         Swal.showValidationMessage('Desconto máximo de 100%');
                         return false;
                     }
-                    const check = BuildFlow.validateLineStock(fresh, cart, qty, index);
+                    const check = AgilERP.validateLineStock(fresh, cart, qty, index);
                     if (!check.ok) {
                         Swal.showValidationMessage(check.message);
                         return false;
@@ -4059,11 +4059,11 @@
                     item.discount = result.value.discount;
                     item.discountType = result.value.discountType;
                     updateCart();
-                    BuildFlow.showToast('Item atualizado', 'success');
+                    AgilERP.showToast('Item atualizado', 'success');
                 } else if (result.isDenied) {
                     cart.splice(index, 1);
                     updateCart();
-                    BuildFlow.showToast('Item removido', 'warning');
+                    AgilERP.showToast('Item removido', 'warning');
                 }
             });
 
@@ -4103,7 +4103,7 @@
                 confirmButtonText: 'Aplicar Desconto',
                 confirmButtonColor: 'var(--pdv-primary)',
                 didOpen: () => {
-                    window._pdvGlobalDiscountField = BuildFlow.initPdvDiscountField(
+                    window._pdvGlobalDiscountField = AgilERP.initPdvDiscountField(
                         'global-swal-input',
                         () => currentType,
                         globalDiscount
@@ -4112,7 +4112,7 @@
                 preConfirm: () => {
                     const discount = window._pdvGlobalDiscountField
                         ? window._pdvGlobalDiscountField.getValue()
-                        : BuildFlow.parseDiscountInput(document.getElementById('global-swal-input')?.value);
+                        : AgilERP.parseDiscountInput(document.getElementById('global-swal-input')?.value);
                     if (currentType === 'percent' && discount > 100) {
                         Swal.showValidationMessage('Desconto máximo de 100%');
                         return false;
@@ -4124,7 +4124,7 @@
                     globalDiscount = result.value.discount;
                     globalDiscountType = result.value.type;
                     updateCart();
-                    BuildFlow.showToast('Desconto aplicado!', 'success');
+                    AgilERP.showToast('Desconto aplicado!', 'success');
                 }
             });
 
@@ -4179,7 +4179,7 @@
             globalDiscount = parseFloat(document.getElementById('globalDiscountInput').value) || 0;
             updateCart();
             closeModal('globalItemsModal');
-            BuildFlow.showToast('Desconto global aplicado');
+            AgilERP.showToast('Desconto global aplicado');
         }
 
         function cancelGlobalDiscount() {
@@ -4196,7 +4196,7 @@
                 if (result.isConfirmed) {
                     document.getElementById('globalDiscountInput').value = globalDiscount;
                     closeModal('globalItemsModal');
-                    BuildFlow.showToast('Operação cancelada', 'info');
+                    AgilERP.showToast('Operação cancelada', 'info');
                 }
             });
         }
@@ -4217,17 +4217,17 @@
                 // Usar ícones baseados na categoria
                 const icon = p.category === 'Elétrica' ? 'fa-bolt' : p.category === 'Hidráulica' ? 'fa-faucet' : 'fa-box';
                 
-                const available = BuildFlow.getProductAvailableStock(p);
+                const available = AgilERP.getProductAvailableStock(p);
                 const outOfStock = available < 1;
 
                 const imageHtml = p.imageUrl 
-                    ? `<img src="${p.imageUrl}" alt="${BuildFlow.escapeHtml(p.name)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" onerror="this.parentElement.innerHTML = '<i class=\'fa-solid ${icon}\'></i>'">` 
+                    ? `<img src="${p.imageUrl}" alt="${AgilERP.escapeHtml(p.name)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" onerror="this.parentElement.innerHTML = '<i class=\'fa-solid ${icon}\'></i>'">` 
                     : `<i class="fa-solid ${icon}"></i>`;
 
                 card.innerHTML = `
                     <div class="product-img">${imageHtml}</div>
-                    <div class="product-name">${BuildFlow.escapeHtml(p.name)}</div>
-                    <div class="product-price">${BuildFlow.formatCurrency(p.price)}</div>
+                    <div class="product-name">${AgilERP.escapeHtml(p.name)}</div>
+                    <div class="product-price">${AgilERP.formatCurrency(p.price)}</div>
                     <div class="product-stock ${outOfStock ? 'out' : ''}">${outOfStock ? 'Sem estoque' : `${available} disp.`}</div>
                 `;
                 card.onclick = async () => {
@@ -4244,15 +4244,15 @@
                 if (!caixaAberto) return false;
             }
             const fresh = getFreshProduct(product) || product;
-            const pid = BuildFlow.normalizeId(fresh._id);
+            const pid = AgilERP.normalizeId(fresh._id);
             const addQty = Math.max(1, parseInt(qty, 10) || 1);
-            const existingIndex = cart.findIndex(item => BuildFlow.normalizeId(item._id) === pid);
+            const existingIndex = cart.findIndex(item => AgilERP.normalizeId(item._id) === pid);
             const existing = existingIndex >= 0 ? cart[existingIndex] : null;
             const newQty = existing ? existing.qty + addQty : addQty;
 
-            const check = BuildFlow.validateLineStock(fresh, cart, newQty, existingIndex);
+            const check = AgilERP.validateLineStock(fresh, cart, newQty, existingIndex);
             if (!check.ok) {
-                BuildFlow.showToast(check.message, 'warning');
+                AgilERP.showToast(check.message, 'warning');
                 return false;
             }
 
@@ -4287,7 +4287,7 @@
                 });
             }
             updateCart();
-            BuildFlow.showToast(`${fresh.name} adicionado (${newQty} un.).`, 'success');
+            AgilERP.showToast(`${fresh.name} adicionado (${newQty} un.).`, 'success');
             return true;
         }
 
@@ -4325,16 +4325,16 @@
                     div.className = 'cart-item';
                     div.onclick = () => openEditModal(index);
                     
-                    const metaHtml = `${item.qty} un x ${BuildFlow.formatCurrency(item.price)}`;
+                    const metaHtml = `${item.qty} un x ${AgilERP.formatCurrency(item.price)}`;
 
                     div.innerHTML = `
                         <div class="item-info">
-                            <div class="item-name">${BuildFlow.escapeHtml(item.name)}</div>
+                            <div class="item-name">${AgilERP.escapeHtml(item.name)}</div>
                             <div class="item-meta">${metaHtml}</div>
                         </div>
                         <div style="display:flex;flex-direction:column;align-items:flex-end;margin-right:12px;">
-                            <div class="item-price">${BuildFlow.formatCurrency(itemFinal)}</div>
-                            ${hasDiscount ? `<div style="font-size:0.7rem;text-decoration:line-through;color:var(--pdv-text-muted);">${BuildFlow.formatCurrency(originalTotal)}</div>` : ''}
+                            <div class="item-price">${AgilERP.formatCurrency(itemFinal)}</div>
+                            ${hasDiscount ? `<div style="font-size:0.7rem;text-decoration:line-through;color:var(--pdv-text-muted);">${AgilERP.formatCurrency(originalTotal)}</div>` : ''}
                         </div>
                         <div class="item-remove" onclick="event.stopPropagation(); removeFromCart(${index})">
                             <i class="fa-solid fa-circle-xmark"></i>
@@ -4354,7 +4354,7 @@
 
         function showMobileCart() {
             if (cart.length === 0) {
-                BuildFlow.showToast('Carrinho vazio', 'warning');
+                AgilERP.showToast('Carrinho vazio', 'warning');
                 return;
             }
 
@@ -4373,12 +4373,12 @@
                 itemsHtml += `
                     <div onclick="Swal.close(); setTimeout(() => openEditModal(${index}), 100);" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--pdv-border);cursor:pointer;">
                         <div style="flex:1;min-width:0;">
-                            <div style="font-weight:700;font-size:0.82rem;color:var(--pdv-text);">${BuildFlow.escapeHtml(item.name)}</div>
-                            <div style="font-size:0.72rem;color:var(--pdv-text-muted);">${item.qty} un x ${BuildFlow.formatCurrency(item.price)}</div>
+                            <div style="font-weight:700;font-size:0.82rem;color:var(--pdv-text);">${AgilERP.escapeHtml(item.name)}</div>
+                            <div style="font-size:0.72rem;color:var(--pdv-text-muted);">${item.qty} un x ${AgilERP.formatCurrency(item.price)}</div>
                         </div>
                         <div style="display:flex;flex-direction:column;align-items:flex-end;">
-                            <div style="font-weight:800;font-size:0.9rem;color:var(--pdv-primary);white-space:nowrap;">${BuildFlow.formatCurrency(itemFinal)}</div>
-                            ${hasDiscount ? `<div style="font-size:0.7rem;text-decoration:line-through;color:var(--pdv-text-muted);">${BuildFlow.formatCurrency(originalTotal)}</div>` : ''}
+                            <div style="font-weight:800;font-size:0.9rem;color:var(--pdv-primary);white-space:nowrap;">${AgilERP.formatCurrency(itemFinal)}</div>
+                            ${hasDiscount ? `<div style="font-size:0.7rem;text-decoration:line-through;color:var(--pdv-text-muted);">${AgilERP.formatCurrency(originalTotal)}</div>` : ''}
                         </div>
                         <div onclick="event.stopPropagation(); removeFromCart(${index}); Swal.close(); setTimeout(showMobileCart, 150);" style="color:var(--pdv-text-muted);font-size:1rem;padding:4px;">
                             <i class="fa-solid fa-circle-xmark"></i>
@@ -4388,7 +4388,7 @@
             });
 
             const globalDiscountHtml = summary.globalDiscountAmount > 0
-                ? `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:0.78rem;color:var(--pdv-secondary);border-bottom:1px solid var(--pdv-border);"><span>Desconto global (${summary.globalDiscount}${summary.globalDiscountType === 'percent' ? '%' : ' R$'})</span><span>-${BuildFlow.formatCurrency(summary.globalDiscountAmount)}</span></div>`
+                ? `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:0.78rem;color:var(--pdv-secondary);border-bottom:1px solid var(--pdv-border);"><span>Desconto global (${summary.globalDiscount}${summary.globalDiscountType === 'percent' ? '%' : ' R$'})</span><span>-${AgilERP.formatCurrency(summary.globalDiscountAmount)}</span></div>`
                 : '';
 
             Swal.fire({
@@ -4400,7 +4400,7 @@
                         ${globalDiscountHtml}
                         <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:2px solid var(--pdv-border);margin-top:4px;">
                             <span style="font-size:0.75rem;font-weight:800;text-transform:uppercase;color:var(--pdv-text-muted);">Total</span>
-                            <span style="font-size:1.5rem;font-weight:900;color:var(--pdv-primary);">${BuildFlow.formatCurrency(summary.total)}</span>
+                            <span style="font-size:1.5rem;font-weight:900;color:var(--pdv-primary);">${AgilERP.formatCurrency(summary.total)}</span>
                         </div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
                             <button type="button" id="mobile-cart-reserve" class="pdv-btn-inline pdv-btn-inline--muted" style="background:var(--pdv-secondary);color:#fff;width:100%;">
@@ -4461,7 +4461,7 @@
 
         function updateTotal() {
             const summary = getCartSaleSummary();
-            document.getElementById('totalValue').innerText = BuildFlow.formatCurrency(summary.total);
+            document.getElementById('totalValue').innerText = AgilERP.formatCurrency(summary.total);
         }
 
         init();

@@ -304,14 +304,15 @@
     <div class="layout">
       <aside class="sidebar">
         <div class="sidebar-logo">
-          <i class="fa-solid fa-layer-group"></i>
-          <span>BuildFlow</span>
+          <div class="sidebar-logo-icon"><i class="fa-solid fa-layer-group"></i></div>
+          <div class="sidebar-logo-text">Build<span>Flow</span></div>
         </div>
-        <nav>
-          <p class="nav-label">Menu Principal</p>
+        <div class="sidebar-inner">
+          <div class="sidebar-group">
+          <div class="sidebar-group-header">Menu Principal</div>
           <ul class="nav-list">
             <li class="nav-item">
-              <a href="dashboard.html" class="nav-link active"
+              <a href="/dashboard" class="nav-link active"
                 ><i class="fa-solid fa-chart-pie"></i><span>Dashboard</span></a
               >
             </li>
@@ -333,7 +334,9 @@
               >
             </li>
           </ul>
-          <p class="nav-label">Relatórios & Analíticos</p>
+          </div>
+          <div class="sidebar-group">
+          <div class="sidebar-group-header">Relatórios & Analíticos</div>
           <ul class="nav-list">
             <li class="nav-item">
               <a href="pages/relatorios.html" class="nav-link"
@@ -342,8 +345,9 @@
               >
             </li>
           </ul>
-
-          <p class="nav-label">Históricos</p>
+          </div>
+          <div class="sidebar-group">
+          <div class="sidebar-group-header">Históricos</div>
           <ul class="nav-list">
             <li class="nav-item">
               <a href="pages/historico-vendas.html" class="nav-link"
@@ -352,8 +356,9 @@
               >
             </li>
           </ul>
-
-          <p class="nav-label">Financeiro</p>
+          </div>
+          <div class="sidebar-group">
+          <div class="sidebar-group-header">Financeiro</div>
           <ul class="nav-list">
             <li class="nav-item">
               <a href="pages/contas-a-pagar.html" class="nav-link"
@@ -362,8 +367,9 @@
               >
             </li>
           </ul>
-
-          <p class="nav-label">Sistema</p>
+          </div>
+          <div class="sidebar-group">
+          <div class="sidebar-group-header">Sistema</div>
           <ul class="nav-list">
             <li class="nav-item">
               <a href="pages/configuracoes.html" class="nav-link"
@@ -372,7 +378,8 @@
               >
             </li>
           </ul>
-        </nav>
+          </div>
+        </div>
       </aside>
 
       <main class="main-content">

@@ -1,6 +1,6 @@
-# BuildFlow ERP
+# AgilERP ERP
 
-BuildFlow é um sistema de gestão empresarial (ERP) moderno, desenvolvido com uma arquitetura **Serverless** e integrado ao **MongoDB Atlas**. Focado em eficiência, o sistema oferece uma interface premium para controle de estoque, frente de caixa (PDV) e relatórios analíticos.
+AgilERP é um sistema de gestão empresarial (ERP) moderno, desenvolvido com uma arquitetura **Serverless** e integrado ao **MongoDB Atlas**. Focado em eficiência, o sistema oferece uma interface premium para controle de estoque, frente de caixa (PDV) e relatórios analíticos.
 
 ## 🚀 Tecnologias Utilizadas
 
@@ -38,7 +38,7 @@ BuildFlow é um sistema de gestão empresarial (ERP) moderno, desenvolvido com u
 
 1. Clone o repositório:
    ```bash
-   git clone https://github.com/robertocarlossupplychain-cmd/BuildFlow.git
+   git clone https://github.com/robertocarlossupplychain-cmd/AgilERP.git
    ```
 
 2. Instale as dependências:

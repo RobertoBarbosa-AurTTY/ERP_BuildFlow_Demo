@@ -122,39 +122,46 @@
 </head>
 <body>
     <div class="layout">
-        <aside class="sidebar">
+                        <aside class="sidebar">
             <div class="sidebar-logo">
-                <i class="fa-solid fa-layer-group"></i>
-                <span>BuildFlow</span>
+                <div class="sidebar-logo-icon"><i class="fa-solid fa-layer-group"></i></div>
+                <div class="sidebar-logo-text">Build<span>Flow</span></div>
             </div>
-            <nav>
-                <p class="nav-label">Menu Principal</p>
-                <ul class="nav-list">
-                    <li class="nav-item"><a href="../dashboard.html" class="nav-link"><i class="fa-solid fa-chart-pie"></i><span>Dashboard</span></a></li>
-                    <li class="nav-item"><a href="estoque.html" class="nav-link"><i class="fa-solid fa-boxes-stacked"></i><span>Estoque</span></a></li>
-                    <li class="nav-item"><a href="entradas.html" class="nav-link"><i class="fa-solid fa-file-import"></i><span>Entradas</span></a></li>
-                    <li class="nav-item"><a href="saidas.html" class="nav-link"><i class="fa-solid fa-cart-shopping"></i><span>PDV / Vendas</span></a></li>
-                </ul>
-<p class="nav-label">Relatórios & Analíticos</p>
-                <ul class="nav-list">
-                    <li class="nav-item"><a href="relatorios.html" class="nav-link"><i class="fa-solid fa-chart-line"></i><span>Relatórios</span></a></li>
-                </ul>
-
-                <p class="nav-label">Históricos</p>
-                <ul class="nav-list">
-                    <li class="nav-item"><a href="historico-vendas.html" class="nav-link active"><i class="fa-solid fa-clock-rotate-left"></i><span>Histórico de Vendas</span></a></li>
-                </ul>
-
-                <p class="nav-label">Financeiro</p>
-                <ul class="nav-list">
-                    <li class="nav-item"><a href="contas-a-pagar.html" class="nav-link"><i class="fa-solid fa-file-invoice-dollar"></i><span>Contas a Pagar</span></a></li>
-                </ul>
-
-                <p class="nav-label">Sistema</p>
-                <ul class="nav-list">
-                    <li class="nav-item"><a href="configuracoes.html" class="nav-link"><i class="fa-solid fa-sliders"></i><span>Configurações</span></a></li>
-                </ul>
-            </nav>
+            <div class="sidebar-inner">
+                <div class="sidebar-group">
+                    <div class="sidebar-group-header">Menu Principal</div>
+                    <ul class="nav-list">
+                        <li class="nav-item"><a href="/dashboard" class="nav-link"><i class="fa-solid fa-chart-pie"></i><span>Dashboard</span></a></li>
+                        <li class="nav-item"><a href="/stock" class="nav-link"><i class="fa-solid fa-boxes-stacked"></i><span>Estoque</span></a></li>
+                        <li class="nav-item"><a href="/receiving" class="nav-link"><i class="fa-solid fa-file-import"></i><span>Entradas</span></a></li>
+                        <li class="nav-item"><a href="/pos" class="nav-link"><i class="fa-solid fa-cart-shopping"></i><span>PDV / Vendas</span></a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-group">
+                    <div class="sidebar-group-header">Relatórios & Analíticos</div>
+                    <ul class="nav-list">
+                        <li class="nav-item"><a href="/reports" class="nav-link"><i class="fa-solid fa-chart-line"></i><span>Relatórios</span></a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-group">
+                    <div class="sidebar-group-header">Históricos</div>
+                    <ul class="nav-list">
+                        <li class="nav-item"><a href="/sales-history" class="nav-link active"><i class="fa-solid fa-clock-rotate-left"></i><span>Histórico de Vendas</span></a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-group">
+                    <div class="sidebar-group-header">Financeiro</div>
+                    <ul class="nav-list">
+                        <li class="nav-item"><a href="/bills" class="nav-link"><i class="fa-solid fa-file-invoice-dollar"></i><span>Contas a Pagar</span></a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-group">
+                    <div class="sidebar-group-header">Sistema</div>
+                    <ul class="nav-list">
+                        <li class="nav-item"><a href="/settings" class="nav-link"><i class="fa-solid fa-sliders"></i><span>Configurações</span></a></li>
+                    </ul>
+                </div>
+            </div>
         </aside>
 
         <main class="main-content">

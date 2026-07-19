@@ -1,4 +1,4 @@
-// BuildFlow ERP - Configurações
+// AgilERP ERP - Configurações
 document.addEventListener('DOMContentLoaded', () => {
     loadSettings();
     loadProfile();
@@ -34,7 +34,7 @@ async function saveProfile() {
     const newPassword = document.getElementById('profileNewPassword').value;
 
     if (!name) {
-        BuildFlow.showToast('Informe seu nome.', 'warning');
+        AgilERP.showToast('Informe seu nome.', 'warning');
         return;
     }
 
@@ -52,7 +52,7 @@ async function saveProfile() {
     }
 
     if (requiresPassword && !currentPassword) {
-        BuildFlow.showToast('Confirme sua senha atual para alterar email ou senha.', 'warning');
+        AgilERP.showToast('Confirme sua senha atual para alterar email ou senha.', 'warning');
         return;
     }
 
@@ -61,7 +61,7 @@ async function saveProfile() {
     }
 
     try {
-        const result = await BuildFlow.apiFetch('/auth-update', {
+        const result = await AgilERP.apiFetch('/auth-update', {
             method: 'POST',
             body: JSON.stringify(body)
         });
@@ -75,14 +75,14 @@ async function saveProfile() {
 
         document.getElementById('profileCurrentPassword').value = '';
         document.getElementById('profileNewPassword').value = '';
-        BuildFlow.showToast('Perfil atualizado com sucesso!', 'success');
+        AgilERP.showToast('Perfil atualizado com sucesso!', 'success');
     } catch (error) {
-        BuildFlow.showToast(error.message || 'Erro ao atualizar perfil.', 'danger');
+        AgilERP.showToast(error.message || 'Erro ao atualizar perfil.', 'danger');
     }
 }
 
 function loadSettings() {
-    const settings = BuildFlow.getSettings();
+    const settings = AgilERP.getSettings();
     
     document.getElementById('storeName').value = settings.storeName;
     document.getElementById('companyName').value = settings.companyName;
@@ -107,17 +107,17 @@ function saveCompanySettings() {
     const companyCnpj = document.getElementById('companyCnpj').value;
 
     if (!storeName) {
-        BuildFlow.showToast('O nome da loja é obrigatório para as impressões!', 'warning');
+        AgilERP.showToast('O nome da loja é obrigatório para as impressões!', 'warning');
         return;
     }
 
-    const settings = JSON.parse(localStorage.getItem('buildflow_settings')) || {};
+    const settings = JSON.parse(localStorage.getItem('agilerp_settings')) || {};
     settings.storeName = storeName;
     settings.companyName = companyName;
     settings.companyCnpj = companyCnpj;
 
-    localStorage.setItem('buildflow_settings', JSON.stringify(settings));
-    BuildFlow.showToast('Configurações da empresa salvas!', 'success');
+    localStorage.setItem('agilerp_settings', JSON.stringify(settings));
+    AgilERP.showToast('Configurações da empresa salvas!', 'success');
 }
 
 function savePrintSettings() {
@@ -129,7 +129,7 @@ function savePrintSettings() {
     const receiptLegalNote = document.getElementById('receiptLegalNote').value;
     const proconNumber = document.getElementById('proconNumber').value;
 
-    const settings = JSON.parse(localStorage.getItem('buildflow_settings')) || {};
+    const settings = JSON.parse(localStorage.getItem('agilerp_settings')) || {};
     settings.autoPrint = autoPrint;
     settings.useQz = useQz;
     settings.printType = printType;
@@ -138,17 +138,17 @@ function savePrintSettings() {
     settings.receiptLegalNote = receiptLegalNote;
     settings.proconNumber = proconNumber;
 
-    localStorage.setItem('buildflow_settings', JSON.stringify(settings));
-    BuildFlow.showToast('Preferências de impressão salvas!', 'success');
+    localStorage.setItem('agilerp_settings', JSON.stringify(settings));
+    AgilERP.showToast('Preferências de impressão salvas!', 'success');
 }
 
 async function loadUnits() {
     try {
-        const units = await BuildFlow.getUnits();
+        const units = await AgilERP.getUnits();
         renderUnits(units);
     } catch (error) {
         console.error('Erro ao carregar unidades:', error);
-        BuildFlow.showToast('Não foi possível carregar unidades.', 'danger');
+        AgilERP.showToast('Não foi possível carregar unidades.', 'danger');
     }
 }
 
@@ -163,8 +163,8 @@ function renderUnits(units) {
     container.innerHTML = units.map(unit => `
         <div class="settings-row">
             <div class="info">
-                <p>${BuildFlow.escapeHtml(unit.name)}</p>
-                <span>${BuildFlow.escapeHtml(unit.address || 'Endereço não informado')}</span>
+                <p>${AgilERP.escapeHtml(unit.name)}</p>
+                <span>${AgilERP.escapeHtml(unit.address || 'Endereço não informado')}</span>
             </div>
             <div style="display:flex; align-items:center; gap:12px;">
                 <span style="font-size:0.8rem; color: var(--text-muted);">${unit.active ? 'Ativa' : 'Inativa'}</span>
@@ -179,23 +179,23 @@ async function saveUnitSettings() {
     const unitActive = document.getElementById('unitActive').checked;
 
     if (!unitName) {
-        BuildFlow.showToast('Informe o nome da unidade.', 'warning');
+        AgilERP.showToast('Informe o nome da unidade.', 'warning');
         return;
     }
 
     try {
-        await BuildFlow.createUnit({
+        await AgilERP.createUnit({
             name: unitName,
             address: unitAddress,
             active: unitActive
         });
-        BuildFlow.showToast('Unidade cadastrada com sucesso!', 'success');
+        AgilERP.showToast('Unidade cadastrada com sucesso!', 'success');
         document.getElementById('unitName').value = '';
         document.getElementById('unitAddress').value = '';
         document.getElementById('unitActive').checked = true;
         loadUnits();
     } catch (error) {
-        BuildFlow.showToast(error.message || 'Erro ao salvar unidade.', 'danger');
+        AgilERP.showToast(error.message || 'Erro ao salvar unidade.', 'danger');
     }
 }
 
@@ -203,12 +203,12 @@ function saveUISettings() {
     const pushNotifications = document.getElementById('pushNotifications').checked;
     const systemSounds = document.getElementById('systemSounds').checked;
 
-    const settings = JSON.parse(localStorage.getItem('buildflow_settings')) || {};
+    const settings = JSON.parse(localStorage.getItem('agilerp_settings')) || {};
     settings.pushNotifications = pushNotifications;
     settings.systemSounds = systemSounds;
 
-    localStorage.setItem('buildflow_settings', JSON.stringify(settings));
-    BuildFlow.showToast('Preferências de interface salvas!', 'success');
+    localStorage.setItem('agilerp_settings', JSON.stringify(settings));
+    AgilERP.showToast('Preferências de interface salvas!', 'success');
 }
 
 async function exportDatabaseBackup() {
@@ -230,12 +230,12 @@ async function exportDatabaseBackup() {
     if (!password) return;
 
     try {
-        await BuildFlow.apiFetch('/auth-verify', {
+        await AgilERP.apiFetch('/auth-verify', {
             method: 'POST',
             body: JSON.stringify({ password })
         });
     } catch (error) {
-        BuildFlow.showToast('Senha incorreta!', 'danger');
+        AgilERP.showToast('Senha incorreta!', 'danger');
         return;
     }
 
@@ -248,7 +248,7 @@ async function exportDatabaseBackup() {
         }
 
         const response = await fetch('/api/export-db?format=json', {
-            headers: BuildFlow.getAuthHeaders()
+            headers: AgilERP.getAuthHeaders()
         });
 
         if (!response.ok) {
@@ -258,7 +258,7 @@ async function exportDatabaseBackup() {
 
         const disposition = response.headers.get('Content-Disposition') || '';
         const filenameMatch = disposition.match(/filename="?(.+?)"?$/);
-        const filename = filenameMatch ? filenameMatch[1] : `buildflow-backup-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+        const filename = filenameMatch ? filenameMatch[1] : `agilerp-backup-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
 
         const blob = await response.blob();
 
@@ -271,9 +271,9 @@ async function exportDatabaseBackup() {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
 
-        BuildFlow.showToast('Backup exportado com sucesso!', 'success');
+        AgilERP.showToast('Backup exportado com sucesso!', 'success');
     } catch (error) {
-        BuildFlow.showToast(error.message || 'Erro ao exportar backup.', 'danger');
+        AgilERP.showToast(error.message || 'Erro ao exportar backup.', 'danger');
     } finally {
         if (btn) {
             btn.disabled = false;

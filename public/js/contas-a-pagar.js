@@ -39,7 +39,7 @@
   }
 
   function normalizeId(id) {
-    return BuildFlow.normalizeId(id);
+    return AgilERP.normalizeId(id);
   }
 
   function formatDate(value) {
@@ -72,8 +72,8 @@
     summaryParams.set("summary", "true");
 
     const [listRes, summaryRes] = await Promise.all([
-      BuildFlow.apiFetch(`/accounts-payable?${params.toString()}`),
-      BuildFlow.apiFetch(`/accounts-payable?${summaryParams.toString()}`),
+      AgilERP.apiFetch(`/accounts-payable?${params.toString()}`),
+      AgilERP.apiFetch(`/accounts-payable?${summaryParams.toString()}`),
     ]);
 
     bills = listRes.data || [];
@@ -85,10 +85,10 @@
 
   function renderKpis() {
     if (!summary || !els.kpiPending) return;
-    els.kpiPending.textContent = BuildFlow.formatCurrency(summary.totalPending);
-    els.kpiOverdue.textContent = BuildFlow.formatCurrency(summary.totalOverdue);
-    els.kpiWeek.textContent = `${summary.countDueThisWeek} · ${BuildFlow.formatCurrency(summary.totalDueThisWeek)}`;
-    els.kpiPaid.textContent = BuildFlow.formatCurrency(summary.paidThisMonth);
+    els.kpiPending.textContent = AgilERP.formatCurrency(summary.totalPending);
+    els.kpiOverdue.textContent = AgilERP.formatCurrency(summary.totalOverdue);
+    els.kpiWeek.textContent = `${summary.countDueThisWeek} · ${AgilERP.formatCurrency(summary.totalDueThisWeek)}`;
+    els.kpiPaid.textContent = AgilERP.formatCurrency(summary.paidThisMonth);
     els.badgeOverdue.textContent = summary.countOverdue || 0;
     els.badgeSoon.textContent = summary.countDueSoon || 0;
 
@@ -98,7 +98,7 @@
         <i class="fa-solid fa-triangle-exclamation"></i>
         <div>
           <strong>${summary.countOverdue} conta(s) vencida(s)</strong>
-          <span>Total em atraso: ${BuildFlow.formatCurrency(summary.totalOverdue)}</span>
+          <span>Total em atraso: ${AgilERP.formatCurrency(summary.totalOverdue)}</span>
         </div>
         <button type="button" class="btn btn-sm" id="filterOverdueBtn">Ver vencidas</button>`;
       $("filterOverdueBtn")?.addEventListener("click", () => {
@@ -111,7 +111,7 @@
         <i class="fa-solid fa-bell"></i>
         <div>
           <strong>${summary.countDueSoon} vencimento(s) próximo(s)</strong>
-          <span>Total: ${BuildFlow.formatCurrency(summary.totalDueSoon)}</span>
+          <span>Total: ${AgilERP.formatCurrency(summary.totalDueSoon)}</span>
         </div>`;
     } else {
       els.alertBanner.style.display = "none";
@@ -140,11 +140,11 @@
                 : "—";
 
         return `<tr class="ap-row ap-row--${bill.status}" data-bill-id="${id}" style="cursor:pointer;">
-          <td><strong>${BuildFlow.escapeHtml(bill.description)}</strong>${bill.documentNumber ? `<br><small>${BuildFlow.escapeHtml(bill.documentNumber)}</small>` : ""}</td>
-          <td>${BuildFlow.escapeHtml(bill.supplier || "—")}</td>
-          <td>${BuildFlow.escapeHtml(CATEGORIES[bill.category] || bill.category)}</td>
+          <td><strong>${AgilERP.escapeHtml(bill.description)}</strong>${bill.documentNumber ? `<br><small>${AgilERP.escapeHtml(bill.documentNumber)}</small>` : ""}</td>
+          <td>${AgilERP.escapeHtml(bill.supplier || "—")}</td>
+          <td>${AgilERP.escapeHtml(CATEGORIES[bill.category] || bill.category)}</td>
           <td>${formatDate(bill.dueDate)}</td>
-          <td><strong>${BuildFlow.formatCurrency(bill.amount)}</strong></td>
+          <td><strong>${AgilERP.formatCurrency(bill.amount)}</strong></td>
           <td style="white-space:nowrap;">${statusBadge(bill.status)}</td>
           <td><small>${daysLabel}</small></td>
           <td class="ap-actions">
@@ -198,7 +198,7 @@
       const total = dayBills.reduce((s, b) => s + (Number(b.amount) || 0), 0);
       html += `<div class="ap-cal-cell${isToday ? " ap-cal-cell--today" : ""}${hasOverdue ? " ap-cal-cell--overdue" : ""}" data-day="${day}">
         <span class="ap-cal-day">${day}</span>
-        ${dayBills.length ? `<span class="ap-cal-count">${dayBills.length}</span><span class="ap-cal-total">${BuildFlow.formatCurrency(total)}</span>` : ""}
+        ${dayBills.length ? `<span class="ap-cal-count">${dayBills.length}</span><span class="ap-cal-total">${AgilERP.formatCurrency(total)}</span>` : ""}
       </div>`;
     }
 
@@ -214,7 +214,7 @@
         const date = new Date(day.date);
         const label = date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
         const cls = day.total > 0 ? "ap-bar--active" : "";
-        return `<div class="ap-bar-wrap" title="${label}: ${BuildFlow.formatCurrency(day.total)} (${day.count})">
+        return `<div class="ap-bar-wrap" title="${label}: ${AgilERP.formatCurrency(day.total)} (${day.count})">
           <div class="ap-bar ${cls}" style="height:${height}%"></div>
           <span>${label}</span>
         </div>`;
@@ -227,8 +227,8 @@
         ? entries
             .map(
               ([key, val]) => `<div class="ap-cat-row">
-            <span>${BuildFlow.escapeHtml(CATEGORIES[key] || key)}</span>
-            <span>${val.count} · ${BuildFlow.formatCurrency(val.total)}</span>
+            <span>${AgilERP.escapeHtml(CATEGORIES[key] || key)}</span>
+            <span>${val.count} · ${AgilERP.formatCurrency(val.total)}</span>
           </div>`,
             )
             .join("")
@@ -254,10 +254,10 @@
     const rows = dayBills
       .map((b) => {
         return `<tr>
-          <td style="padding:10px 8px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">${BuildFlow.escapeHtml(b.description)}${b.documentNumber ? `<br><small style="font-weight:400;">${BuildFlow.escapeHtml(b.documentNumber)}</small>` : ""}</td>
-          <td style="padding:10px 8px;white-space:nowrap;">${BuildFlow.escapeHtml(b.supplier || "—")}</td>
-          <td style="padding:10px 8px;white-space:nowrap;">${BuildFlow.escapeHtml(CATEGORIES[b.category] || b.category)}</td>
-          <td style="padding:10px 8px;white-space:nowrap;text-align:right;">${BuildFlow.formatCurrency(b.amount)}</td>
+          <td style="padding:10px 8px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">${AgilERP.escapeHtml(b.description)}${b.documentNumber ? `<br><small style="font-weight:400;">${AgilERP.escapeHtml(b.documentNumber)}</small>` : ""}</td>
+          <td style="padding:10px 8px;white-space:nowrap;">${AgilERP.escapeHtml(b.supplier || "—")}</td>
+          <td style="padding:10px 8px;white-space:nowrap;">${AgilERP.escapeHtml(CATEGORIES[b.category] || b.category)}</td>
+          <td style="padding:10px 8px;white-space:nowrap;text-align:right;">${AgilERP.formatCurrency(b.amount)}</td>
           <td style="padding:10px 8px;white-space:nowrap;">${statusBadge(b.status)}</td>
         </tr>`;
       })
@@ -284,7 +284,7 @@
   }
 
   function showInstallmentGroup(groupId) {
-    BuildFlow.apiFetch(`/accounts-payable?groupId=${encodeURIComponent(groupId)}`).then((groupBills) => {
+    AgilERP.apiFetch(`/accounts-payable?groupId=${encodeURIComponent(groupId)}`).then((groupBills) => {
       if (!groupBills || !groupBills.length) return;
       const rows = groupBills
         .map((b) => {
@@ -292,7 +292,7 @@
           return `<tr style="border-bottom:1px solid var(--border);${paid ? "opacity:0.6;" : ""}">
             <td style="padding:10px 8px;white-space:nowrap;text-align:center;">${b.installmentNumber || "—"}/${b.totalInstallments || "—"}</td>
             <td style="padding:10px 8px;white-space:nowrap;">${formatDate(b.dueDate)}</td>
-            <td style="padding:10px 8px;white-space:nowrap;text-align:right;">${BuildFlow.formatCurrency(b.amount)}</td>
+            <td style="padding:10px 8px;white-space:nowrap;text-align:right;">${AgilERP.formatCurrency(b.amount)}</td>
             <td style="padding:10px 8px;white-space:nowrap;text-align:right;">${b.paidDate ? formatDate(b.paidDate) : "—"}</td>
             <td style="padding:10px 8px;white-space:nowrap;">${statusBadge(b.status)}</td>
           </tr>`;
@@ -300,8 +300,8 @@
         .join("");
       const paidCount = groupBills.filter((b) => b.status === "paid").length;
       Swal.fire({
-        title: `Parcelas — ${BuildFlow.escapeHtml(groupBills[0].description)}`,
-        html: `<div style="text-align:left;"><div style="margin-bottom:12px;font-size:0.85rem;color:var(--text-muted);">${paidCount} de ${groupBills.length} pagas · Total: ${BuildFlow.formatCurrency(groupBills.reduce((s, b) => s + (Number(b.amount) || 0), 0))}</div><div style="max-height:50vh;overflow-y:auto;"><table style="width:100%;border-collapse:collapse;font-size:0.85rem;table-layout:fixed;">
+        title: `Parcelas — ${AgilERP.escapeHtml(groupBills[0].description)}`,
+        html: `<div style="text-align:left;"><div style="margin-bottom:12px;font-size:0.85rem;color:var(--text-muted);">${paidCount} de ${groupBills.length} pagas · Total: ${AgilERP.formatCurrency(groupBills.reduce((s, b) => s + (Number(b.amount) || 0), 0))}</div><div style="max-height:50vh;overflow-y:auto;"><table style="width:100%;border-collapse:collapse;font-size:0.85rem;table-layout:fixed;">
           <colgroup><col style="width:80px;"><col style="width:100px;"><col style="width:100px;"><col style="width:100px;"><col></colgroup>
           <thead><tr style="border-bottom:2px solid var(--border);">
             <th style="padding:10px 8px;text-align:center;white-space:nowrap;">Parcela</th>
@@ -324,7 +324,7 @@
     let groupData = null;
     if (isGroup) {
       try {
-        const res = await BuildFlow.apiFetch(`/accounts-payable?groupId=${encodeURIComponent(bill.installmentGroupId)}`);
+        const res = await AgilERP.apiFetch(`/accounts-payable?groupId=${encodeURIComponent(bill.installmentGroupId)}`);
         if (res && res.length) groupData = res;
       } catch (_) {}
     }
@@ -342,17 +342,17 @@
           <div style="flex:1;text-align:center;">
             <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">Pagas</div>
             <div style="font-size:1.1rem;font-weight:700;color:#10b981;">${paidBills.length}/${groupData.length}</div>
-            <div style="font-size:0.8rem;color:var(--text-secondary);">${BuildFlow.formatCurrency(paidTotal)}</div>
+            <div style="font-size:0.8rem;color:var(--text-secondary);">${AgilERP.formatCurrency(paidTotal)}</div>
           </div>
           <div style="flex:1;text-align:center;">
             <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">Pendente</div>
             <div style="font-size:1.1rem;font-weight:700;color:#f59e0b;">${pendingBills.length}</div>
-            <div style="font-size:0.8rem;color:var(--text-secondary);">${BuildFlow.formatCurrency(pendingTotal)}</div>
+            <div style="font-size:0.8rem;color:var(--text-secondary);">${AgilERP.formatCurrency(pendingTotal)}</div>
           </div>
           <div style="flex:1;text-align:center;">
             <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">Total</div>
             <div style="font-size:1.1rem;font-weight:700;">${groupData.length}</div>
-            <div style="font-size:0.8rem;color:var(--text-secondary);">${BuildFlow.formatCurrency(totalAmount)}</div>
+            <div style="font-size:0.8rem;color:var(--text-secondary);">${AgilERP.formatCurrency(totalAmount)}</div>
           </div>
         </div>`;
     }
@@ -367,19 +367,19 @@
         ${summaryHtml}
         <table style="width:100%;border-collapse:collapse;">
           <tbody>
-            ${renderRow("Descrição", `<strong>${BuildFlow.escapeHtml(bill.description)}</strong>`)}
-            ${renderRow("Fornecedor", BuildFlow.escapeHtml(bill.supplier || "—"))}
-            ${renderRow("Categoria", BuildFlow.escapeHtml(CATEGORIES[bill.category] || bill.category))}
-            ${renderRow("Valor", `<strong>${BuildFlow.formatCurrency(bill.amount)}</strong>`)}
+            ${renderRow("Descrição", `<strong>${AgilERP.escapeHtml(bill.description)}</strong>`)}
+            ${renderRow("Fornecedor", AgilERP.escapeHtml(bill.supplier || "—"))}
+            ${renderRow("Categoria", AgilERP.escapeHtml(CATEGORIES[bill.category] || bill.category))}
+            ${renderRow("Valor", `<strong>${AgilERP.formatCurrency(bill.amount)}</strong>`)}
             ${renderRow("Vencimento", formatDate(bill.dueDate))}
             ${renderRow("Status", statusBadge(bill.status))}
             ${renderRow("Parcelas", parcelas)}
-            ${bill.documentNumber ? renderRow("Nº Documento", BuildFlow.escapeHtml(bill.documentNumber)) : ""}
-            ${bill.paymentMethod ? renderRow("Forma de Pagamento", BuildFlow.escapeHtml(PAYMENT_METHODS[bill.paymentMethod] || bill.paymentMethod)) : ""}
+            ${bill.documentNumber ? renderRow("Nº Documento", AgilERP.escapeHtml(bill.documentNumber)) : ""}
+            ${bill.paymentMethod ? renderRow("Forma de Pagamento", AgilERP.escapeHtml(PAYMENT_METHODS[bill.paymentMethod] || bill.paymentMethod)) : ""}
             ${bill.paidDate ? renderRow("Pago em", formatDate(bill.paidDate)) : ""}
           </tbody>
         </table>
-        ${bill.notes ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);"><div style="color:var(--text-muted);font-size:0.8rem;margin-bottom:4px;">Observações</div><div style="font-size:0.9rem;color:var(--text-secondary);">${BuildFlow.escapeHtml(bill.notes)}</div></div>` : ""}
+        ${bill.notes ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);"><div style="color:var(--text-muted);font-size:0.8rem;margin-bottom:4px;">Observações</div><div style="font-size:0.9rem;color:var(--text-secondary);">${AgilERP.escapeHtml(bill.notes)}</div></div>` : ""}
       </div>`;
 
     const showGroupBtn = isGroup;
@@ -465,13 +465,13 @@
     try {
       if (editingId) {
         const { totalInstallments: _, ...editPayload } = payload;
-        await BuildFlow.apiFetch("/accounts-payable", {
+        await AgilERP.apiFetch("/accounts-payable", {
           method: "PUT",
           body: JSON.stringify({ id: editingId, ...editPayload, amount: Number(els.fieldAmount.value) }),
         });
         Swal.fire({ icon: "success", title: "Conta atualizada!", timer: 1800, showConfirmButton: false });
       } else {
-        await BuildFlow.apiFetch("/accounts-payable", {
+        await AgilERP.apiFetch("/accounts-payable", {
           method: "POST",
           body: JSON.stringify(payload),
         });
@@ -499,7 +499,7 @@
     });
     if (!result.isConfirmed) return;
     try {
-      await BuildFlow.apiFetch("/accounts-payable", {
+      await AgilERP.apiFetch("/accounts-payable", {
         method: "PUT",
         body: JSON.stringify({ id, action: "pay" }),
       });
@@ -522,7 +522,7 @@
     });
     if (!result.isConfirmed) return;
     try {
-      await BuildFlow.apiFetch("/accounts-payable", {
+      await AgilERP.apiFetch("/accounts-payable", {
         method: "DELETE",
         body: JSON.stringify({ id }),
       });
@@ -546,7 +546,7 @@
       let body = "";
       if (overdue) body += `${overdue} conta(s) vencida(s). `;
       if (soon) body += `${soon} vencimento(s) nos próximos dias.`;
-      new Notification("BuildFlow — Contas a Pagar", { body, icon: "/favicon.ico" });
+      new Notification("AgilERP — Contas a Pagar", { body, icon: "/favicon.ico" });
       localStorage.setItem(key, "1");
     };
 
@@ -687,7 +687,7 @@
   }
 
   document.addEventListener("DOMContentLoaded", async () => {
-    BuildFlow.checkAuth();
+    AgilERP.checkAuth();
     cacheElements();
     bindEvents();
     try {

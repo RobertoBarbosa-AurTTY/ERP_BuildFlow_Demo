@@ -72,7 +72,7 @@ exports.handler = async (event, context) => {
         statusCode: 200,
         headers: {
           'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'Content-Disposition': `attachment; filename="buildflow-backup-${timestamp}.xlsx"`
+          'Content-Disposition': `attachment; filename="agilerp-backup-${timestamp}.xlsx"`
         },
         body: buf.toString('base64'),
         isBase64Encoded: true
@@ -85,7 +85,7 @@ exports.handler = async (event, context) => {
       statusCode: 200,
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
-        'Content-Disposition': `attachment; filename="buildflow-backup-${timestamp}.json"`
+        'Content-Disposition': `attachment; filename="agilerp-backup-${timestamp}.json"`
       },
       body: jsonString
     };
