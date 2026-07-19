@@ -1,5 +1,6 @@
 // BuildFlow - Global API and Auth Management
 const API_BASE = "/api";
+const APP_VERSION = "1.0.0";
 
 const BuildFlow = {
   // Autenticação
@@ -1622,6 +1623,20 @@ const BuildFlow = {
     return;
   },
 
+  checkVersionUpdate() {
+    const currentVersion = APP_VERSION;
+    const storedVersion = localStorage.getItem("buildflow_version");
+
+    if (storedVersion && storedVersion !== currentVersion) {
+      this.showToast(
+        `Nova atualização disponivel (v${currentVersion})! O sistema foi atualizado com novos modulos e melhorias.`,
+        "info",
+      );
+    }
+
+    localStorage.setItem("buildflow_version", currentVersion);
+  },
+
   // UI Utilities
   applyTheme() {
     const settings = this.getSettings();
@@ -1706,6 +1721,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   BuildFlow.applyTheme();
   BuildFlow.initGlobalSearch();
   BuildFlow.initUserMenu();
+  BuildFlow.checkVersionUpdate();
 });
 
 // Animation CSS
