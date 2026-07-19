@@ -600,9 +600,7 @@ body.light-theme .nav-link.active i {
     color: var(--brand);
 }
 
-body.light-theme .sidebar-inner::-webkit-scrollbar-thumb {
-    background: rgba(0,0,0,0.08);
-}
+
 
 /* PDV Modo Claro */
 body.light-theme .pdv-header {
@@ -934,23 +932,12 @@ input[type=number] {
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
+    overflow: hidden;
     padding: 0 12px 20px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.06) transparent;
 }
 
 .sidebar-inner::-webkit-scrollbar {
-    width: 3px;
-}
-
-.sidebar-inner::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.06);
-    border-radius: 10px;
-}
-
-.sidebar-inner::-webkit-scrollbar-track {
-    background: transparent;
+    display: none;
 }
 
 .sidebar-logo {

@@ -377,6 +377,12 @@
                 ><span>Configurações</span></a
               >
             </li>
+            <li class="nav-item">
+              <a href="/manual" class="nav-link"
+                ><i class="fa-solid fa-circle-question"></i
+                ><span>Ajuda</span></a
+              >
+            </li>
           </ul>
           </div>
         </div>
@@ -882,6 +888,9 @@
             const currentPeriodName = labels.currentLabel;
             const prevPeriodName = labels.prevLabel;
 
+            const currRev = data.revenue || 0;
+            const prevRev = data.prevRevenue || 0;
+
             if (data.revenueChange !== null) {
               const change = parseFloat(data.revenueChange);
               const isUp = change >= 0;
@@ -891,30 +900,41 @@
               comparisonEl.innerHTML = `${signal}${change.toFixed(1)}% <i class="fa-solid fa-${icon}" style="font-size:1rem;"></i>`;
               comparisonEl.style.color = color;
 
-              const maxVal = Math.max(data.revenue || 0, data.prevRevenue || 0, 1);
-              const currPct = ((data.revenue || 0) / maxVal) * 100;
-              const prevPct = ((data.prevRevenue || 0) / maxVal) * 100;
+              const maxVal = Math.max(currRev, prevRev, 1);
+              const currPct = (currRev / maxVal) * 100;
+              const prevPct = (prevRev / maxVal) * 100;
 
               comparisonDetail.innerHTML = `
                 <div style="flex:1;background:rgba(255,255,255,0.03);border-radius:12px;padding:12px 14px;border:1px solid var(--border);">
                   <p style="font-size:0.6rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin:0 0 4px;">${currentPeriodName}</p>
-                  <p style="font-size:1.1rem;font-weight:800;margin:0;color:var(--text-primary);">R$ ${(data.revenue || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+                  <p style="font-size:1.1rem;font-weight:800;margin:0;color:var(--text-primary);">R$ ${currRev.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
                   <div style="margin-top:6px;height:3px;background:var(--bg-hover);border-radius:3px;overflow:hidden;">
                     <div style="width:${currPct}%;height:100%;background:var(--brand);border-radius:3px;"></div>
                   </div>
                 </div>
                 <div style="flex:1;background:rgba(255,255,255,0.03);border-radius:12px;padding:12px 14px;border:1px solid var(--border);">
                   <p style="font-size:0.6rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin:0 0 4px;">${prevPeriodName}</p>
-                  <p style="font-size:1.1rem;font-weight:800;margin:0;color:var(--text-secondary);">R$ ${(data.prevRevenue || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+                  <p style="font-size:1.1rem;font-weight:800;margin:0;color:var(--text-secondary);">R$ ${prevRev.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
                   <div style="margin-top:6px;height:3px;background:var(--bg-hover);border-radius:3px;overflow:hidden;">
                     <div style="width:${prevPct}%;height:100%;background:var(--text-muted);border-radius:3px;"></div>
                   </div>
                 </div>
               `;
             } else {
-              comparisonEl.textContent = "—";
-              comparisonEl.style.color = "var(--text-muted)";
-              comparisonDetail.innerHTML = `<div style="flex:1;text-align:center;padding:12px;color:var(--text-muted);font-size:0.8rem;">Sem vendas no período anterior para comparar.</div>`;
+              comparisonEl.innerHTML = `R$ ${currRev.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+              comparisonEl.style.color = "var(--text-primary)";
+              comparisonDetail.innerHTML = `
+                <div style="flex:1;background:rgba(255,255,255,0.03);border-radius:12px;padding:12px 14px;border:1px solid var(--border);">
+                  <p style="font-size:0.6rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin:0 0 4px;">${currentPeriodName}</p>
+                  <p style="font-size:1.1rem;font-weight:800;margin:0;color:var(--text-primary);">R$ ${currRev.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+                  <div style="margin-top:6px;height:3px;background:var(--bg-hover);border-radius:3px;overflow:hidden;">
+                    <div style="width:100%;height:100%;background:var(--brand);border-radius:3px;"></div>
+                  </div>
+                </div>
+                <div style="flex:1;background:rgba(255,255,255,0.03);border-radius:12px;padding:12px 14px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;">
+                  <span style="color:var(--text-muted);font-size:0.75rem;">Sem dados do período anterior</span>
+                </div>
+              `;
             }
 
             const topRevenue = data.topProducts[0]?.revenue || 1;
