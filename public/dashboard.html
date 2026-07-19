@@ -317,18 +317,18 @@
               >
             </li>
             <li class="nav-item">
-              <a href="pages/estoque.html" class="nav-link"
+              <a href="/stock" class="nav-link"
                 ><i class="fa-solid fa-boxes-stacked"></i
                 ><span>Estoque</span></a
               >
             </li>
             <li class="nav-item">
-              <a href="pages/entradas.html" class="nav-link"
+              <a href="/receiving" class="nav-link"
                 ><i class="fa-solid fa-file-import"></i><span>Entradas</span></a
               >
             </li>
             <li class="nav-item">
-              <a href="pages/saidas.html" class="nav-link"
+              <a href="/pos" class="nav-link"
                 ><i class="fa-solid fa-cart-shopping"></i
                 ><span>PDV / Vendas</span></a
               >
@@ -339,7 +339,7 @@
           <div class="sidebar-group-header">Relatórios & Analíticos</div>
           <ul class="nav-list">
             <li class="nav-item">
-              <a href="pages/relatorios.html" class="nav-link"
+              <a href="/reports" class="nav-link"
                 ><i class="fa-solid fa-chart-line"></i
                 ><span>Relatórios</span></a
               >
@@ -350,7 +350,7 @@
           <div class="sidebar-group-header">Históricos</div>
           <ul class="nav-list">
             <li class="nav-item">
-              <a href="pages/historico-vendas.html" class="nav-link"
+              <a href="/sales-history" class="nav-link"
                 ><i class="fa-solid fa-clock-rotate-left"></i
                 ><span>Histórico de Vendas</span></a
               >
@@ -361,7 +361,7 @@
           <div class="sidebar-group-header">Financeiro</div>
           <ul class="nav-list">
             <li class="nav-item">
-              <a href="pages/contas-a-pagar.html" class="nav-link"
+              <a href="/bills" class="nav-link"
                 ><i class="fa-solid fa-file-invoice-dollar"></i
                 ><span>Contas a Pagar</span></a
               >
@@ -372,7 +372,7 @@
           <div class="sidebar-group-header">Sistema</div>
           <ul class="nav-list">
             <li class="nav-item">
-              <a href="pages/configuracoes.html" class="nav-link"
+              <a href="/settings" class="nav-link"
                 ><i class="fa-solid fa-sliders"></i
                 ><span>Configurações</span></a
               >
@@ -492,7 +492,7 @@
               <h3 id="recentSalesTitle">Vendas Recentes</h3>
               <button
                 class="btn"
-                onclick="location.href = 'pages/historico-vendas.html'"
+                onclick="location.href = '/sales-history'"
                 style="
                   background: var(--bg-hover);
                   padding: 8px 16px;
@@ -535,7 +535,7 @@
               <h3 id="recentProductsTitle">Lançamentos no Estoque</h3>
               <button
                 class="btn"
-                onclick="location.href = 'pages/estoque.html'"
+                onclick="location.href = '/stock'"
                 style="
                   background: var(--bg-hover);
                   padding: 8px 16px;
@@ -630,7 +630,7 @@
           </div>
           <div class="quick-access-grid">
             <a
-              href="pages/etiqueta-precificacao.html"
+              href="/price-tag"
               class="quick-access-card"
             >
               <strong>Etiqueta de Precificação</strong>
@@ -639,7 +639,7 @@
               >
               <span class="qa-meta" id="qaPriceMeta">Carregando...</span>
             </a>
-            <a href="pages/etiqueta-prateleira.html" class="quick-access-card">
+            <a href="/shelf-label" class="quick-access-card">
               <strong>Etiqueta de Prateleira</strong>
               <span class="qa-desc"
                 >Placas de endereço físico: corredor, prateleira, nível e
@@ -647,28 +647,28 @@
               >
               <span class="qa-meta" id="qaShelfMeta">Carregando...</span>
             </a>
-            <a href="pages/criar-endereco.html" class="quick-access-card">
+            <a href="/new-address" class="quick-access-card">
               <strong>Criar Endereço</strong>
               <span class="qa-desc"
                 >Cadastrar novos locais de prateleira no armazém.</span
               >
               <span class="qa-meta" id="qaCreateAddrMeta">Carregando...</span>
             </a>
-            <a href="pages/enderecar-produto.html" class="quick-access-card">
+            <a href="/address" class="quick-access-card">
               <strong>Endereçar Produto</strong>
               <span class="qa-desc"
                 >Cadastrar ou alterar o local do produto na prateleira.</span
               >
               <span class="qa-meta" id="qaAddressMeta">Carregando...</span>
             </a>
-            <a href="pages/estoque.html" class="quick-access-card">
+            <a href="/stock" class="quick-access-card">
               <strong>Controle de Estoque</strong>
               <span class="qa-desc"
                 >Consultar produtos, quantidades e status.</span
               >
               <span class="qa-meta" id="qaStockMeta">Carregando...</span>
             </a>
-            <a href="pages/entradas.html" class="quick-access-card">
+            <a href="/receiving" class="quick-access-card">
               <strong>Entradas</strong>
               <span class="qa-desc"
                 >Registrar novos produtos e reposições.</span
@@ -677,32 +677,32 @@
                 >Módulo de cadastro</span
               >
             </a>
-            <a href="pages/saidas.html" class="quick-access-card">
+            <a href="/pos" class="quick-access-card">
               <strong>PDV / Vendas</strong>
               <span class="qa-desc"
                 >Ponto de venda e finalização de pedidos.</span
               >
               <span class="qa-meta muted" id="qaPdvMeta">—</span>
             </a>
-            <a href="pages/contas-a-pagar.html" class="quick-access-card">
+            <a href="/bills" class="quick-access-card">
               <strong>Contas a Pagar</strong>
               <span class="qa-desc"
                 >Boletos, vencimentos e alertas financeiros.</span
               >
             </a>
-            <a href="pages/historico-vendas.html" class="quick-access-card">
+            <a href="/sales-history" class="quick-access-card">
               <strong>Histórico de Vendas</strong>
               <span class="qa-desc"
                 >Consultar vendas anteriores e detalhes de pedidos.</span
               >
             </a>
-            <a href="pages/configuracoes.html" class="quick-access-card">
+            <a href="/settings" class="quick-access-card">
               <strong>Configurações</strong>
               <span class="qa-desc"
                 >Ajustar preferências do sistema e da conta.</span
               >
             </a>
-            <a href="pages/relatorios.html" class="quick-access-card">
+            <a href="/reports" class="quick-access-card">
               <strong>Relatórios</strong>
               <span class="qa-desc"
                 >Análise e relatório de performance do negócio.</span
@@ -962,55 +962,55 @@
         {
           title: "Etiqueta de Precificação",
           desc: "Imprimir etiquetas de preço para produtos.",
-          href: "pages/etiqueta-precificacao.html",
+          href: "/price-tag",
           tags: ["etiqueta", "preço", "precificação", "produto"],
         },
         {
           title: "Etiqueta de Prateleira",
           desc: "Placas de endereço físico por corredor, prateleira e nível.",
-          href: "pages/etiqueta-prateleira.html",
+          href: "/shelf-label",
           tags: ["prateleira", "endereço", "gôndola", "localização"],
         },
         {
           title: "Criar Endereço",
           desc: "Cadastrar novos locais de estocagem no armazém.",
-          href: "pages/criar-endereco.html",
+          href: "/new-address",
           tags: ["endereço", "gôndagem", "local"],
         },
         {
           title: "Endereçar Produto",
           desc: "Atribuir local de estocagem a um produto.",
-          href: "pages/enderecar-produto.html",
+          href: "/address",
           tags: ["endereçar", "produto", "localização", "prateleira"],
         },
         {
           title: "Controle de Estoque",
           desc: "Consultar produtos, quantidades e status de estoque.",
-          href: "pages/estoque.html",
+          href: "/stock",
           tags: ["estoque", "produto", "saldo", "consulta"],
         },
         {
           title: "Entradas",
           desc: "Registrar novos recebimentos e reposições.",
-          href: "pages/entradas.html",
+          href: "/receiving",
           tags: ["entradas", "recebimento", "fornecedor", "compra"],
         },
         {
           title: "PDV / Vendas",
           desc: "Vendas e finalização de pedidos.",
-          href: "pages/saidas.html",
+          href: "/pos",
           tags: ["vendas", "pdv", "checkout", "pedido"],
         },
         {
           title: "Relatórios",
           desc: "Análise e relatório de performance do negócio.",
-          href: "pages/relatorios.html",
+          href: "/reports",
           tags: ["relatórios", "análise", "vendas", "estoque"],
         },
         {
           title: "Histórico de Vendas",
           desc: "Consultar vendas anteriores e detalhes de pedidos.",
-          href: "pages/historico-vendas.html",
+          href: "/sales-history",
           tags: ["histórico", "vendas", "pedido", "registro"],
         },
       ];
@@ -1044,7 +1044,7 @@
               .slice(0, 8)
               .map(
                 (product) =>
-                  `<button type="button" class="search-result-item" data-href="pages/estoque.html?productId=${encodeURIComponent(product._id || product.id)}"><strong>${product.name}</strong><span>${product.sku || ""} · ${product.supplier || "Fornecedor desconhecido"} · ${product.quantity || 0} un</span></button>`,
+                  `<button type="button" class="search-result-item" data-href="/stock?productId=${encodeURIComponent(product._id || product.id)}"><strong>${product.name}</strong><span>${product.sku || ""} · ${product.supplier || "Fornecedor desconhecido"} · ${product.quantity || 0} un</span></button>`,
               )
               .join("")}</div>`
           : "";
