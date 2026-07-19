@@ -1,6 +1,6 @@
 // BuildFlow - Global API and Auth Management
 const API_BASE = "/api";
-const APP_VERSION = "1.0.0";
+const APP_VERSION = "1.1.0";
 
 const BuildFlow = {
   // Autenticação
