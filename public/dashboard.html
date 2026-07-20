@@ -90,6 +90,61 @@
       }
       .modal-close:hover { color: var(--text-primary); }
 
+      .prod-detail-popup {
+        background: var(--bg-card);
+        border-radius: 16px;
+        width: 400px;
+        max-width: 92vw;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        animation: modalIn 0.2s ease-out;
+        overflow: hidden;
+      }
+      .prod-detail-body {
+        padding: 20px;
+      }
+      .prod-detail-body .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .prod-detail-body .detail-row:last-child {
+        border-bottom: none;
+      }
+      .prod-detail-body .detail-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        font-weight: 500;
+      }
+      .prod-detail-body .detail-value {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+      .prod-detail-body .detail-value.positive {
+        color: var(--emerald);
+      }
+      .prod-detail-body .detail-value.neutral {
+        color: var(--text-primary);
+      }
+      .prod-detail-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+      }
+      .prod-detail-category {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-bottom: 16px;
+      }
+      .prod-detail-divider {
+        height: 1px;
+        background: var(--border);
+        margin: 14px 0;
+      }
+
       .calendar-nav {
         display: flex;
         align-items: center;
@@ -942,8 +997,9 @@
             topProductsEl.innerHTML = data.topProducts.map((p, i) => {
               const barPct = Math.max(2, (p.qty / topQty) * 100);
               const isTop3 = i < 3;
+              const detailData = encodeURIComponent(JSON.stringify(p));
               return `
-              <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;transition:background 0.15s;cursor:default;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;transition:background 0.15s;cursor:pointer;" onclick="showProductDetail(this)" data-product="${detailData}" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
                 <span style="width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800;flex-shrink:0;${isTop3 ? `background:${rankColors[i]};color:white;` : 'background:var(--bg-hover);color:var(--text-muted);'}">${i + 1}</span>
                 <div style="flex:1;min-width:0;">
                   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
@@ -1178,6 +1234,45 @@
         loadDashboard('day', dateStr);
       }
 
+      function showProductDetail(el) {
+        const raw = el.dataset.product;
+        try {
+          const p = JSON.parse(decodeURIComponent(raw));
+          const overlay = document.getElementById('prodDetailOverlay');
+          const body = document.getElementById('prodDetailBody');
+          const investment = (p.costPrice || 0) * p.qty;
+          const netBalance = p.revenue - investment;
+          body.innerHTML = `
+            <div class="prod-detail-name">${BuildFlow.escapeHtml(p.name)}</div>
+            <div class="prod-detail-category">${BuildFlow.escapeHtml(p.category)}</div>
+            <div class="detail-row">
+              <span class="detail-label">Quantidade Vendida</span>
+              <span class="detail-value neutral">${p.qty} un</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Em Estoque</span>
+              <span class="detail-value neutral">${p.stock != null ? p.stock : '—'} un</span>
+            </div>
+            <div class="prod-detail-divider"></div>
+            <div class="detail-row">
+              <span class="detail-label">Valor Faturado</span>
+              <span class="detail-value positive">R$ ${(p.revenue || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Investimento</span>
+              <span class="detail-value neutral">R$ ${investment.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Saldo Líquido</span>
+              <span class="detail-value ${netBalance >= 0 ? 'positive' : ''}" style="color:${netBalance >= 0 ? 'var(--emerald)' : 'var(--red)'}">R$ ${netBalance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+            </div>
+          `;
+          overlay.classList.add('active');
+        } catch (e) {
+          console.error('Erro ao abrir detalhes do produto:', e);
+        }
+      }
+
       document.addEventListener("DOMContentLoaded", () => {
         Promise.all([loadDashboard('month'), loadQuickAccessStats(), loadCaixaStatus()]);
 
@@ -1196,6 +1291,14 @@
           if (e.target === e.currentTarget) closeDayPicker();
         });
         document.getElementById('dayPickerClose').addEventListener('click', closeDayPicker);
+
+        const prodOverlay = document.getElementById('prodDetailOverlay');
+        prodOverlay.addEventListener('click', (e) => {
+          if (e.target === e.currentTarget) prodOverlay.classList.remove('active');
+        });
+        document.getElementById('prodDetailClose').addEventListener('click', () => {
+          prodOverlay.classList.remove('active');
+        });
 
         document.getElementById('calPrev').addEventListener('click', () => {
           calState.month--;
@@ -1254,5 +1357,15 @@
         });
       });
     </script>
+
+    <div class="modal-overlay" id="prodDetailOverlay">
+      <div class="modal-popup prod-detail-popup">
+        <div class="modal-header">
+          <h3>Detalhes do Produto</h3>
+          <button class="modal-close" id="prodDetailClose">&times;</button>
+        </div>
+        <div class="prod-detail-body" id="prodDetailBody"></div>
+      </div>
+    </div>
   </body>
 </html>

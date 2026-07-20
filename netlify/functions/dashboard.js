@@ -1,3 +1,4 @@
+const { ObjectId } = require('mongodb');
 const { getDb } = require('../../src/lib/mongodb');
 const { verifyToken } = require('../../src/lib/auth');
 
@@ -223,7 +224,7 @@ exports.handler = async (event, context) => {
         for (const item of sale.items) {
           const name = item.name || 'Produto';
           if (!productSales[name]) {
-            productSales[name] = { name, qty: 0, revenue: 0, category: item.category || '' };
+            productSales[name] = { name, qty: 0, revenue: 0, category: item.category || '', productId: item.id || null };
           }
           productSales[name].qty += Number(item.qty) || 0;
           productSales[name].revenue += Number(item.lineTotal) || (Number(item.price) || 0) * (Number(item.qty) || 0);
@@ -233,6 +234,34 @@ exports.handler = async (event, context) => {
     const topProducts = Object.values(productSales)
       .sort((a, b) => b.qty - a.qty)
       .slice(0, 10);
+
+    // Enriquecer com dados atuais do produto (estoque, custo)
+    const prodIds = topProducts.filter(p => p.productId).map(p => new ObjectId(p.productId));
+    if (prodIds.length > 0) {
+      const prodMap = {};
+      const produtos = await db.collection('products').find(
+        { _id: { $in: prodIds } },
+        { projection: { _id: 1, quantity: 1, costPrice: 1, price: 1, name: 1 } }
+      ).toArray();
+      for (const prod of produtos) {
+        prodMap[prod._id.toString()] = prod;
+      }
+      for (const p of topProducts) {
+        const prod = prodMap[p.productId];
+        if (prod) {
+          p.stock = prod.quantity || 0;
+          p.costPrice = prod.costPrice || 0;
+        } else {
+          p.stock = 0;
+          p.costPrice = 0;
+        }
+      }
+    } else {
+      for (const p of topProducts) {
+        p.stock = 0;
+        p.costPrice = 0;
+      }
+    }
 
     return {
       statusCode: 200,
