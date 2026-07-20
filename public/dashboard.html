@@ -937,10 +937,10 @@
               `;
             }
 
-            const topRevenue = data.topProducts[0]?.revenue || 1;
+            const topQty = data.topProducts[0]?.qty || 1;
             const rankColors = ['#10b981', '#6366f1', '#f59e0b'];
             topProductsEl.innerHTML = data.topProducts.map((p, i) => {
-              const barPct = Math.max(2, (p.revenue / topRevenue) * 100);
+              const barPct = Math.max(2, (p.qty / topQty) * 100);
               const isTop3 = i < 3;
               return `
               <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;transition:background 0.15s;cursor:default;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
@@ -948,13 +948,13 @@
                 <div style="flex:1;min-width:0;">
                   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
                     <span style="font-size:0.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-primary);">${BuildFlow.escapeHtml(p.name)}</span>
-                    <span style="font-size:0.78rem;font-weight:700;color:var(--emerald);flex-shrink:0;margin-left:8px;">R$ ${(p.revenue || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                    <span style="font-size:0.78rem;font-weight:700;color:var(--text-muted);flex-shrink:0;margin-left:8px;">${p.qty} un</span>
                   </div>
                   <div style="display:flex;align-items:center;gap:8px;">
                     <div style="flex:1;height:4px;background:var(--bg-hover);border-radius:4px;overflow:hidden;">
                       <div style="width:${barPct}%;height:100%;background:${isTop3 ? rankColors[i] : 'var(--border)'};border-radius:4px;transition:width 0.3s;"></div>
                     </div>
-                    <span style="font-size:0.65rem;color:var(--text-muted);font-weight:600;flex-shrink:0;white-space:nowrap;">${p.qty} un · ${BuildFlow.escapeHtml(p.category)}</span>
+                    <span style="font-size:0.65rem;color:var(--text-muted);font-weight:600;flex-shrink:0;white-space:nowrap;">R$ ${(p.revenue || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} · ${BuildFlow.escapeHtml(p.category)}</span>
                   </div>
                 </div>
               </div>

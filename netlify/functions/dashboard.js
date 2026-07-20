@@ -231,7 +231,7 @@ exports.handler = async (event, context) => {
       }
     }
     const topProducts = Object.values(productSales)
-      .sort((a, b) => b.revenue - a.revenue)
+      .sort((a, b) => b.qty - a.qty)
       .slice(0, 10);
 
     return {
