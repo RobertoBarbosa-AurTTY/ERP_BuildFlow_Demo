@@ -509,7 +509,7 @@
           </div>
 
           <section class="grid-stats">
-            <div class="card-stat">
+            <div class="card-stat" style="position: relative;">
               <div class="stat-info">
                 <p id="revenueLabel">Faturamento do Mês</p>
                 <h3 id="revenueText">Carregando...</h3>
@@ -517,8 +517,9 @@
               <div class="stat-icon bg-blue-op">
                 <i class="fa-solid fa-wallet"></i>
               </div>
+              <i class="fa-solid fa-circle-question" style="position: absolute; top: 8px; right: 10px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; opacity: 0.6; transition: opacity 0.2s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'" onclick="showRevenueInfo()"></i>
             </div>
-            <div class="card-stat">
+            <div class="card-stat" style="position: relative;">
               <div class="stat-info">
                 <p id="salesCountLabel">Vendas do Mês</p>
                 <h3 id="salesCountText">Carregando...</h3>
@@ -526,8 +527,9 @@
               <div class="stat-icon bg-emerald-op">
                 <i class="fa-solid fa-basket-shopping"></i>
               </div>
+              <i class="fa-solid fa-circle-question" style="position: absolute; top: 8px; right: 10px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; opacity: 0.6; transition: opacity 0.2s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'" onclick="showSalesCountInfo()"></i>
             </div>
-            <div class="card-stat">
+            <div class="card-stat" style="position: relative;">
               <div class="stat-info">
                 <p>Produtos em Baixa</p>
                 <h3 id="lowStockText">Carregando...</h3>
@@ -535,8 +537,9 @@
               <div class="stat-icon bg-amber-op">
                 <i class="fa-solid fa-triangle-exclamation"></i>
               </div>
+              <i class="fa-solid fa-circle-question" style="position: absolute; top: 8px; right: 10px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; opacity: 0.6; transition: opacity 0.2s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'" onclick="showLowStockInfo()"></i>
             </div>
-            <div class="card-stat">
+            <div class="card-stat" style="position: relative;">
               <div class="stat-info">
                 <p id="profitLabel">Lucro do Mês (Est.)</p>
                 <h3 id="profitText">Carregando...</h3>
@@ -544,6 +547,7 @@
               <div class="stat-icon bg-violet-op">
                 <i class="fa-solid fa-chart-simple"></i>
               </div>
+              <i class="fa-solid fa-circle-question" style="position: absolute; top: 8px; right: 10px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; opacity: 0.6; transition: opacity 0.2s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'" onclick="showProfitInfo()"></i>
             </div>
           </section>
 
@@ -611,6 +615,7 @@
               <table>
                 <thead class="table-sticky-head">
                   <tr>
+                    <th style="width: 36px;">#</th>
                     <th>Produto</th>
                     <th>Qtd</th>
                     <th>Preço</th>
@@ -619,7 +624,7 @@
                 <tbody id="recentProductsTableBody">
                   <tr>
                     <td
-                      colspan="3"
+                      colspan="4"
                       style="
                         text-align: center;
                         padding: 40px;
@@ -866,8 +871,8 @@
           document.getElementById("comparativoLabel").textContent = labels.comparativo;
           document.getElementById("topProdutosLabel").textContent = labels.top;
           document.getElementById("insightsSubtitle").textContent = labels.subtitle;
-          document.getElementById("recentSalesTitle").textContent = `Vendas Recentes ${labels.tableSuffix}`;
-          document.getElementById("recentProductsTitle").textContent = `Lançamentos no Estoque ${labels.tableSuffix}`;
+          document.getElementById("recentSalesTitle").textContent = `Top 5 Vendas Recentes ${labels.tableSuffix}`;
+          document.getElementById("recentProductsTitle").textContent = `Top 5 Lançamentos no Estoque ${labels.tableSuffix}`;
 
           setMetricText(
             "revenueText",
@@ -902,7 +907,7 @@
             salesBody.innerHTML =
               '<tr><td colspan="3" style="text-align: center; padding: 20px;">Nenhuma venda recente.</td></tr>';
           } else {
-            data.recentSales.forEach((sale) => {
+            data.recentSales.slice(0, 5).forEach((sale) => {
               const row = document.createElement("tr");
               row.innerHTML = `
                             <td>${new Date(sale.createdAt).toLocaleString("pt-BR")}</td>
@@ -920,12 +925,13 @@
           productsBody.innerHTML = "";
 
           if (!data.recentProducts || data.recentProducts.length === 0) {
-            productsBody.innerHTML =
-              '<tr><td colspan="3" style="text-align: center; padding: 20px;">Nenhum produto recente.</td></tr>';
+              productsBody.innerHTML =
+              '<tr><td colspan="4" style="text-align: center; padding: 20px;">Nenhum produto recente.</td></tr>';
           } else {
-            data.recentProducts.forEach((product) => {
+            data.recentProducts.slice(0, 5).forEach((product, i) => {
               const row = document.createElement("tr");
               row.innerHTML = `
+                            <td style="text-align: center; font-weight: 700; color: var(--text-muted);">${i + 1}</td>
                             <td>${product.name}</td>
                             <td>${product.quantity} ${product.unit || "un"}</td>
                             <td>R$ ${(Number(product.price) || 0).toFixed(2)}</td>
@@ -1356,6 +1362,87 @@
           }
         });
       });
+
+      window.showRevenueInfo = () => {
+        Swal.fire({
+          title: 'Faturamento do Mês',
+          html: `<div style="text-align:left;font-size:0.9rem;line-height:1.6;">
+            <p style="margin-bottom:12px;">Soma total de todas as <strong>vendas finalizadas</strong> no período selecionado, considerando o valor total de cada venda.</p>
+            <div style="background:var(--bg-hover,#f5f5f5);padding:12px 16px;border-radius:8px;font-family:monospace;font-size:0.85rem;">
+              <strong>Cálculo:</strong><br>
+              Σ valor total das vendas finalizadas no período
+            </div>
+            <p style="margin-top:12px;color:var(--text-muted);font-size:0.8rem;">
+              <i class="fa-solid fa-calendar"></i> Você pode alterar o período usando o filtro "Mês", "Semana" ou "Dia".
+            </p>
+          </div>`,
+          icon: 'info',
+          confirmButtonText: 'Entendi',
+          confirmButtonColor: 'var(--brand, #4f46e5)',
+          background: 'var(--bg-card, #fff)',
+          color: 'var(--text-primary, #111)',
+        });
+      };
+
+      window.showSalesCountInfo = () => {
+        Swal.fire({
+          title: 'Vendas do Mês',
+          html: `<div style="text-align:left;font-size:0.9rem;line-height:1.6;">
+            <p style="margin-bottom:12px;">Número total de <strong>vendas finalizadas</strong> no período selecionado, independentemente do valor de cada uma.</p>
+            <div style="background:var(--bg-hover,#f5f5f5);padding:12px 16px;border-radius:8px;font-family:monospace;font-size:0.85rem;">
+              <strong>Cálculo:</strong><br>
+              total de vendas com status "FINALIZED" no período
+            </div>
+            <p style="margin-top:12px;color:var(--text-muted);font-size:0.8rem;">
+              <i class="fa-solid fa-calendar"></i> Você pode alterar o período usando o filtro "Mês", "Semana" ou "Dia".
+            </p>
+          </div>`,
+          icon: 'info',
+          confirmButtonText: 'Entendi',
+          confirmButtonColor: 'var(--brand, #4f46e5)',
+          background: 'var(--bg-card, #fff)',
+          color: 'var(--text-primary, #111)',
+        });
+      };
+
+      window.showLowStockInfo = () => {
+        Swal.fire({
+          title: 'Produtos em Baixa',
+          html: `<div style="text-align:left;font-size:0.9rem;line-height:1.6;">
+            <p style="margin-bottom:12px;">Produtos cuja <strong>quantidade em estoque</strong> está abaixo do mínimo recomendado, indicando necessidade de reposição.</p>
+            <div style="background:var(--bg-hover,#f5f5f5);padding:12px 16px;border-radius:8px;font-family:monospace;font-size:0.85rem;">
+              <strong>Critério:</strong><br>
+              quantidade &lt; 10 unidades
+            </div>
+          </div>`,
+          icon: 'info',
+          confirmButtonText: 'Entendi',
+          confirmButtonColor: 'var(--brand, #4f46e5)',
+          background: 'var(--bg-card, #fff)',
+          color: 'var(--text-primary, #111)',
+        });
+      };
+
+      window.showProfitInfo = () => {
+        Swal.fire({
+          title: 'Lucro do Mês (Est.)',
+          html: `<div style="text-align:left;font-size:0.9rem;line-height:1.6;">
+            <p style="margin-bottom:12px;">Estimativa de <strong>lucro bruto</strong> baseada na diferença entre o valor de venda e o custo dos produtos vendidos no período.</p>
+            <div style="background:var(--bg-hover,#f5f5f5);padding:12px 16px;border-radius:8px;font-family:monospace;font-size:0.85rem;">
+              <strong>Cálculo:</strong><br>
+              Σ (preço de venda - preço de custo) × quantidade por item
+            </div>
+            <p style="margin-top:12px;color:var(--text-muted);font-size:0.8rem;">
+              <i class="fa-solid fa-info-circle"></i> O valor é uma estimativa, pois depende do custo real de cada produto.
+            </p>
+          </div>`,
+          icon: 'info',
+          confirmButtonText: 'Entendi',
+          confirmButtonColor: 'var(--brand, #4f46e5)',
+          background: 'var(--bg-card, #fff)',
+          color: 'var(--text-primary, #111)',
+        });
+      };
     </script>
 
     <div class="modal-overlay" id="prodDetailOverlay">
