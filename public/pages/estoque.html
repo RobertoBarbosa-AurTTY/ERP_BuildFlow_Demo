@@ -652,21 +652,25 @@
             </header>
 
             <section class="stats-grid">
-                <div class="card-stat">
+                <div class="card-stat" style="position: relative;">
                     <h3 id="totalStockValue" style="color: var(--emerald);">R$ 0,00</h3>
                     <p>Valor Total em Estoque</p>
+                    <i class="fa-solid fa-circle-question" style="position: absolute; top: 8px; right: 10px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; opacity: 0.6; transition: opacity 0.2s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'" onclick="showStockValueInfo()"></i>
                 </div>
-                <div class="card-stat" id="stagnantCard" onclick="showStagnantModal()" style="cursor: pointer;">
+                <div class="card-stat" id="stagnantCard" onclick="showStagnantModal()" style="cursor: pointer; position: relative;">
                     <h3 id="stagnantCount" style="color: var(--amber);">0</h3>
                     <p>Produtos Parados</p>
+                    <i class="fa-solid fa-circle-question" style="position: absolute; top: 8px; right: 10px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; opacity: 0.6; transition: opacity 0.2s; z-index: 2;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'" onclick="event.stopPropagation(); showStagnantInfo()"></i>
                 </div>
-                <div class="card-stat" id="lowStockCard" onclick="showLowStockModal()" style="cursor: pointer;">
+                <div class="card-stat" id="lowStockCard" onclick="showLowStockModal()" style="cursor: pointer; position: relative;">
                     <h3 id="lowStockCount" style="color: var(--red);">0</h3>
                     <p>Produtos em Baixa</p>
+                    <i class="fa-solid fa-circle-question" style="position: absolute; top: 8px; right: 10px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; opacity: 0.6; transition: opacity 0.2s; z-index: 2;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'" onclick="event.stopPropagation(); showLowStockInfo()"></i>
                 </div>
-                <div class="card-stat">
+                <div class="card-stat" style="position: relative;">
                     <h3 id="totalItemsCount" style="color: var(--brand);">0</h3>
                     <p>Total de Itens</p>
+                    <i class="fa-solid fa-circle-question" style="position: absolute; top: 8px; right: 10px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; opacity: 0.6; transition: opacity 0.2s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'" onclick="showTotalItemsInfo()"></i>
                 </div>
             </section>
 
@@ -1011,6 +1015,17 @@
                         </label>
                     </div>
                 </div>
+                <div style="margin-bottom: 24px; padding-top: 16px; border-top: 1px solid var(--border);">
+                    <h4 style="margin: 0 0 12px; font-size: 1rem;"><i class="fa-solid fa-dollar-sign"></i> Valor do Estoque</h4>
+                    <div style="display: flex; gap: 10px;">
+                        <label id="stockValueModeSale" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; border-radius: 10px; border: 2px solid var(--border); cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; background: transparent; color: var(--text-muted);" onclick="setStockValueMode('sale')">
+                            <i class="fa-solid fa-tag"></i> Valor de Venda
+                        </label>
+                        <label id="stockValueModeInvestment" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; border-radius: 10px; border: 2px solid var(--border); cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; background: transparent; color: var(--text-muted);" onclick="setStockValueMode('investment')">
+                            <i class="fa-solid fa-chart-line"></i> Valor de Investimento
+                        </label>
+                    </div>
+                </div>
                 <div style="display: flex; gap: 10px; justify-content: flex-end;">
                     <button type="button" class="btn btn-outline" onclick="document.getElementById('stockSettingsModal').style.display='none'" style="padding: 10px 24px;">Fechar</button>
                 </div>
@@ -1116,12 +1131,47 @@
                 }
             }
 
+            function getStockValueMode() {
+                return localStorage.getItem('stockValueMode') || 'sale';
+            }
+
+            window.setStockValueMode = (mode) => {
+                localStorage.setItem('stockValueMode', mode);
+                updateStockValueLabels(mode);
+                if (allProducts.length) {
+                    calculateMetrics(allProducts, stagnantProducts);
+                }
+            };
+
+            function updateStockValueLabels(mode) {
+                const saleLabel = document.getElementById('stockValueModeSale');
+                const investLabel = document.getElementById('stockValueModeInvestment');
+                if (!saleLabel || !investLabel) return;
+                if (mode === 'investment') {
+                    investLabel.style.borderColor = 'var(--brand)';
+                    investLabel.style.background = 'rgba(79, 70, 229, 0.08)';
+                    investLabel.style.color = 'var(--brand)';
+                    saleLabel.style.borderColor = 'var(--border)';
+                    saleLabel.style.background = 'transparent';
+                    saleLabel.style.color = 'var(--text-muted)';
+                } else {
+                    saleLabel.style.borderColor = 'var(--brand)';
+                    saleLabel.style.background = 'rgba(79, 70, 229, 0.08)';
+                    saleLabel.style.color = 'var(--brand)';
+                    investLabel.style.borderColor = 'var(--border)';
+                    investLabel.style.background = 'transparent';
+                    investLabel.style.color = 'var(--text-muted)';
+                }
+            }
+
             function calculateMetrics(products, stagnant) {
                 let totalValue = 0, totalItems = 0;
                 lowStockProducts = [];
+                const valueMode = getStockValueMode();
                 for (const p of products) {
                     const qty = Number(p.quantity) || 0;
-                    totalValue += (Number(p.price) || 0) * qty;
+                    const unitValue = valueMode === 'investment' ? (Number(p.costPrice) || 0) : (Number(p.price) || 0);
+                    totalValue += unitValue * qty;
                     totalItems += qty;
                     if (qty < 10) lowStockProducts.push(p);
                 }
@@ -1130,13 +1180,108 @@
                 const itemsMode = getTotalItemsMode();
                 const displayValue = itemsMode === 'skus' ? totalSkus : totalItems;
                 const displayLabel = itemsMode === 'skus' ? 'Total de SKUs' : 'Total de Itens';
+                const valueLabel = valueMode === 'investment' ? 'Valor de Investimento' : 'Valor de Venda em Estoque';
 
                 document.getElementById('totalStockValue').innerText = `R$ ${totalValue.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 document.getElementById('lowStockCount').innerText = lowStockProducts.length;
                 document.getElementById('totalItemsCount').innerText = displayValue;
                 document.getElementById('totalItemsCount').parentElement.querySelector('p').textContent = displayLabel;
                 document.getElementById('stagnantCount').innerText = stagnant.length;
+                document.getElementById('totalStockValue').parentElement.querySelector('p').textContent = valueLabel;
             }
+
+            window.showStockValueInfo = () => {
+                const mode = getStockValueMode();
+                const modeName = mode === 'investment' ? 'Investimento' : 'Venda';
+                const fieldName = mode === 'investment' ? 'custo (costPrice)' : 'venda (price)';
+                const formula = `Σ (quantidade × preço de ${fieldName})`;
+                const description = mode === 'investment'
+                    ? 'Valor total baseado no <strong>preço de custo</strong> de cada produto, representando o investimento total em estoque.'
+                    : 'Valor total baseado no <strong>preço de venda</strong> de cada produto, representando o quanto o estoque vale para venda.';
+                Swal.fire({
+                    title: `Valor de ${modeName}`,
+                    html: `<div style="text-align:left;font-size:0.9rem;line-height:1.6;">
+                        <p style="margin-bottom:12px;">${description}</p>
+                        <div style="background:var(--bg-hover,#f5f5f5);padding:12px 16px;border-radius:8px;font-family:monospace;font-size:0.85rem;">
+                            <strong>Cálculo:</strong><br>
+                            ${formula}
+                        </div>
+                        <p style="margin-top:12px;color:var(--text-muted);font-size:0.8rem;">
+                            <i class="fa-solid fa-gear"></i> Você pode alterar entre "Valor de Venda" e "Valor de Investimento" nas configurações do estoque.
+                        </p>
+                    </div>`,
+                    icon: 'info',
+                    confirmButtonText: 'Entendi',
+                    confirmButtonColor: 'var(--brand, #4f46e5)',
+                    background: 'var(--bg-card, #fff)',
+                    color: 'var(--text-primary, #111)',
+                });
+            };
+
+            window.showStagnantInfo = () => {
+                Swal.fire({
+                    title: 'Produtos Parados',
+                    html: `<div style="text-align:left;font-size:0.9rem;line-height:1.6;">
+                        <p style="margin-bottom:12px;">Produtos com <strong>quantidade positiva</strong> em estoque que não tiveram nenhuma venda ou atualização há mais de <strong>10 dias</strong>.</p>
+                        <div style="background:var(--bg-hover,#f5f5f5);padding:12px 16px;border-radius:8px;font-family:monospace;font-size:0.85rem;">
+                            <strong>Critério:</strong><br>
+                            dias sem movimento &gt; 10
+                        </div>
+                    </div>`,
+                    icon: 'info',
+                    confirmButtonText: 'Entendi',
+                    confirmButtonColor: 'var(--brand, #4f46e5)',
+                    background: 'var(--bg-card, #fff)',
+                    color: 'var(--text-primary, #111)',
+                });
+            };
+
+            window.showLowStockInfo = () => {
+                Swal.fire({
+                    title: 'Produtos em Baixa',
+                    html: `<div style="text-align:left;font-size:0.9rem;line-height:1.6;">
+                        <p style="margin-bottom:12px;">Produtos cuja <strong>quantidade em estoque</strong> está abaixo do mínimo recomendado, indicando necessidade de reposição.</p>
+                        <div style="background:var(--bg-hover,#f5f5f5);padding:12px 16px;border-radius:8px;font-family:monospace;font-size:0.85rem;">
+                            <strong>Critério:</strong><br>
+                            quantidade &lt; 10 unidades
+                        </div>
+                    </div>`,
+                    icon: 'info',
+                    confirmButtonText: 'Entendi',
+                    confirmButtonColor: 'var(--brand, #4f46e5)',
+                    background: 'var(--bg-card, #fff)',
+                    color: 'var(--text-primary, #111)',
+                });
+            };
+
+            window.showTotalItemsInfo = () => {
+                const mode = getTotalItemsMode();
+                const modeName = mode === 'skus' ? 'SKUs' : 'Unidades';
+                const formula = mode === 'skus'
+                    ? 'total de produtos cadastrados (SKUs)'
+                    : 'Σ quantidade de cada produto';
+                const description = mode === 'skus'
+                    ? 'Número total de <strong>produtos distintos</strong> cadastrados no estoque, independentemente da quantidade de cada um.'
+                    : 'Soma de todas as <strong>unidades físicas</strong> em estoque, considerando a quantidade de cada produto.';
+                Swal.fire({
+                    title: `Total de ${modeName}`,
+                    html: `<div style="text-align:left;font-size:0.9rem;line-height:1.6;">
+                        <p style="margin-bottom:12px;">${description}</p>
+                        <div style="background:var(--bg-hover,#f5f5f5);padding:12px 16px;border-radius:8px;font-family:monospace;font-size:0.85rem;">
+                            <strong>Cálculo:</strong><br>
+                            ${formula}
+                        </div>
+                        <p style="margin-top:12px;color:var(--text-muted);font-size:0.8rem;">
+                            <i class="fa-solid fa-gear"></i> Você pode alternar entre "Unidades" e "SKUs" nas configurações do estoque.
+                        </p>
+                    </div>`,
+                    icon: 'info',
+                    confirmButtonText: 'Entendi',
+                    confirmButtonColor: 'var(--brand, #4f46e5)',
+                    background: 'var(--bg-card, #fff)',
+                    color: 'var(--text-primary, #111)',
+                });
+            };
 
             window.showStagnantModal = () => {
                 if (stagnantProducts.length === 0) {
@@ -1866,6 +2011,7 @@
             await loadCategories();
             loadProducts();
             updateTotalItemsLabels(getTotalItemsMode());
+            updateStockValueLabels(getStockValueMode());
 
             async function updateAllProductDates() {
                 try {
@@ -2118,6 +2264,7 @@ tr:hover { background: #eef2ff; }
                 renderColumnToggles();
                 renderCategoryManager();
                 updateTotalItemsLabels(getTotalItemsMode());
+                updateStockValueLabels(getStockValueMode());
             });
 
             applyColumnVisibility();

@@ -261,8 +261,8 @@
 
             ['locAisle', 'locShelf', 'locLevel', 'locSlot', 'labelQty', 'locDesc', 'labelColor'].forEach(id => {
                 const el = document.getElementById(id);
-                el.addEventListener('input', renderShelfLabels);
-                el.addEventListener('change', renderShelfLabels);
+                el.addEventListener('input', () => renderShelfLabels());
+                el.addEventListener('change', () => renderShelfLabels());
             });
 
             document.getElementById('btnPreview').addEventListener('click', renderShelfLabels);
