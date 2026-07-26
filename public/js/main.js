@@ -907,197 +907,15 @@ const BuildFlow = {
   /** Imprime cupom térmico ou A4 com descontos e pagamento. */
   printSalePdf(sale, type, jsPDF, settings = {}) {
     const s = this.normalizeSaleRecord(sale);
-    if (!s || !jsPDF) return;
-
-    const storeName = settings.storeName || "BuildFlow";
-    const footer = settings.footerMessage || "Obrigado pela preferência!";
+    if (!s) return;
 
     if (type === "thermal") {
-      const pw = Number(settings.paperWidth) || 80;
-      const ml = 2, mr = pw - 2, cx = pw / 2;
-      let y = 4;
-
-      let estHeight = 50;
-      estHeight += s.items.length * 8;
-      if (s.itemsDiscountTotal > 0) estHeight += 6;
-      if (s.globalDiscountAmount > 0) estHeight += 6;
-      if (s.amountPaid != null) estHeight += 15;
-      if (settings.showCompanyData && (settings.companyCnpj || settings.address)) estHeight += 15;
-      estHeight += 30;
-
-      const doc = new jsPDF({ unit: "mm", format: [pw, Math.max(40, estHeight)] });
-
-      doc.setTextColor(0, 0, 0);
-      doc.setFillColor(255, 255, 255);
-      doc.rect(0, 0, pw, estHeight, "F");
-
-      const hrBold = (yy) => { doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.2); doc.line(ml, yy, mr, yy); };
-
-      doc.setFont("courier", "bold");
-      doc.setFontSize(14);
-      doc.text(storeName, cx, y, { align: "center" });
-      y += 5;
-      doc.setFont("courier", "bold");
-      doc.setFontSize(9);
-      doc.text("COMPROVANTE DE VENDA", cx, y, { align: "center" });
-      y += 3.5;
-      doc.setFont("courier", "bold");
-      doc.setFontSize(8);
-      doc.text("NAO FISCAL", cx, y, { align: "center" });
-      y += 3.5;
-      hrBold(y);
-      y += 3.5;
-
-      doc.setFont("courier", "bold");
-      doc.setFontSize(9);
-      const d = new Date(s.createdAt);
-      const dateStr = d.toLocaleDateString("pt-BR");
-      const timeStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-      doc.text("DATA", ml, y);
-      doc.text(`${dateStr} ${timeStr}`, mr, y, { align: "right" });
-      y += 3.5;
-      doc.text("CUPOM", ml, y);
-      doc.text(`#${s.saleNumber || String(s._id || "").slice(-6)}`, mr, y, { align: "right" });
-      y += 3.5;
-      doc.text("PGTO", ml, y);
-      doc.text(`${s.paymentMethod || "-"}`, mr, y, { align: "right" });
-      y += 3.5;
-
-      if (settings.showCompanyData) {
-        if (settings.companyCnpj || settings.address) {
-          hrBold(y);
-          y += 3;
-          doc.setFont("courier", "bold");
-          doc.setFontSize(8);
-          if (settings.companyCnpj) {
-            doc.text(`CNPJ ${settings.companyCnpj}`, cx, y, { align: "center" });
-            y += 3;
-          }
-          if (settings.address) {
-            doc.setFont("courier", "normal");
-            const addrLines = doc.splitTextToSize(String(settings.address), mr - ml);
-            addrLines.forEach(line => { doc.text(line, cx, y, { align: "center" }); y += 2.5; });
-          }
-          y += 1;
-        }
-      }
-
-      hrBold(y);
-      y += 3.5;
-
-      doc.setFont("courier", "bold");
-      doc.setFontSize(8);
-      doc.text("QTD PRODUTO", ml, y);
-      doc.text("VALOR", mr, y, { align: "right" });
-      y += 3;
-      hrBold(y);
-      y += 3;
-
-      doc.setFont("courier", "normal");
-      s.items.forEach((item) => {
-        const qtyStr = String(item.qty);
-        const nameMax = 22;
-        const name = (item.name || "Produto").substring(0, nameMax);
-        doc.setFont("courier", "bold");
-        doc.setFontSize(8);
-        doc.text(`${qtyStr}  ${name}`, ml, y);
-        doc.text(this.formatCurrency(item.lineTotal), mr, y, { align: "right" });
-        y += 3;
-
-        if (item.discountAmount > 0) {
-          doc.setFont("courier", "normal");
-          doc.setFontSize(7);
-          doc.setTextColor(80, 80, 80);
-          doc.text(`Bruto: ${this.formatCurrency(item.lineGross)}`, ml, y);
-          doc.text(`-${this.formatCurrency(item.discountAmount)}`, mr, y, { align: "right" });
-          doc.setTextColor(0, 0, 0);
-          y += 2.5;
-          doc.setFont("courier", "bold");
-          doc.setFontSize(8);
-          doc.text(` Liquido: ${this.formatCurrency(item.lineTotal)}`, ml, y);
-          y += 3;
-        }
-        y += 0.5;
-      });
-
-      hrBold(y);
-      y += 3;
-
-      doc.setFont("courier", "bold");
-      doc.setFontSize(8);
-      if (s.grossSubtotal > 0) {
-        doc.text("Subtotal bruto:", ml, y);
-        doc.text(this.formatCurrency(s.grossSubtotal), mr, y, { align: "right" });
-        y += 3;
-      }
-      if (s.itemsDiscountTotal > 0) {
-        doc.text("Desconto itens:", ml, y);
-        doc.text(`-${this.formatCurrency(s.itemsDiscountTotal)}`, mr, y, { align: "right" });
-        y += 3;
-      }
-      if (s.globalDiscountAmount > 0) {
-        const gLabel = s.globalDiscountType === "percent"
-          ? `Desconto venda (${s.globalDiscount}%):`
-          : "Desconto venda:";
-        doc.text(gLabel, ml, y);
-        doc.text(`-${this.formatCurrency(s.globalDiscountAmount)}`, mr, y, { align: "right" });
-        y += 3;
-      }
-      y += 1;
-
-      const totY = y;
-      const boxH = 9;
-      const totLabel = "TOTAL A PAGAR";
-      const totVal = this.formatCurrency(s.total);
-      doc.setDrawColor(0, 0, 0);
-      doc.setLineWidth(0.3);
-      doc.roundedRect(ml, totY, mr - ml, boxH, 1.5, 1.5);
-      doc.setFont("courier", "bold");
-      doc.setFontSize(11);
-      doc.text(totLabel, ml + 2, totY + boxH - 2);
-      doc.text(totVal, mr - 2, totY + boxH - 2, { align: "right" });
-      y = totY + boxH + 4;
-      doc.setFont("courier", "normal");
-
-      doc.setFont("courier", "bold");
-      doc.setFontSize(8);
-      if (s.amountPaid != null) {
-        hrBold(y);
-        y += 3;
-        doc.text("Valor recebido:", ml, y);
-        doc.text(this.formatCurrency(s.amountPaid), mr, y, { align: "right" });
-        y += 3;
-        doc.text("Troco:", ml, y);
-        doc.text(this.formatCurrency(s.change || 0), mr, y, { align: "right" });
-        y += 3;
-      }
-
-      y += 1;
-      hrBold(y);
-      y += 4;
-
-      doc.setFont("courier", "bold");
-      doc.setFontSize(10);
-      doc.text(footer, cx, y, { align: "center" });
-      y += 4;
-      doc.setFont("courier", "bold");
-      doc.setFontSize(7);
-      const legalLines = doc.splitTextToSize(settings.receiptLegalNote || "Documento nao fiscal", mr - ml);
-      legalLines.forEach((line) => {
-        doc.text(line, cx, y, { align: "center" });
-        y += 2.5;
-      });
-      y += 1;
-      doc.text(`PROCON ${settings.proconNumber || "151"}`, cx, y, { align: "center" });
-
-      if (settings.useQz && window.QzPrint) {
-        QzPrint.printPdf(doc.output('arraybuffer'));
-      } else {
-        window.open(doc.output("bloburl"), "_blank");
-      }
+      this.printThermalCoupon(s, settings);
       return;
     }
 
+    if (!jsPDF) return;
+    const storeName = settings.storeName || "BuildFlow";
     const doc = new jsPDF();
     const margin = 20;
     doc.setFontSize(22);
@@ -1210,10 +1028,177 @@ const BuildFlow = {
         align: "right",
       });
     }
-    if (settings.useQz && window.QzPrint) {
-      QzPrint.printPdf(doc.output('arraybuffer'));
-    } else {
-      window.open(doc.output("bloburl"), "_blank");
+    window.open(doc.output("bloburl"), "_blank");
+  },
+
+  /** Gera HTML do cupom térmico e abre impressão do navegador. */
+  printThermalCoupon(s, settings) {
+    const pw = Number(String(settings.paperWidth).replace(/[^0-9.]/g, '')) || 80;
+    const storeName = settings.storeName || "BuildFlow";
+    const footer = settings.footerMessage || "Obrigado pela preferência!";
+    const d = new Date(s.createdAt);
+    const dateStr = d.toLocaleDateString("pt-BR");
+    const timeStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    const fmt = (v) => this.formatCurrency(v);
+
+    let itemsHtml = '';
+    s.items.forEach((item) => {
+      const name = (item.name || "Produto").substring(0, 22);
+      itemsHtml += `<tr><td class="q">${item.qty}</td><td class="n">${name}</td><td class="v">${fmt(item.lineTotal)}</td></tr>`;
+      if (item.discountAmount > 0) {
+        itemsHtml += `<tr class="d"><td></td><td>Bruto: ${fmt(item.lineGross)}</td><td class="v">-${fmt(item.discountAmount)}</td></tr>`;
+        itemsHtml += `<tr class="d"><td></td><td> Liquido: ${fmt(item.lineTotal)}</td><td class="v">${fmt(item.lineTotal)}</td></tr>`;
+      }
+    });
+
+    let discHtml = '';
+    if (s.grossSubtotal > 0) discHtml += `<div class="lr"><span>Subtotal bruto:</span><span>${fmt(s.grossSubtotal)}</span></div>`;
+    if (s.itemsDiscountTotal > 0) discHtml += `<div class="lr"><span>Desconto itens:</span><span>-${fmt(s.itemsDiscountTotal)}</span></div>`;
+    if (s.globalDiscountAmount > 0) {
+      const gl = s.globalDiscountType === "percent"
+        ? `Desconto venda (${s.globalDiscount}%):`
+        : "Desconto venda:";
+      discHtml += `<div class="lr"><span>${gl}</span><span>-${fmt(s.globalDiscountAmount)}</span></div>`;
+    }
+
+    let payHtml = '';
+    if (s.amountPaid != null) {
+      payHtml += `<div class="hr"></div>`;
+      payHtml += `<div class="lr"><span>Valor recebido:</span><span>${fmt(s.amountPaid)}</span></div>`;
+      payHtml += `<div class="lr"><span>Troco:</span><span>${fmt(s.change || 0)}</span></div>`;
+    }
+
+    let coHtml = '';
+    if (settings.showCompanyData && (settings.companyCnpj || settings.address)) {
+      coHtml += `<div class="hr"></div>`;
+      if (settings.companyCnpj) coHtml += `<div class="c">CNPJ ${settings.companyCnpj}</div>`;
+      if (settings.address) coHtml += `<div class="c sm">${settings.address}</div>`;
+    }
+
+    const legalNote = settings.receiptLegalNote || "Documento nao fiscal emitido conforme Lei Complementar n 123/2006";
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><style>
+@page{size:${pw}mm 297mm;margin:0}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Courier New',Courier,monospace;width:${pw}mm;padding:0 2mm;color:#000;font-size:8pt;line-height:1.15}
+.hr{border:none;border-top:.5px solid #000;margin:1.2mm 0}
+.c{text-align:center;font-weight:bold}
+.sm{font-size:7pt;font-weight:normal}
+.lr{display:flex;justify-content:space-between;font-size:8pt;margin:.8mm 0}
+table{width:100%;border-collapse:collapse;font-size:8pt}
+td{padding:0;vertical-align:top}
+.q{width:8mm;white-space:nowrap}
+.n{word-break:break-word}
+.v{text-align:right;white-space:nowrap;padding-left:2mm}
+.d{font-size:7pt;color:#555}
+.tb{border:1px solid #000;border-radius:1.2mm;padding:1.5mm;margin:1mm 0;display:flex;justify-content:space-between;font-weight:bold;font-size:11pt}
+.ft{text-align:center;font-size:7pt;margin-top:1mm}
+</style></head><body>
+<div class="c" style="font-size:14pt;margin-bottom:1mm">${storeName}</div>
+<div class="c" style="font-size:9pt">COMPROVANTE DE VENDA</div>
+<div class="c" style="font-size:8pt">NAO FISCAL</div>
+<div class="hr"></div>
+<div class="lr"><span>DATA</span><span>${dateStr} ${timeStr}</span></div>
+<div class="lr"><span>CUPOM</span><span>#${s.saleNumber || String(s._id || "").slice(-6)}</span></div>
+<div class="lr"><span>PGTO</span><span>${s.paymentMethod || "-"}</span></div>
+${coHtml}
+<div class="hr"></div>
+<div class="lr" style="font-weight:bold"><span>QTD PRODUTO</span><span>VALOR</span></div>
+<div class="hr" style="margin-bottom:0"></div>
+<table><tbody>${itemsHtml}</tbody></table>
+<div class="hr"></div>
+${discHtml}
+<div class="tb"><span>TOTAL A PAGAR</span><span>${fmt(s.total)}</span></div>
+${payHtml}
+<div class="hr"></div>
+<div class="c" style="font-size:10pt">${footer}</div>
+<div class="ft">${legalNote}</div>
+<div class="ft" style="margin-top:.3mm">PROCON ${settings.proconNumber || "151"}</div>
+<script>window.onafterprint=()=>window.close();setTimeout(()=>window.print(),100);<\/script>
+</body></html>`;
+
+    const win = window.open(URL.createObjectURL(new Blob([html], { type: 'text/html' })), '_blank');
+    if (!win) {
+      const fallback = window.open('', '_blank');
+      if (fallback) { fallback.document.write(html); fallback.document.close(); }
+    }
+  },
+
+  /** Gera HTML do orçamento térmico e abre impressão do navegador. */
+  printThermalBudget(data, settings) {
+    const pw = Number(String(settings.paperWidth).replace(/[^0-9.]/g, '')) || 80;
+    const storeName = settings.storeName || "BuildFlow";
+    const d = data.createdAt instanceof Date ? data.createdAt : new Date(data.createdAt);
+    const dateStr = d.toLocaleDateString("pt-BR");
+    const timeStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    const fmt = (v) => `R$ ${Number(v).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+
+    let itemsHtml = '';
+    (data.items || []).forEach((item) => {
+      const name = (item.name || "Item").substring(0, 22);
+      itemsHtml += `<tr><td class="q">${item.qty}</td><td class="n">${name}</td><td class="v">${fmt(item.total)}</td></tr>`;
+      if (item.discount > 0) {
+        const origTotal = Number(item.price) * Number(item.qty);
+        const discLabel = item.discountType === 'percent' ? `${item.discount}%` : `R$ ${Number(item.discount).toFixed(2)}`;
+        itemsHtml += `<tr class="d"><td></td><td>Bruto: ${fmt(origTotal)}</td><td class="v">Desc: ${discLabel}</td></tr>`;
+        itemsHtml += `<tr class="d"><td></td><td> Liquido: ${fmt(item.total)}</td><td class="v">${fmt(item.total)}</td></tr>`;
+      }
+    });
+
+    let coHtml = '';
+    if (settings.showCompanyData && (settings.companyCnpj || settings.address)) {
+      coHtml += `<div class="hr"></div>`;
+      if (settings.companyCnpj) coHtml += `<div class="c">CNPJ ${settings.companyCnpj}</div>`;
+      if (settings.address) coHtml += `<div class="c sm">${settings.address}</div>`;
+    }
+
+    const legalNote = settings.receiptLegalNote || "Documento nao fiscal emitido conforme Lei Complementar n 123/2006";
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><style>
+@page{size:${pw}mm 297mm;margin:0}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Courier New',Courier,monospace;width:${pw}mm;padding:0 2mm;color:#000;font-size:8pt;line-height:1.15}
+.hr{border:none;border-top:.5px solid #000;margin:1.2mm 0}
+.c{text-align:center;font-weight:bold}
+.sm{font-size:7pt;font-weight:normal}
+.lr{display:flex;justify-content:space-between;font-size:8pt;margin:.8mm 0}
+table{width:100%;border-collapse:collapse;font-size:8pt}
+td{padding:0;vertical-align:top}
+.q{width:8mm;white-space:nowrap}
+.n{word-break:break-word}
+.v{text-align:right;white-space:nowrap;padding-left:2mm}
+.d{font-size:7pt;color:#555}
+.tb{border:1px solid #000;border-radius:1.2mm;padding:1.5mm;margin:1mm 0;display:flex;justify-content:space-between;font-weight:bold;font-size:11pt}
+.ft{text-align:center;font-size:7pt;margin-top:1mm}
+</style></head><body>
+<div class="c" style="font-size:14pt;margin-bottom:1mm">${storeName}</div>
+<div class="c" style="font-size:9pt">ORCAMENTO</div>
+<div class="c" style="font-size:8pt">SEM VALOR FISCAL</div>
+<div class="hr"></div>
+<div class="lr"><span>DATA</span><span>${dateStr} ${timeStr}</span></div>
+<div class="lr"><span>REF</span><span>${data.saleNumber || ""}</span></div>
+${coHtml}
+<div class="hr"></div>
+<div class="lr" style="font-weight:bold"><span>QTD PRODUTO</span><span>VALOR</span></div>
+<div class="hr" style="margin-bottom:0"></div>
+<table><tbody>${itemsHtml}</tbody></table>
+<div class="hr"></div>
+<div class="tb"><span>TOTAL</span><span>${fmt(data.total)}</span></div>
+<div class="hr"></div>
+<div class="c" style="font-size:7pt">Valido por 7 dias.</div>
+<div class="ft">${legalNote}</div>
+<div class="ft" style="margin-top:.3mm">PROCON ${settings.proconNumber || "151"}</div>
+<script>window.onafterprint=()=>window.close();setTimeout(()=>window.print(),100);<\/script>
+</body></html>`;
+
+    const win = window.open(URL.createObjectURL(new Blob([html], { type: 'text/html' })), '_blank');
+    if (!win) {
+      const fallback = window.open('', '_blank');
+      if (fallback) { fallback.document.write(html); fallback.document.close(); }
     }
   },
 
@@ -1574,7 +1559,6 @@ const BuildFlow = {
         companyCnpj: "",
         address: "",
         autoPrint: false,
-        useQz: false,
         printType: "thermal",
         paperWidth: 80,
         showCompanyData: true,

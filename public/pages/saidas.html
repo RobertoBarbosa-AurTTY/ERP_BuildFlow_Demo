@@ -13,9 +13,7 @@
     <!-- PDF Export Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <!-- qz-tray for direct thermal printing -->
-    <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.2/build/qz-tray.min.js"></script>
-    <script src="../js/qz-print.js"></script>
+    
     <style>
         :root {
             --pdv-bg: #1e293b; /* Slate 800 */
@@ -2403,81 +2401,9 @@
                     doc.setTextColor(100, 116, 139);
                     doc.text(`PROCON: ${settings.proconNumber || '151'}`, margin, finalY + 22);
                     doc.text(settings.receiptLegalNote || 'Documento não fiscal', margin, finalY + 27);
-                    if (settings.useQz && window.QzPrint) { QzPrint.printPdf(doc.output('arraybuffer')); } else { window.open(doc.output('bloburl'), '_blank'); }
+                    window.open(doc.output('bloburl'), '_blank');
                 } else {
-                    const pw = Number(settings.paperWidth) || 80;
-                    const ml = 2, mr = pw - 2, cx = pw / 2;
-                    let est = 55 + budgetData.items.length * 8 + 25;
-                    const doc = new jsPDF({ unit: 'mm', format: [pw, Math.max(40, est)] });
-                    doc.setTextColor(0, 0, 0);
-                    doc.setFillColor(255, 255, 255);
-                    doc.rect(0, 0, pw, est, "F");
-                    const hrBold = (yy) => { doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.2); doc.line(ml, yy, mr, yy); };
-                    let y = 4;
-                    doc.setFont('courier', 'bold'); doc.setFontSize(14);
-                    doc.text(settings.storeName, cx, y, { align: 'center' }); y += 5;
-                    doc.setFont('courier', 'bold'); doc.setFontSize(9);
-                    doc.text('ORCAMENTO', cx, y, { align: 'center' }); y += 3.5;
-                    doc.setFont('courier', 'bold'); doc.setFontSize(8);
-                    doc.text('SEM VALOR FISCAL', cx, y, { align: 'center' }); y += 3.5;
-                    hrBold(y); y += 3.5;
-                    doc.setFont('courier', 'bold'); doc.setFontSize(9);
-                    const d = budgetData.createdAt;
-                    const dateStr = d.toLocaleDateString('pt-BR');
-                    const timeStr = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                    doc.text('DATA', ml, y); doc.text(`${dateStr} ${timeStr}`, mr, y, { align: 'right' }); y += 3.5;
-                    doc.text('REF', ml, y); doc.text(budgetData.saleNumber, mr, y, { align: 'right' }); y += 3.5;
-                    if (settings.showCompanyData && (settings.companyCnpj || settings.address)) {
-                        hrBold(y); y += 3; doc.setFont('courier', 'bold'); doc.setFontSize(8);
-                        if (settings.companyCnpj) { doc.text(`CNPJ ${settings.companyCnpj}`, cx, y, { align: 'center' }); y += 3; }
-                        if (settings.address) { doc.setFont('courier', 'normal'); const addrLines = doc.splitTextToSize(String(settings.address), mr - ml); addrLines.forEach(line => { doc.text(line, cx, y, { align: 'center' }); y += 2.5; }); }
-                        y += 1;
-                    }
-                    hrBold(y); y += 3.5;
-                    doc.setFont('courier', 'bold'); doc.setFontSize(8);
-                    doc.text('QTD PRODUTO', ml, y); doc.text('VALOR', mr, y, { align: 'right' }); y += 3;
-                    hrBold(y); y += 3;
-                    doc.setFont('courier', 'normal');
-                    budgetData.items.forEach(item => {
-                        const qtyStr = String(item.qty);
-                        const nameMax = 22;
-                        const name = (item.name || 'Item').substring(0, nameMax);
-                        doc.setFont('courier', 'bold'); doc.setFontSize(8);
-                        doc.text(`${qtyStr}  ${name}`, ml, y);
-                        doc.text(`R$ ${(Number(item.total) || 0).toFixed(2)}`, mr, y, { align: 'right' });
-                        y += 3;
-                        if (item.discount > 0) {
-                            const origTotal = Number(item.price) * Number(item.qty);
-                            doc.setFont('courier', 'normal'); doc.setFontSize(7);
-                            doc.setTextColor(80, 80, 80);
-                            doc.text(`Bruto: R$ ${origTotal.toFixed(2)}`, ml, y);
-                            doc.text(`Desc: ${item.discount}${item.discountType === 'percent' ? '%' : ''}`, mr, y, { align: 'right' });
-                            doc.setTextColor(0, 0, 0);
-                            y += 2.5;
-                            doc.setFont('courier', 'bold'); doc.setFontSize(8);
-                            doc.text(` Liquido: R$ ${(Number(item.total) || 0).toFixed(2)}`, ml, y);
-                            y += 3;
-                        }
-                        y += 0.5;
-                    });
-                    hrBold(y); y += 3;
-                    const totY = y; const boxH = 9;
-                    const totLabel = "TOTAL"; const totVal = `R$ ${(Number(budgetData.total) || 0).toFixed(2)}`;
-                    doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.3);
-                    doc.roundedRect(ml, totY, mr - ml, boxH, 1.5, 1.5);
-                    doc.setFont('courier', 'bold'); doc.setFontSize(11);
-                    doc.text(totLabel, ml + 2, totY + boxH - 2);
-                    doc.text(totVal, mr - 2, totY + boxH - 2, { align: 'right' });
-                    y = totY + boxH + 4;
-                    doc.setFont('courier', 'bold'); doc.setFontSize(8);
-                    hrBold(y); y += 3.5;
-                    doc.text('Valido por 7 dias.', cx, y, { align: 'center' }); y += 4;
-                    doc.setFont('courier', 'bold'); doc.setFontSize(7);
-                    const legalLines = doc.splitTextToSize(settings.receiptLegalNote || 'Documento nao fiscal', mr - ml);
-                    legalLines.forEach(line => { doc.text(line, cx, y, { align: 'center' }); y += 2.5; });
-                    y += 1;
-                    doc.text(`PROCON ${settings.proconNumber || '151'}`, cx, y, { align: 'center' });
-                    if (settings.useQz && window.QzPrint) { QzPrint.printPdf(doc.output('arraybuffer')); } else { window.open(doc.output('bloburl'), '_blank'); }
+                    BuildFlow.printThermalBudget(budgetData, settings);
                 }
                 return;
             }
@@ -2498,80 +2424,7 @@
             if (printType === undefined) return;
 
             if (printType === true) { // Cupom Térmico
-                const pw = Number(settings.paperWidth) || 80;
-                const ml = 2, mr = pw - 2, cx = pw / 2;
-                let est = 55 + budgetData.items.length * 8 + 25;
-                const doc = new jsPDF({ unit: 'mm', format: [pw, Math.max(40, est)] });
-                doc.setTextColor(0, 0, 0);
-                doc.setFillColor(255, 255, 255);
-                doc.rect(0, 0, pw, est, "F");
-                const hrBold = (yy) => { doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.2); doc.line(ml, yy, mr, yy); };
-                let y = 4;
-                doc.setFont('courier', 'bold'); doc.setFontSize(14);
-                doc.text(settings.storeName, cx, y, { align: 'center' }); y += 5;
-                doc.setFont('courier', 'bold'); doc.setFontSize(9);
-                doc.text('ORCAMENTO', cx, y, { align: 'center' }); y += 3.5;
-                doc.setFont('courier', 'bold'); doc.setFontSize(8);
-                doc.text('SEM VALOR FISCAL', cx, y, { align: 'center' }); y += 3.5;
-                hrBold(y); y += 3.5;
-                doc.setFont('courier', 'bold'); doc.setFontSize(9);
-                const d = budgetData.createdAt;
-                const dateStr = d.toLocaleDateString('pt-BR');
-                const timeStr = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                doc.text('DATA', ml, y); doc.text(`${dateStr} ${timeStr}`, mr, y, { align: 'right' }); y += 3.5;
-                doc.text('REF', ml, y); doc.text(budgetData.saleNumber, mr, y, { align: 'right' }); y += 3.5;
-                if (settings.showCompanyData && (settings.companyCnpj || settings.address)) {
-                    hrBold(y); y += 3; doc.setFont('courier', 'bold'); doc.setFontSize(8);
-                    if (settings.companyCnpj) { doc.text(`CNPJ ${settings.companyCnpj}`, cx, y, { align: 'center' }); y += 3; }
-                    if (settings.address) { doc.setFont('courier', 'normal'); const addrLines = doc.splitTextToSize(String(settings.address), mr - ml); addrLines.forEach(line => { doc.text(line, cx, y, { align: 'center' }); y += 2.5; }); }
-                    y += 1;
-                }
-                hrBold(y); y += 3.5;
-                doc.setFont('courier', 'bold'); doc.setFontSize(8);
-                doc.text('QTD PRODUTO', ml, y); doc.text('VALOR', mr, y, { align: 'right' }); y += 3;
-                hrBold(y); y += 3;
-                doc.setFont('courier', 'normal');
-                budgetData.items.forEach(item => {
-                    const qtyStr = String(item.qty);
-                    const nameMax = 22;
-                    const name = (item.name || 'Item').substring(0, nameMax);
-                    doc.setFont('courier', 'bold'); doc.setFontSize(8);
-                    doc.text(`${qtyStr}  ${name}`, ml, y);
-                    doc.text(`R$ ${(Number(item.total) || 0).toFixed(2)}`, mr, y, { align: 'right' });
-                    y += 3;
-                    if (item.discount > 0) {
-                        const origTotal = Number(item.price) * Number(item.qty);
-                        doc.setFont('courier', 'normal'); doc.setFontSize(7);
-                        doc.setTextColor(80, 80, 80);
-                        doc.text(`Bruto: R$ ${origTotal.toFixed(2)}`, ml, y);
-                        doc.text(`Desc: ${item.discount}${item.discountType === 'percent' ? '%' : ''}`, mr, y, { align: 'right' });
-                        doc.setTextColor(0, 0, 0);
-                        y += 2.5;
-                        doc.setFont('courier', 'bold'); doc.setFontSize(8);
-                        doc.text(` Liquido: R$ ${(Number(item.total) || 0).toFixed(2)}`, ml, y);
-                        y += 3;
-                    }
-                    y += 0.5;
-                });
-                hrBold(y); y += 3;
-                const totY = y; const boxH = 9;
-                const totLabel = "TOTAL"; const totVal = `R$ ${(Number(budgetData.total) || 0).toFixed(2)}`;
-                doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.3);
-                doc.roundedRect(ml, totY, mr - ml, boxH, 1.5, 1.5);
-                doc.setFont('courier', 'bold'); doc.setFontSize(11);
-                doc.text(totLabel, ml + 2, totY + boxH - 2);
-                doc.text(totVal, mr - 2, totY + boxH - 2, { align: 'right' });
-                y = totY + boxH + 4;
-                doc.setFont('courier', 'bold'); doc.setFontSize(8);
-                hrBold(y); y += 3.5;
-                doc.text('Valido por 7 dias.', cx, y, { align: 'center' }); y += 4;
-                doc.setFont('courier', 'bold'); doc.setFontSize(7);
-                const legalLines = doc.splitTextToSize(settings.receiptLegalNote || 'Documento nao fiscal', mr - ml);
-                legalLines.forEach(line => { doc.text(line, cx, y, { align: 'center' }); y += 2.5; });
-                y += 1;
-                doc.text(`PROCON ${settings.proconNumber || '151'}`, cx, y, { align: 'center' });
-                
-                if (settings.useQz && window.QzPrint) { QzPrint.printPdf(doc.output('arraybuffer')); } else { window.open(doc.output('bloburl'), '_blank'); }
+                BuildFlow.printThermalBudget(budgetData, settings);
             } else { // Impressão A4
                 const doc = new jsPDF();
                 const margin = 14;
@@ -2656,7 +2509,7 @@
                 doc.text('Validade do Orçamento: 07 dias corridos.', 14, finalY + 25);
                 doc.text('Este documento não possui valor fiscal.', 105, 285, { align: 'center' });
 
-                if (settings.useQz && window.QzPrint) { QzPrint.printPdf(doc.output('arraybuffer')); } else { window.open(doc.output('bloburl'), '_blank'); }
+                window.open(doc.output('bloburl'), '_blank');
             }
             BuildFlow.showToast('Orçamento gerado com sucesso!', 'success');
         }
@@ -3542,7 +3395,6 @@
                             settings
                         );
                     } else {
-                        // Perguntar se deseja imprimir o cupom
                         const printResult = await Swal.fire({
                             ...pdvSwalOptions(),
                             title: 'Venda Finalizada!',
