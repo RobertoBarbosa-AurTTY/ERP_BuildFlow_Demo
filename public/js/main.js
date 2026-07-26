@@ -911,10 +911,11 @@ const BuildFlow = {
 
     const storeName = settings.storeName || "BuildFlow";
     const footer = settings.footerMessage || "Obrigado pela preferência!";
+    const effectiveType = type === "thermal" ? (settings.printType || "thermal-80") : type;
 
-    if (type === "thermal") {
-      const pw = Number(settings.paperWidth) || 80;
-      const ml = 2, mr = pw - 2, cx = pw / 2;
+    if (effectiveType === "thermal" || effectiveType === "thermal-80" || effectiveType === "thermal-58") {
+      const pw = effectiveType === "thermal-58" ? 58 : (Number(settings.paperWidth) || 80);
+      const ml = 4, mr = pw - 4, cx = pw / 2;
       let y = 4;
 
       let estHeight = 50;
@@ -1091,7 +1092,7 @@ const BuildFlow = {
       doc.text(`PROCON ${settings.proconNumber || "151"}`, cx, y, { align: "center" });
 
       if (settings.useQz && window.QzPrint) {
-        QzPrint.printPdf(doc.output('arraybuffer'));
+        QzPrint.printPdf(doc.output('arraybuffer'), { paperWidth: pw, paperHeight: estHeight });
       } else {
         window.open(doc.output("bloburl"), "_blank");
       }
@@ -1211,7 +1212,7 @@ const BuildFlow = {
       });
     }
     if (settings.useQz && window.QzPrint) {
-      QzPrint.printPdf(doc.output('arraybuffer'));
+      QzPrint.printPdf(doc.output('arraybuffer'), { paperWidth: 210, paperHeight: 297 });
     } else {
       window.open(doc.output("bloburl"), "_blank");
     }
@@ -1575,7 +1576,7 @@ const BuildFlow = {
         address: "",
         autoPrint: false,
         useQz: false,
-        printType: "thermal",
+        printType: "thermal-80",
         paperWidth: 80,
         showCompanyData: true,
         footerMessage: "Obrigado pela preferência!",

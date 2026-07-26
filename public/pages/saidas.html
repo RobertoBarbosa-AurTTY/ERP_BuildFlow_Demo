@@ -2403,10 +2403,10 @@
                     doc.setTextColor(100, 116, 139);
                     doc.text(`PROCON: ${settings.proconNumber || '151'}`, margin, finalY + 22);
                     doc.text(settings.receiptLegalNote || 'Documento não fiscal', margin, finalY + 27);
-                    if (settings.useQz && window.QzPrint) { QzPrint.printPdf(doc.output('arraybuffer')); } else { window.open(doc.output('bloburl'), '_blank'); }
+                    if (settings.useQz && window.QzPrint) { QzPrint.printPdf(doc.output('arraybuffer'), { paperWidth: 210, paperHeight: 297 }); } else { window.open(doc.output('bloburl'), '_blank'); }
                 } else {
                     const pw = Number(settings.paperWidth) || 80;
-                    const ml = 2, mr = pw - 2, cx = pw / 2;
+                    const ml = 4, mr = pw - 4, cx = pw / 2;
                     let est = 55 + budgetData.items.length * 8 + 25;
                     const doc = new jsPDF({ unit: 'mm', format: [pw, Math.max(40, est)] });
                     doc.setTextColor(0, 0, 0);
@@ -2477,7 +2477,7 @@
                     legalLines.forEach(line => { doc.text(line, cx, y, { align: 'center' }); y += 2.5; });
                     y += 1;
                     doc.text(`PROCON ${settings.proconNumber || '151'}`, cx, y, { align: 'center' });
-                    if (settings.useQz && window.QzPrint) { QzPrint.printPdf(doc.output('arraybuffer')); } else { window.open(doc.output('bloburl'), '_blank'); }
+                    if (settings.useQz && window.QzPrint) { QzPrint.printPdf(doc.output('arraybuffer'), { paperWidth: pw, paperHeight: est }); } else { window.open(doc.output('bloburl'), '_blank'); }
                 }
                 return;
             }
@@ -2499,7 +2499,7 @@
 
             if (printType === true) { // Cupom Térmico
                 const pw = Number(settings.paperWidth) || 80;
-                const ml = 2, mr = pw - 2, cx = pw / 2;
+                const ml = 4, mr = pw - 4, cx = pw / 2;
                 let est = 55 + budgetData.items.length * 8 + 25;
                 const doc = new jsPDF({ unit: 'mm', format: [pw, Math.max(40, est)] });
                 doc.setTextColor(0, 0, 0);
@@ -2571,7 +2571,7 @@
                 y += 1;
                 doc.text(`PROCON ${settings.proconNumber || '151'}`, cx, y, { align: 'center' });
                 
-                if (settings.useQz && window.QzPrint) { QzPrint.printPdf(doc.output('arraybuffer')); } else { window.open(doc.output('bloburl'), '_blank'); }
+                if (settings.useQz && window.QzPrint) { QzPrint.printPdf(doc.output('arraybuffer'), { paperWidth: pw, paperHeight: est }); } else { window.open(doc.output('bloburl'), '_blank'); }
             } else { // Impressão A4
                 const doc = new jsPDF();
                 const margin = 14;
@@ -2656,7 +2656,7 @@
                 doc.text('Validade do Orçamento: 07 dias corridos.', 14, finalY + 25);
                 doc.text('Este documento não possui valor fiscal.', 105, 285, { align: 'center' });
 
-                if (settings.useQz && window.QzPrint) { QzPrint.printPdf(doc.output('arraybuffer')); } else { window.open(doc.output('bloburl'), '_blank'); }
+                if (settings.useQz && window.QzPrint) { QzPrint.printPdf(doc.output('arraybuffer'), { paperWidth: 210, paperHeight: 297 }); } else { window.open(doc.output('bloburl'), '_blank'); }
             }
             BuildFlow.showToast('Orçamento gerado com sucesso!', 'success');
         }
@@ -3537,7 +3537,7 @@
                         };
                         BuildFlow.printSalePdf(
                             saleForPrint,
-                            settings.printType || 'thermal',
+                            settings.printType || 'thermal-80',
                             window.jspdf.jsPDF,
                             settings
                         );
@@ -3563,7 +3563,7 @@
                             };
                             BuildFlow.printSalePdf(
                                 saleForPrint,
-                                'thermal',
+                                settings.printType || 'thermal-80',
                                 window.jspdf.jsPDF,
                                 settings
                             );

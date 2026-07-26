@@ -106,7 +106,10 @@ function loadSettings() {
 
     if (document.getElementById('autoPrint')) document.getElementById('autoPrint').checked = settings.autoPrint;
     if (document.getElementById('useQz')) document.getElementById('useQz').checked = settings.useQz;
-    if (document.getElementById('printType')) document.getElementById('printType').value = settings.printType || 'thermal';
+    if (document.getElementById('printType')) {
+      const pt = settings.printType || 'thermal-80';
+      document.getElementById('printType').value = pt === 'thermal' ? 'thermal-80' : pt;
+    }
     if (document.getElementById('showCompanyData')) document.getElementById('showCompanyData').checked = settings.showCompanyData;
     if (document.getElementById('footerMessage')) document.getElementById('footerMessage').value = settings.footerMessage;
     if (document.getElementById('receiptLegalNote')) document.getElementById('receiptLegalNote').value = settings.receiptLegalNote;
@@ -147,10 +150,13 @@ function savePrintSettings() {
     const receiptLegalNote = document.getElementById('receiptLegalNote').value;
     const proconNumber = document.getElementById('proconNumber').value;
 
+    const paperWidth = printType === 'thermal-58' ? 58 : 80;
+
     const settings = JSON.parse(localStorage.getItem('buildflow_settings')) || {};
     settings.autoPrint = autoPrint;
     settings.useQz = useQz;
     settings.printType = printType;
+    settings.paperWidth = paperWidth;
     settings.showCompanyData = showCompanyData;
     settings.footerMessage = footerMessage;
     settings.receiptLegalNote = receiptLegalNote;

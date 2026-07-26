@@ -607,7 +607,8 @@
                 const sale = allSales.find(s => BuildFlow.normalizeId(s._id) === BuildFlow.normalizeId(saleId));
                 if (!sale) return;
                 const { jsPDF } = window.jspdf;
-                BuildFlow.printSalePdf(sale, 'thermal', jsPDF, BuildFlow.getSettings());
+                const settings = BuildFlow.getSettings();
+                BuildFlow.printSalePdf(sale, settings.printType || 'thermal-80', jsPDF, settings);
             };
 
             document.getElementById('dateStart').addEventListener('change', loadSales);

@@ -35,7 +35,7 @@ const QzPrint = {
         this._connecting = false;
     },
 
-    async printPdf(pdfData) {
+    async printPdf(pdfData, options = {}) {
         if (!this._connected) {
             const ok = await this.connect();
             if (!ok) {
@@ -56,7 +56,16 @@ const QzPrint = {
             return false;
         }
 
-        const config = qz.configs.create(printer);
+        const paperWidth = options.paperWidth || 80;
+        const config = qz.configs.create(printer, {
+            paperSize: { width: paperWidth, height: options.paperHeight || 297 },
+            orientation: 'portrait',
+            margins: { top: 0, bottom: 0, left: 0, right: 0 },
+            colorType: 'blackwhite',
+            copies: 1,
+            dpi: 203,
+            paperSource: 'auto'
+        });
 
         const uint8 = new Uint8Array(pdfData);
         const binary = uint8.reduce((acc, byte) => acc + String.fromCharCode(byte), '');
