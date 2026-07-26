@@ -1095,6 +1095,7 @@
             const productCount = document.getElementById('productCount');
             let allProducts = [];
             let currentProducts = [];
+            let categories = [];
             let stagnantProducts = [];
             let lowStockProducts = [];
 
@@ -1513,7 +1514,7 @@
 
             async function loadCategories() {
                 try {
-                    const categories = await BuildFlow.apiFetch('/categories') || [];
+                    categories = await BuildFlow.apiFetch('/categories') || [];
                     categoryFilter.innerHTML = '<option value="all">Todas as Categorias</option>';
                     categories.forEach(cat => {
                         const option = document.createElement('option');
