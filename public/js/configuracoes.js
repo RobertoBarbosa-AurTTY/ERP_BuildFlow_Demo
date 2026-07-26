@@ -102,6 +102,7 @@ function loadSettings() {
     document.getElementById('storeName').value = settings.storeName;
     document.getElementById('companyName').value = settings.companyName;
     document.getElementById('companyCnpj').value = settings.companyCnpj;
+    if (document.getElementById('companyAddress')) document.getElementById('companyAddress').value = settings.address;
 
     if (document.getElementById('autoPrint')) document.getElementById('autoPrint').checked = settings.autoPrint;
     if (document.getElementById('useQz')) document.getElementById('useQz').checked = settings.useQz;
@@ -120,6 +121,7 @@ function saveCompanySettings() {
     const storeName = document.getElementById('storeName').value;
     const companyName = document.getElementById('companyName').value;
     const companyCnpj = document.getElementById('companyCnpj').value;
+    const companyAddress = document.getElementById('companyAddress')?.value || '';
 
     if (!storeName) {
         BuildFlow.showToast('O nome da loja é obrigatório para as impressões!', 'warning');
@@ -130,6 +132,7 @@ function saveCompanySettings() {
     settings.storeName = storeName;
     settings.companyName = companyName;
     settings.companyCnpj = companyCnpj;
+    settings.address = companyAddress;
 
     localStorage.setItem('buildflow_settings', JSON.stringify(settings));
     BuildFlow.showToast('Configurações da empresa salvas!', 'success');

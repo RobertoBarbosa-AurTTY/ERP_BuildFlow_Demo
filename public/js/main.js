@@ -917,21 +917,22 @@ const BuildFlow = {
       const ml = 2, mr = pw - 2, cx = pw / 2;
       let y = 4;
 
-      let estHeight = 30;
-      estHeight += s.items.length * 5;
-      if (s.itemsDiscountTotal > 0) estHeight += 4;
-      if (s.globalDiscountAmount > 0) estHeight += 4;
-      if (s.amountPaid != null) estHeight += 12;
-      if (settings.showCompanyData && (settings.companyCnpj || settings.address)) estHeight += 12;
-      estHeight += 20;
+      let estHeight = 50;
+      estHeight += s.items.length * 8;
+      if (s.itemsDiscountTotal > 0) estHeight += 6;
+      if (s.globalDiscountAmount > 0) estHeight += 6;
+      if (s.amountPaid != null) estHeight += 15;
+      if (settings.showCompanyData && (settings.companyCnpj || settings.address)) estHeight += 15;
+      estHeight += 30;
 
       const doc = new jsPDF({ unit: "mm", format: [pw, Math.max(40, estHeight)] });
 
-      doc.setTextColor(0, 0, 0);
+      const cor = { texto: 60, linha: 50 };
+      doc.setTextColor(cor.texto, cor.texto, cor.texto);
       doc.setFillColor(255, 255, 255);
       doc.rect(0, 0, pw, estHeight, "F");
 
-      const hrBold = (yy) => { doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.5); doc.line(ml, yy, mr, yy); };
+      const hrBold = (yy) => { doc.setDrawColor(cor.linha, cor.linha, cor.linha); doc.setLineWidth(0.4); doc.line(ml, yy, mr, yy); };
 
       doc.setFont("courier", "bold");
       doc.setFontSize(14);
@@ -987,7 +988,7 @@ const BuildFlow = {
 
       doc.setFont("courier", "bold");
       doc.setFontSize(8);
-      doc.text("QTD COD PRODUTO", ml, y);
+      doc.text("QTD PRODUTO", ml, y);
       doc.text("VALOR", mr, y, { align: "right" });
       y += 3;
       hrBold(y);
@@ -996,23 +997,21 @@ const BuildFlow = {
       doc.setFont("courier", "normal");
       s.items.forEach((item) => {
         const qtyStr = String(item.qty);
-        const shortSku = ((item.sku || "").slice(-5)).padEnd(5, " ");
-        const nameMax = 18;
+        const nameMax = 22;
         const name = (item.name || "Produto").substring(0, nameMax);
         doc.setFont("courier", "bold");
         doc.setFontSize(8);
-        doc.text(`${qtyStr} ${shortSku} ${name}`, ml, y);
-        const lineVal = item.discountAmount > 0 ? item.lineTotal : item.lineTotal;
-        doc.text(this.formatCurrency(lineVal), mr, y, { align: "right" });
+        doc.text(`${qtyStr}  ${name}`, ml, y);
+        doc.text(this.formatCurrency(item.lineTotal), mr, y, { align: "right" });
         y += 3;
 
         if (item.discountAmount > 0) {
           doc.setFont("courier", "normal");
           doc.setFontSize(7);
-          doc.setTextColor(80, 80, 80);
+          doc.setTextColor(cor.texto - 10, cor.texto - 10, cor.texto - 10);
           doc.text(`Bruto: ${this.formatCurrency(item.lineGross)}`, ml, y);
           doc.text(`-${this.formatCurrency(item.discountAmount)}`, mr, y, { align: "right" });
-          doc.setTextColor(0, 0, 0);
+          doc.setTextColor(cor.texto, cor.texto, cor.texto);
           y += 2.5;
           doc.setFont("courier", "bold");
           doc.setFontSize(8);
@@ -1051,8 +1050,8 @@ const BuildFlow = {
       const boxH = 9;
       const totLabel = "TOTAL A PAGAR";
       const totVal = this.formatCurrency(s.total);
-      doc.setDrawColor(0, 0, 0);
-      doc.setLineWidth(0.6);
+      doc.setDrawColor(cor.linha, cor.linha, cor.linha);
+      doc.setLineWidth(0.4);
       doc.roundedRect(ml, totY, mr - ml, boxH, 1.5, 1.5);
       doc.setFont("courier", "bold");
       doc.setFontSize(11);
@@ -1572,9 +1571,9 @@ const BuildFlow = {
   getSettings() {
     const defaults = {
         storeName: "BuildFlow",
-        companyName: "BuildFlow & Logística S.A.",
-        companyCnpj: "12.345.678/0001-90",
-        address: "Av. Principal, 1000 - São Paulo/SP",
+        companyName: "",
+        companyCnpj: "",
+        address: "",
         autoPrint: false,
         useQz: false,
         printType: "thermal",
