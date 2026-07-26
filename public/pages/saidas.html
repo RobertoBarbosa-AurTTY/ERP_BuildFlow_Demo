@@ -2405,7 +2405,7 @@
                     doc.text(settings.receiptLegalNote || 'Documento não fiscal', margin, finalY + 27);
                     if (settings.useQz && window.QzPrint) { QzPrint.printPdf(doc.output('arraybuffer')); } else { window.open(doc.output('bloburl'), '_blank'); }
                 } else {
-                    const pw = settings.paperWidth || 58;
+                    const pw = Number(settings.paperWidth) || 80;
                     const ml = 2, mr = pw - 2, cx = pw / 2;
                     let est = 55 + budgetData.items.length * 8 + 25;
                     const doc = new jsPDF({ unit: 'mm', format: [pw, Math.max(40, est)] });
@@ -2498,7 +2498,7 @@
             if (printType === undefined) return;
 
             if (printType === true) { // Cupom Térmico
-                const pw = settings.paperWidth || 58;
+                const pw = Number(settings.paperWidth) || 80;
                 const ml = 2, mr = pw - 2, cx = pw / 2;
                 let est = 55 + budgetData.items.length * 8 + 25;
                 const doc = new jsPDF({ unit: 'mm', format: [pw, Math.max(40, est)] });

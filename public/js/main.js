@@ -913,7 +913,7 @@ const BuildFlow = {
     const footer = settings.footerMessage || "Obrigado pela preferência!";
 
     if (type === "thermal") {
-      const pw = settings.paperWidth || 58;
+      const pw = Number(settings.paperWidth) || 80;
       const ml = 2, mr = pw - 2, cx = pw / 2;
       let y = 4;
 
@@ -1576,7 +1576,7 @@ const BuildFlow = {
         autoPrint: false,
         useQz: false,
         printType: "thermal",
-        paperWidth: 58,
+        paperWidth: 80,
         showCompanyData: true,
         footerMessage: "Obrigado pela preferência!",
         receiptLegalNote: "Documento não fiscal emitido conforme Lei Complementar nº 123/2006",
