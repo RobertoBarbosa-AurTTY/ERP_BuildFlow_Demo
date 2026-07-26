@@ -927,12 +927,11 @@ const BuildFlow = {
 
       const doc = new jsPDF({ unit: "mm", format: [pw, Math.max(40, estHeight)] });
 
-      const cor = { texto: 60, linha: 50 };
-      doc.setTextColor(cor.texto, cor.texto, cor.texto);
+      doc.setTextColor(0, 0, 0);
       doc.setFillColor(255, 255, 255);
       doc.rect(0, 0, pw, estHeight, "F");
 
-      const hrBold = (yy) => { doc.setDrawColor(cor.linha, cor.linha, cor.linha); doc.setLineWidth(0.4); doc.line(ml, yy, mr, yy); };
+      const hrBold = (yy) => { doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.2); doc.line(ml, yy, mr, yy); };
 
       doc.setFont("courier", "bold");
       doc.setFontSize(14);
@@ -1008,10 +1007,10 @@ const BuildFlow = {
         if (item.discountAmount > 0) {
           doc.setFont("courier", "normal");
           doc.setFontSize(7);
-          doc.setTextColor(cor.texto - 10, cor.texto - 10, cor.texto - 10);
+          doc.setTextColor(80, 80, 80);
           doc.text(`Bruto: ${this.formatCurrency(item.lineGross)}`, ml, y);
           doc.text(`-${this.formatCurrency(item.discountAmount)}`, mr, y, { align: "right" });
-          doc.setTextColor(cor.texto, cor.texto, cor.texto);
+          doc.setTextColor(0, 0, 0);
           y += 2.5;
           doc.setFont("courier", "bold");
           doc.setFontSize(8);
@@ -1050,8 +1049,8 @@ const BuildFlow = {
       const boxH = 9;
       const totLabel = "TOTAL A PAGAR";
       const totVal = this.formatCurrency(s.total);
-      doc.setDrawColor(cor.linha, cor.linha, cor.linha);
-      doc.setLineWidth(0.4);
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.3);
       doc.roundedRect(ml, totY, mr - ml, boxH, 1.5, 1.5);
       doc.setFont("courier", "bold");
       doc.setFontSize(11);

@@ -2409,11 +2409,10 @@
                     const ml = 2, mr = pw - 2, cx = pw / 2;
                     let est = 55 + budgetData.items.length * 8 + 25;
                     const doc = new jsPDF({ unit: 'mm', format: [pw, Math.max(40, est)] });
-                    const cor = { texto: 60, linha: 50 };
-                    doc.setTextColor(cor.texto, cor.texto, cor.texto);
+                    doc.setTextColor(0, 0, 0);
                     doc.setFillColor(255, 255, 255);
                     doc.rect(0, 0, pw, est, "F");
-                    const hrBold = (yy) => { doc.setDrawColor(cor.linha, cor.linha, cor.linha); doc.setLineWidth(0.4); doc.line(ml, yy, mr, yy); };
+                    const hrBold = (yy) => { doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.2); doc.line(ml, yy, mr, yy); };
                     let y = 4;
                     doc.setFont('courier', 'bold'); doc.setFontSize(14);
                     doc.text(settings.storeName, cx, y, { align: 'center' }); y += 5;
@@ -2450,10 +2449,10 @@
                         if (item.discount > 0) {
                             const origTotal = Number(item.price) * Number(item.qty);
                             doc.setFont('courier', 'normal'); doc.setFontSize(7);
-                            doc.setTextColor(cor.texto - 10, cor.texto - 10, cor.texto - 10);
+                            doc.setTextColor(80, 80, 80);
                             doc.text(`Bruto: R$ ${origTotal.toFixed(2)}`, ml, y);
                             doc.text(`Desc: ${item.discount}${item.discountType === 'percent' ? '%' : ''}`, mr, y, { align: 'right' });
-                            doc.setTextColor(cor.texto, cor.texto, cor.texto);
+                            doc.setTextColor(0, 0, 0);
                             y += 2.5;
                             doc.setFont('courier', 'bold'); doc.setFontSize(8);
                             doc.text(` Liquido: R$ ${(Number(item.total) || 0).toFixed(2)}`, ml, y);
@@ -2464,7 +2463,7 @@
                     hrBold(y); y += 3;
                     const totY = y; const boxH = 9;
                     const totLabel = "TOTAL"; const totVal = `R$ ${(Number(budgetData.total) || 0).toFixed(2)}`;
-                    doc.setDrawColor(cor.linha, cor.linha, cor.linha); doc.setLineWidth(0.4);
+                    doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.3);
                     doc.roundedRect(ml, totY, mr - ml, boxH, 1.5, 1.5);
                     doc.setFont('courier', 'bold'); doc.setFontSize(11);
                     doc.text(totLabel, ml + 2, totY + boxH - 2);
@@ -2503,11 +2502,10 @@
                 const ml = 2, mr = pw - 2, cx = pw / 2;
                 let est = 55 + budgetData.items.length * 8 + 25;
                 const doc = new jsPDF({ unit: 'mm', format: [pw, Math.max(40, est)] });
-                const cor = { texto: 60, linha: 50 };
-                doc.setTextColor(cor.texto, cor.texto, cor.texto);
+                doc.setTextColor(0, 0, 0);
                 doc.setFillColor(255, 255, 255);
                 doc.rect(0, 0, pw, est, "F");
-                const hrBold = (yy) => { doc.setDrawColor(cor.linha, cor.linha, cor.linha); doc.setLineWidth(0.4); doc.line(ml, yy, mr, yy); };
+                const hrBold = (yy) => { doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.2); doc.line(ml, yy, mr, yy); };
                 let y = 4;
                 doc.setFont('courier', 'bold'); doc.setFontSize(14);
                 doc.text(settings.storeName, cx, y, { align: 'center' }); y += 5;
@@ -2544,10 +2542,10 @@
                     if (item.discount > 0) {
                         const origTotal = Number(item.price) * Number(item.qty);
                         doc.setFont('courier', 'normal'); doc.setFontSize(7);
-                        doc.setTextColor(cor.texto - 10, cor.texto - 10, cor.texto - 10);
+                        doc.setTextColor(80, 80, 80);
                         doc.text(`Bruto: R$ ${origTotal.toFixed(2)}`, ml, y);
                         doc.text(`Desc: ${item.discount}${item.discountType === 'percent' ? '%' : ''}`, mr, y, { align: 'right' });
-                        doc.setTextColor(cor.texto, cor.texto, cor.texto);
+                        doc.setTextColor(0, 0, 0);
                         y += 2.5;
                         doc.setFont('courier', 'bold'); doc.setFontSize(8);
                         doc.text(` Liquido: R$ ${(Number(item.total) || 0).toFixed(2)}`, ml, y);
@@ -2558,7 +2556,7 @@
                 hrBold(y); y += 3;
                 const totY = y; const boxH = 9;
                 const totLabel = "TOTAL"; const totVal = `R$ ${(Number(budgetData.total) || 0).toFixed(2)}`;
-                doc.setDrawColor(cor.linha, cor.linha, cor.linha); doc.setLineWidth(0.4);
+                doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.3);
                 doc.roundedRect(ml, totY, mr - ml, boxH, 1.5, 1.5);
                 doc.setFont('courier', 'bold'); doc.setFontSize(11);
                 doc.text(totLabel, ml + 2, totY + boxH - 2);
