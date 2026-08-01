@@ -11,6 +11,20 @@ exports.handler = async (event) => {
   const db = await getDb();
   const collection = db.collection('retiradas_caixa');
 
+  const parseObjectId = (value) => {
+    if (!value) return null;
+    let id = value;
+    if (typeof id === 'object' && id !== null) {
+      if (id.$oid) id = id.$oid;
+      else return null;
+    }
+    try {
+      return new ObjectId(String(id));
+    } catch {
+      return null;
+    }
+  };
+
   try {
     switch (event.httpMethod) {
       case 'GET': {
@@ -18,7 +32,11 @@ exports.handler = async (event) => {
         const query = {};
 
         if (caixaId) {
-          query.caixaId = new ObjectId(caixaId);
+          const parsedCaixaId = parseObjectId(caixaId);
+          if (!parsedCaixaId) {
+            return { statusCode: 400, body: JSON.stringify({ message: 'ID do caixa inválido' }) };
+          }
+          query.caixaId = parsedCaixaId;
         }
 
         if (tipo) {
@@ -47,6 +65,7 @@ exports.handler = async (event) => {
           const descricao = String(body.descricao || '').trim();
           const categoria = String(body.categoria || '').trim();
           const caixaId = body.caixaId;
+          const parsedCaixaId = parseObjectId(caixaId);
           const userName = body.userName || user.name || 'Operador';
           const tipo = body.tipo === 'suprimento' ? 'suprimento' : 'retirada';
 
@@ -63,7 +82,7 @@ exports.handler = async (event) => {
             descricao,
             categoria: categoria || 'Geral',
             tipo,
-            caixaId: caixaId ? new ObjectId(caixaId) : null,
+            caixaId: parsedCaixaId || null,
             userId: user.userId || user.id,
             userName,
             createdAt: new Date()

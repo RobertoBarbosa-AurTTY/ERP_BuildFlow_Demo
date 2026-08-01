@@ -43,6 +43,93 @@
             color: white;
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
         }
+        .clickable-row {
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+        .clickable-row:hover {
+            background: rgba(79, 70, 229, 0.08);
+            transform: translateX(1px);
+        }
+        .sale-detail-swal .swal2-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+        .sale-detail-swal .swal2-html-container {
+            padding: 0 0 8px;
+        }
+        .sale-detail-swal .report-container {
+            text-align: left;
+        }
+        .sale-detail-swal .report-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+        .sale-detail-swal .report-card {
+            padding: 16px;
+            border-radius: 18px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+        }
+        .sale-detail-swal .report-card p {
+            margin: 0;
+        }
+        .sale-detail-swal .report-card .label {
+            margin-bottom: 6px;
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .sale-detail-swal .report-card .value {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+        .sale-detail-swal .report-note {
+            padding: 16px;
+            border-radius: 18px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            margin-bottom: 18px;
+        }
+        .sale-detail-swal .report-table {
+            width: 100%;
+            min-width: 520px;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.94rem;
+        }
+        .sale-detail-swal .report-table th,
+        .sale-detail-swal .report-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        .sale-detail-swal .report-table th {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-align: left;
+        }
+        .sale-detail-swal .report-table tbody tr:hover {
+            background: var(--bg-hover);
+        }
+        .sale-detail-swal .report-table td.value {
+            font-weight: 700;
+            text-align: right;
+        }
+        .sale-detail-swal .report-table td.type-suprimento {
+            color: var(--emerald);
+        }
+        .sale-detail-swal .report-table td.type-sangria {
+            color: var(--pdv-amber,#d97706);
+        }
         .tab-btn .badge {
             font-size: 0.7rem;
             padding: 2px 6px;
@@ -307,6 +394,9 @@
                             const vFinal = Number(cx.valorFinal || 0);
                             const nVendas = Number(cx.numeroVendas || 0);
                             const isOpen = cx.status === 'aberto';
+                            row.className = 'clickable-row';
+                            row.style.cursor = 'pointer';
+                            row.title = 'Clique para ver o relatório do caixa';
                             row.innerHTML = `
                                 <td style="font-weight:700;">${numero}</td>
                                 <td>${abertura}</td>
@@ -316,6 +406,7 @@
                                 <td>${nVendas}</td>
                                 <td>${isOpen ? '<span class="badge badge-success">Aberto</span>' : '<span class="badge" style="background:var(--bg-hover);color:var(--text-muted);">Fechado</span>'}</td>
                             `;
+                            row.addEventListener('click', () => showCaixaReport(cx));
                             body.appendChild(row);
                         });
                     }
@@ -436,6 +527,111 @@
                 return sale.saleNumber != null
                     ? String(sale.saleNumber)
                     : BuildFlow.normalizeId(sale._id).slice(-8);
+            }
+
+            async function showCaixaReport(caixa) {
+                const caixaId = BuildFlow.normalizeId(caixa._id || caixa.id);
+                const start = caixa.dataAbertura ? new Date(caixa.dataAbertura).toISOString() : null;
+                const end = caixa.dataFechamento ? new Date(caixa.dataFechamento).toISOString() : new Date().toISOString();
+                let movimentos = [];
+                try {
+                    movimentos = await BuildFlow.getSangriasCaixa({ caixaId, start, end });
+                } catch (error) {
+                    movimentos = [];
+                }
+
+                const totalRetiradas = movimentos.reduce((sum, item) => sum + (item.tipo === 'suprimento' ? 0 : Number(item.valor) || 0), 0);
+                const totalSuprimentos = movimentos.reduce((sum, item) => sum + (item.tipo === 'suprimento' ? Number(item.valor) || 0 : 0), 0);
+                const valorInicial = Number(caixa.valorInicial || 0);
+                const totalVendas = Number(caixa.totalVendas || 0);
+                const valorFinal = Number(caixa.valorFinal || (valorInicial + totalVendas - totalRetiradas + totalSuprimentos));
+                const periodoLabel = caixa.dataAbertura ? `${new Date(caixa.dataAbertura).toLocaleString('pt-BR')} — ${caixa.dataFechamento ? new Date(caixa.dataFechamento).toLocaleString('pt-BR') : 'Atual'}` : 'Período não disponível';
+                const observacao = caixa.observacao ? BuildFlow.escapeHtml(caixa.observacao) : '—';
+
+                const movementsHtml = movimentos.length > 0
+                    ? movimentos.map((item, index) => {
+                        const descricao = BuildFlow.escapeHtml(item.descricao || item.categoria || '—');
+                        const valor = Number(item.valor) || 0;
+                        const tipoLabel = item.tipo === 'suprimento' ? 'Suprimento' : 'Sangria';
+                        const sinal = item.tipo === 'suprimento' ? '+' : '-';
+                        const color = item.tipo === 'suprimento' ? 'var(--emerald)' : 'var(--pdv-amber,#d97706)';
+                        const data = item.createdAt ? new Date(item.createdAt).toLocaleString('pt-BR') : '—';
+                        return `
+                            <tr>
+                                <td style="padding: 10px 12px; border-bottom:1px solid rgba(0,0,0,0.05);">${index + 1}</td>
+                                <td style="padding: 10px 12px; border-bottom:1px solid rgba(0,0,0,0.05);">${tipoLabel}</td>
+                                <td style="padding: 10px 12px; border-bottom:1px solid rgba(0,0,0,0.05);">${descricao}</td>
+                                <td class="value ${item.tipo === 'suprimento' ? 'type-suprimento' : 'type-sangria'}" style="padding: 10px 12px; border-bottom:1px solid rgba(0,0,0,0.05);">${sinal} ${BuildFlow.formatCurrency(valor)}</td>
+                                <td style="padding: 10px 12px; border-bottom:1px solid rgba(0,0,0,0.05);">${data}</td>
+                            </tr>`;
+                    }).join('')
+                    : '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted);">Nenhum movimento de caixa registrado para este período.</td></tr>';
+
+                const reportHtml = `
+                    <div class="report-container">
+                        <div class="report-grid">
+                            <div class="report-card">
+                                <span class="label">Período</span>
+                                <p class="value">${periodoLabel}</p>
+                            </div>
+                            <div class="report-card">
+                                <span class="label">Terminal</span>
+                                <p class="value">${BuildFlow.escapeHtml(caixa.numeroCaixa || '—')}</p>
+                            </div>
+                        </div>
+                        <div class="report-grid">
+                            <div class="report-card">
+                                <span class="label">Valor Inicial</span>
+                                <p class="value">${BuildFlow.formatCurrency(valorInicial)}</p>
+                            </div>
+                            <div class="report-card">
+                                <span class="label">Total Sangrias</span>
+                                <p class="value type-sangria">-${BuildFlow.formatCurrency(totalRetiradas)}</p>
+                            </div>
+                            <div class="report-card">
+                                <span class="label">Total Suprimentos</span>
+                                <p class="value type-suprimento">+${BuildFlow.formatCurrency(totalSuprimentos)}</p>
+                            </div>
+                            <div class="report-card">
+                                <span class="label">Valor Final</span>
+                                <p class="value">${BuildFlow.formatCurrency(valorFinal)}</p>
+                            </div>
+                        </div>
+                        <div class="report-note">
+                            <span class="label">Observação</span>
+                            <p>${observacao}</p>
+                        </div>
+                        <div class="report-grid" style="margin-top: 0;">
+                            <div style="grid-column: 1 / -1;">
+                                <h4 style="margin:0 0 12px;font-size:1rem;font-weight:700;">Movimentos de Caixa</h4>
+                                <div style="overflow:auto;">
+                                    <table class="report-table">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Tipo</th>
+                                                <th>Descrição</th>
+                                                <th style="text-align:right;">Valor</th>
+                                                <th style="text-align:right;">Data</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${movementsHtml}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                await Swal.fire({
+                    title: `Relatório do Caixa ${BuildFlow.escapeHtml(caixa.numeroCaixa || '—')}`,
+                    html: reportHtml,
+                    width: '860px',
+                    confirmButtonText: 'Fechar',
+                    customClass: { popup: 'sale-detail-swal' }
+                });
             }
 
             async function promptSaleCashPayment(totalAmount) {

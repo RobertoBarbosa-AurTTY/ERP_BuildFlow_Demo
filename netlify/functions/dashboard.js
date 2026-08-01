@@ -61,6 +61,7 @@ exports.handler = async (event, context) => {
       entriesLast24h,
       recentSales,
       recentProducts,
+      cashMovements,
       pendingSales,
       recentMovements,
       idleStockProducts,
@@ -117,6 +118,13 @@ exports.handler = async (event, context) => {
       // Produtos recentes do período (últimos 10)
       db.collection('products')
         .find({ createdAt: { $gte: currentStart, $lt: currentEnd } }, { projection: { _id: 1, name: 1, sku: 1, quantity: 1, price: 1, createdAt: 1 } })
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .toArray(),
+
+      // Movimentos de caixa do período (sangrias e suprimentos)
+      db.collection('retiradas_caixa')
+        .find({ createdAt: { $gte: currentStart, $lt: currentEnd } })
         .sort({ createdAt: -1 })
         .limit(10)
         .toArray(),
@@ -273,6 +281,7 @@ exports.handler = async (event, context) => {
         estimatedProfit,
         recentSales,
         recentProducts,
+        cashMovements,
         prevRevenue,
         revenueChange,
         topProducts,

@@ -597,10 +597,10 @@
 
           <section class="card-table">
             <div class="table-header">
-              <h3 id="recentProductsTitle">Lançamentos no Estoque</h3>
+              <h3 id="recentProductsTitle">Movimentos de Caixa</h3>
               <button
                 class="btn"
-                onclick="location.href = '/stock'"
+                onclick="location.href = '/saidas'"
                 style="
                   background: var(--bg-hover);
                   padding: 8px 16px;
@@ -608,7 +608,7 @@
                   font-size: 0.75rem;
                 "
               >
-                Ver Estoque
+                Ver Caixa
               </button>
             </div>
             <div class="table-scroll-wrapper">
@@ -616,22 +616,23 @@
                 <thead class="table-sticky-head">
                   <tr>
                     <th style="width: 36px;">#</th>
-                    <th>Produto</th>
-                    <th>Qtd</th>
-                    <th>Preço</th>
+                    <th>Tipo</th>
+                    <th>Descrição</th>
+                    <th>Valor</th>
+                    <th>Data</th>
                   </tr>
                 </thead>
                 <tbody id="recentProductsTableBody">
                   <tr>
                     <td
-                      colspan="4"
+                      colspan="5"
                       style="
                         text-align: center;
                         padding: 40px;
                         color: var(--text-muted);
                       "
                     >
-                      Carregando produtos...
+                      Carregando movimentos de caixa...
                     </td>
                   </tr>
                 </tbody>
@@ -872,7 +873,7 @@
           document.getElementById("topProdutosLabel").textContent = labels.top;
           document.getElementById("insightsSubtitle").textContent = labels.subtitle;
           document.getElementById("recentSalesTitle").textContent = `Top 5 Vendas Recentes ${labels.tableSuffix}`;
-          document.getElementById("recentProductsTitle").textContent = `Top 5 Lançamentos no Estoque ${labels.tableSuffix}`;
+          document.getElementById("recentProductsTitle").textContent = `Movimentos de Caixa ${labels.tableSuffix}`;
 
           setMetricText(
             "revenueText",
@@ -924,17 +925,24 @@
           );
           productsBody.innerHTML = "";
 
-          if (!data.recentProducts || data.recentProducts.length === 0) {
+          if (!data.cashMovements || data.cashMovements.length === 0) {
               productsBody.innerHTML =
-              '<tr><td colspan="4" style="text-align: center; padding: 20px;">Nenhum produto recente.</td></tr>';
+              '<tr><td colspan="5" style="text-align: center; padding: 20px;">Nenhum movimento de caixa no período.</td></tr>';
           } else {
-            data.recentProducts.slice(0, 5).forEach((product, i) => {
+            data.cashMovements.slice(0, 5).forEach((movement, i) => {
               const row = document.createElement("tr");
+              const dateText = movement.createdAt ? new Date(movement.createdAt).toLocaleString("pt-BR") : "—";
+              const value = Number(movement.valor) || 0;
+              const tipoLabel = movement.tipo === "suprimento" ? "Suprimento" : "Sangria";
+              const valueStyle = movement.tipo === "suprimento" ? "color:var(--emerald);" : "color:var(--pdv-amber,#d97706);";
+              const sign = movement.tipo === "suprimento" ? "+" : "-";
+              const descricaoText = movement.descricao ? movement.descricao : movement.categoria ? movement.categoria : "—";
               row.innerHTML = `
                             <td style="text-align: center; font-weight: 700; color: var(--text-muted);">${i + 1}</td>
-                            <td>${product.name}</td>
-                            <td>${product.quantity} ${product.unit || "un"}</td>
-                            <td>R$ ${(Number(product.price) || 0).toFixed(2)}</td>
+                            <td>${tipoLabel}</td>
+                            <td>${BuildFlow.escapeHtml(descricaoText)}</td>
+                            <td style="font-weight: 600; ${valueStyle}">${sign} R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                            <td>${dateText}</td>
                         `;
               productsBody.appendChild(row);
             });

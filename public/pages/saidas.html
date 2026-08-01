@@ -2178,7 +2178,7 @@
                     valor: value.valor,
                     descricao: value.descricao,
                     categoria: value.categoria,
-                    caixaId: caixaAberto._id || caixaAberto.id,
+                    caixaId: BuildFlow.normalizeId(caixaAberto._id || caixaAberto.id),
                     userName: userData.name || 'Operador'
                 });
                 BuildFlow.showToast(`Sangria de ${BuildFlow.formatCurrency(value.valor)} registrada: ${BuildFlow.escapeHtml(value.descricao)}`, 'success');
@@ -2263,7 +2263,7 @@
                     valor: value.valor,
                     descricao: value.descricao,
                     categoria: value.categoria,
-                    caixaId: caixaAberto._id || caixaAberto.id,
+                    caixaId: BuildFlow.normalizeId(caixaAberto._id || caixaAberto.id),
                     userName: userData.name || 'Operador'
                 });
                 BuildFlow.showToast(`Suprimento de ${BuildFlow.formatCurrency(value.valor)} registrado: ${BuildFlow.escapeHtml(value.descricao)}`, 'success');
