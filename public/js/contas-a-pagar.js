@@ -67,6 +67,7 @@
     if (category !== "all") params.set("category", category);
     if (els.filterFrom?.value) params.set("from", els.filterFrom.value);
     if (els.filterTo?.value) params.set("to", els.filterTo.value);
+    params.set("limit", "all");
 
     const summaryParams = new URLSearchParams(params.toString());
     summaryParams.set("summary", "true");

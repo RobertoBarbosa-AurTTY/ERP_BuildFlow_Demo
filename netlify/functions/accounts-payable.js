@@ -197,7 +197,7 @@ exports.handler = async (event) => {
           return { statusCode: 200, body: JSON.stringify(summary) };
         }
 
-        const { search, status, category, from, to, page = 1, limit = 50 } = params;
+        const { search, status, category, from, to, page = 1, limit = 'all' } = params;
         const query = {};
 
         if (category && category !== "all") query.category = category;
@@ -229,8 +229,8 @@ exports.handler = async (event) => {
         }
 
         const pageNum = Math.max(1, parseInt(page, 10));
-        const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
-        const skip = (pageNum - 1) * limitNum;
+        const limitNum = limit === "all" ? 0 : Math.min(100, Math.max(1, parseInt(limit, 10)));
+        const skip = limitNum === 0 ? 0 : (pageNum - 1) * limitNum;
 
         const [total, dataRaw] = await Promise.all([
           collection.countDocuments(query),
@@ -246,7 +246,7 @@ exports.handler = async (event) => {
               page: pageNum,
               limit: limitNum,
               total,
-              totalPages: Math.ceil(total / limitNum),
+              totalPages: limitNum === 0 ? 1 : Math.ceil(total / limitNum),
             },
           }),
         };
