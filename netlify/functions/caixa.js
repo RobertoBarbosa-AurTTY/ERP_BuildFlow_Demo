@@ -131,15 +131,16 @@ exports.handler = async (event, context) => {
           const observacao = String(body.observacao || '').trim();
 
           const salesCol = db.collection('sales');
-          const salesQuery = {
-            createdAt: {
-              $gte: aberto.dataAbertura,
-              $lte: new Date()
-            },
-            status: 'FINALIZED'
-          };
-
-          const sales = await salesCol.find(salesQuery).toArray();
+          // Vendas da sessão: por caixaId quando disponível; fallback para vendas antigas sem o campo
+          const sales = await salesCol.find({
+            status: 'FINALIZED',
+            $or: [
+              { caixaId: aberto._id },
+              { caixaId: { $exists: false }, createdAt: { $gte: aberto.dataAbertura, $lte: new Date() } }
+            ]
+          }, {
+            projection: { total: 1, totalDiscount: 1, paymentMethod: 1, splitPayment: 1 }
+          }).toArray();
 
           const retiradasCol = db.collection('retiradas_caixa');
           const retiradas = await retiradasCol.find({
@@ -163,6 +164,25 @@ exports.handler = async (event, context) => {
             totalDescontos += Number(sale.totalDiscount) || 0;
             numeroVendas++;
 
+            if (sale.paymentMethod === 'Dividido' && sale.splitPayment && sale.splitPayment.cash != null) {
+              totalDinheiro += Number(sale.splitPayment.cash) || 0;
+              const rest = Number(sale.splitPayment.rest) || 0;
+              switch (sale.splitPayment.method) {
+                case 'Cartão de Crédito':
+                  totalCartaoCredito += rest;
+                  break;
+                case 'Cartão de Débito':
+                  totalCartaoDebito += rest;
+                  break;
+                case 'PIX':
+                  totalPIX += rest;
+                  break;
+                default:
+                  break;
+              }
+              continue;
+            }
+
             switch (sale.paymentMethod) {
               case 'Dinheiro':
                 totalDinheiro += Number(sale.total) || 0;
@@ -182,11 +202,16 @@ exports.handler = async (event, context) => {
           }
 
           let totalRetiradas = 0;
+          let totalSuprimentos = 0;
           for (const ret of retiradas) {
-            totalRetiradas += Number(ret.valor) || 0;
+            if (ret.tipo === 'suprimento') {
+              totalSuprimentos += Number(ret.valor) || 0;
+            } else {
+              totalRetiradas += Number(ret.valor) || 0;
+            }
           }
 
-          const valorFinal = Number(aberto.valorInicial) + totalVendas - totalRetiradas;
+          const valorFinal = Number(aberto.valorInicial) + totalVendas - totalRetiradas + totalSuprimentos;
 
           const update = {
             $set: {
@@ -200,6 +225,7 @@ exports.handler = async (event, context) => {
               totalPIX,
               totalDescontos,
               totalRetiradas,
+              totalSuprimentos,
               numeroVendas,
               observacao: observacao || aberto.observacao || '',
               updatedAt: new Date()
@@ -214,7 +240,7 @@ exports.handler = async (event, context) => {
             entity: 'caixa',
             entityId: aberto._id,
             timestamp: new Date(),
-            details: `Caixa fechado. Total de vendas: R$ ${totalVendas.toFixed(2)}${totalRetiradas > 0 ? `, Retiradas: R$ ${totalRetiradas.toFixed(2)}` : ''}, Nº vendas: ${numeroVendas}`
+            details: `Caixa fechado. Total de vendas: R$ ${totalVendas.toFixed(2)}${totalRetiradas > 0 ? `, Sangrias: R$ ${totalRetiradas.toFixed(2)}` : ''}${totalSuprimentos > 0 ? `, Suprimentos: R$ ${totalSuprimentos.toFixed(2)}` : ''}, Nº vendas: ${numeroVendas}`
           });
 
           const registroFinal = await caixa.findOne({ _id: aberto._id });
@@ -228,6 +254,7 @@ exports.handler = async (event, context) => {
                 valorInicial: aberto.valorInicial,
                 totalVendas,
                 totalRetiradas,
+                totalSuprimentos,
                 valorFinal,
                 numeroVendas,
                 totalDinheiro,

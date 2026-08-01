@@ -14,7 +14,7 @@ exports.handler = async (event, context) => {
   try {
     switch (event.httpMethod) {
       case 'GET':
-        const { start, end, status: filterStatus, page = 1, limit = 50 } = event.queryStringParameters || {};
+        const { start, end, status: filterStatus, caixaId, summary, page = 1, limit = 50 } = event.queryStringParameters || {};
         let query = {};
         
         if (start || end) {
@@ -25,6 +25,27 @@ exports.handler = async (event, context) => {
 
         if (filterStatus) {
           query.status = filterStatus;
+        }
+
+        if (caixaId) {
+          query.caixaId = new ObjectId(caixaId);
+        }
+
+        // Resumo agregado (sem itens) para fechamento de caixa
+        if (summary === '1' || summary === 'true') {
+          const agg = await sales.aggregate([
+            { $match: query },
+            { $project: { total: 1, totalDiscount: 1, paymentMethod: 1, splitPayment: 1 } },
+            { $group: {
+                _id: null,
+                totalVendas: { $sum: { $ifNull: ['$total', 0] } },
+                totalDescontos: { $sum: { $ifNull: ['$totalDiscount', 0] } },
+                numeroVendas: { $sum: 1 },
+                methods: { $push: { method: '$paymentMethod', total: { $ifNull: ['$total', 0] }, splitPayment: '$splitPayment' } }
+            } }
+          ]).toArray();
+          const s = agg[0] || { totalVendas: 0, totalDescontos: 0, numeroVendas: 0, methods: [] };
+          return { statusCode: 200, body: JSON.stringify({ summary: s }) };
         }
 
         const pageNum = Math.max(1, parseInt(page, 10));
@@ -99,17 +120,40 @@ exports.handler = async (event, context) => {
             }
           }));
           await db.collection('products').bulkWrite(revertOps);
-          
-          // Aplicar estoque novo
-          const applyOps = updateData.items.map(item => ({
-            updateOne: {
-              filter: { _id: new ObjectId(item.id) },
-              update: (updateData.status === 'RESERVED' || (!updateData.status && oldSale.status === 'RESERVED'))
-                ? { $inc: { reserved: item.qty } }
-                : { $inc: { quantity: -item.qty } }
+
+          // Aplicar estoque novo de forma atômica (condição impede saldo negativo)
+          const isReservedNew = updateData.status === 'RESERVED' || (!updateData.status && oldSale.status === 'RESERVED');
+          const appliedNew = [];
+          let applyFailed = false;
+          for (const item of updateData.items) {
+            let filter, update;
+            if (isReservedNew) {
+              filter = { _id: new ObjectId(item.id) };
+              update = { $inc: { reserved: item.qty } };
+            } else {
+              filter = { _id: new ObjectId(item.id), quantity: { $gte: item.qty } };
+              update = { $inc: { quantity: -item.qty } };
             }
-          }));
-          await db.collection('products').bulkWrite(applyOps);
+            const upd = await db.collection('products').updateOne(filter, update);
+            if (upd.modifiedCount !== 1) {
+              applyFailed = true;
+              break;
+            }
+            appliedNew.push({ id: item.id, qty: item.qty, isReserved: isReservedNew });
+          }
+
+          if (applyFailed) {
+            // Reverter o que foi aplicado e restaurar estoque antigo
+            await db.collection('products').bulkWrite(appliedNew.map(a => ({
+              updateOne: {
+                filter: { _id: new ObjectId(a.id) },
+                update: a.isReserved
+                  ? { $inc: { reserved: -a.qty } }
+                  : { $inc: { quantity: a.qty } }
+              }
+            })).concat(revertOps));
+            return { statusCode: 409, body: JSON.stringify({ message: 'Conflito de estoque. Saldo insuficiente para a edição.' }) };
+          }
         }
 
         await sales.updateOne(
@@ -144,7 +188,9 @@ exports.handler = async (event, context) => {
           globalDiscountAmount,
           totalDiscount,
           amountPaid,
-          change: changeAmount
+          change: changeAmount,
+          caixaId,
+          splitPayment
         } = body;
         const saleStatus = status || 'FINALIZED';
 
@@ -183,33 +229,60 @@ exports.handler = async (event, context) => {
           paymentMethod: paymentMethod || 'Dinheiro',
           amountPaid: amountPaid != null ? Number(amountPaid) : null,
           change: changeAmount != null ? Number(changeAmount) : null,
+          caixaId: caixaId ? new ObjectId(caixaId) : null,
+          splitPayment: splitPayment && splitPayment.cash != null ? {
+            cash: Number(splitPayment.cash) || 0,
+            method: splitPayment.method || 'Cartão de Crédito',
+            rest: Number(splitPayment.rest) || 0
+          } : null,
           userId: user.userId,
           createdAt: new Date()
         };
 
         const result = await sales.insertOne(sale);
+
+        // Atualizar estoque de forma atômica (condição impede saldo negativo)
         const appliedStock = [];
-
-        // Atualizar estoque em massa
-        const bulkOps = Array.from(demand.entries()).map(([productId, wantQty]) => ({
-          updateOne: {
-            filter: { _id: new ObjectId(productId) },
-            update: saleStatus === 'RESERVED'
-              ? { $inc: { reserved: wantQty } }
-              : { $inc: { quantity: -wantQty } }
+        for (const [productId, wantQty] of demand.entries()) {
+          let filter, update;
+          if (saleStatus === 'RESERVED') {
+            filter = {
+              _id: new ObjectId(productId),
+              $expr: {
+                $gte: [
+                  { $subtract: [{ $ifNull: ['$quantity', 0] }, { $ifNull: ['$reserved', 0] }] },
+                  wantQty
+                ]
+              }
+            };
+            update = { $inc: { reserved: wantQty } };
+          } else {
+            filter = { _id: new ObjectId(productId), quantity: { $gte: wantQty } };
+            update = { $inc: { quantity: -wantQty } };
           }
-        }));
-
-        const bulkResult = await productsCol.bulkWrite(bulkOps);
-        
-        if (bulkResult.matchedCount !== demand.size) {
-          await sales.deleteOne({ _id: result.insertedId });
-          return {
-            statusCode: 409,
-            body: JSON.stringify({
-              message: 'Conflito de estoque. Produto não encontrado. Tente novamente.'
-            })
-          };
+          const upd = await productsCol.updateOne(filter, update);
+          if (upd.modifiedCount !== 1) {
+            // Falhou: reverter o que já foi aplicado
+            const rollback = appliedStock.map(s => ({
+              updateOne: {
+                filter: { _id: new ObjectId(s.productId) },
+                update: saleStatus === 'RESERVED'
+                  ? { $inc: { reserved: -s.wantQty } }
+                  : { $inc: { quantity: s.wantQty } }
+              }
+            }));
+            if (rollback.length > 0) {
+              await productsCol.bulkWrite(rollback);
+            }
+            await sales.deleteOne({ _id: result.insertedId });
+            return {
+              statusCode: 409,
+              body: JSON.stringify({
+                message: 'Conflito de estoque. Produto não encontrado ou saldo insuficiente. Tente novamente.'
+              })
+            };
+          }
+          appliedStock.push({ productId, wantQty });
         }
 
         // 3. Log de auditoria

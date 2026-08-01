@@ -607,6 +607,28 @@
             font-size: 1.25rem;
             color: var(--pdv-primary);
         }
+        .pdv-cash-quick {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .cash-quick-btn {
+            flex: 1 1 calc(33% - 6px);
+            padding: 9px 8px;
+            border-radius: 10px;
+            border: 1px solid var(--pdv-modal-border);
+            background: var(--pdv-modal-surface);
+            color: var(--pdv-text);
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .cash-quick-btn:hover {
+            border-color: var(--pdv-primary);
+            color: var(--pdv-primary);
+        }
         .pdv-cash-change-box {
             margin-top: 12px;
             padding: 14px 16px;
@@ -1631,13 +1653,13 @@
             <i class="fa-solid fa-clock-rotate-left"></i>
             <span>Histórico (F10)</span>
         </button>
-        <button class="footer-btn btn-orange" id="caixaFooterBtn">
-            <i class="fa-solid fa-cash-register"></i>
-            <span>Caixa (F8)</span>
+        <button class="footer-btn system-btn" id="suprimentoBtn" style="background:var(--pdv-success,#16a34a);color:#fff;">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+            <span>Suprimento (F8)</span>
         </button>
         <button class="footer-btn system-btn" id="retiradaBtn" style="background:var(--pdv-amber,#d97706);color:#fff;">
-            <i class="fa-solid fa-hand-holding-dollar"></i>
-            <span>Retirada (F11)</span>
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            <span>Sangria (F11)</span>
         </button>
     </footer>
     </div>
@@ -1663,6 +1685,21 @@
         let barcodeProcessing = false;
         let barcodeLastHandled = '';
         let barcodeLastHandledAt = 0;
+        let isFinalizing = false;
+
+        // --- Cache de produtos (evita re-baixar o catálogo a cada venda) ---
+        let productsCache = null;
+        let productsCacheTime = 0;
+        const PRODUCTS_CACHE_TTL = 15000;
+        async function loadProducts(force = false) {
+            const now = Date.now();
+            if (!force && productsCache && (now - productsCacheTime) < PRODUCTS_CACHE_TTL) {
+                return productsCache;
+            }
+            productsCache = await BuildFlow.getProducts({ limit: 'all' });
+            productsCacheTime = now;
+            return productsCache;
+        }
 
         // --- Sincronização em tempo real entre dispositivos ---
         let deviceId = localStorage.getItem('pdv_device_id');
@@ -1766,7 +1803,7 @@
                 if (mobileCaixaNumber) mobileCaixaNumber.textContent = caixaLabel;
                 if (caixaStatusAberto) caixaStatusAberto.style.display = 'inline';
                 if (caixaStatusFechado) caixaStatusFechado.style.display = 'none';
-                if (caixaBtnText) caixaBtnText.textContent = 'Fechar Caixa (F8)';
+                if (caixaBtnText) caixaBtnText.textContent = 'Fechar Caixa';
                 if (caixaActionBtn) {
                     caixaActionBtn.style.background = 'var(--pdv-danger)';
                 }
@@ -1791,7 +1828,7 @@
                 if (mobileCaixaNumber) mobileCaixaNumber.textContent = '---';
                 if (caixaStatusAberto) caixaStatusAberto.style.display = 'none';
                 if (caixaStatusFechado) caixaStatusFechado.style.display = 'inline';
-                if (caixaBtnText) caixaBtnText.textContent = 'Abrir Caixa (F8)';
+                if (caixaBtnText) caixaBtnText.textContent = 'Abrir Caixa';
                 if (caixaActionBtn) {
                     caixaActionBtn.style.background = 'var(--pdv-success)';
                 }
@@ -2010,6 +2047,7 @@
         }
 
         let autoCloseTimer = null;
+        let autoCloseWarnings = [];
 
         function startAutoCloseScheduler() {
             stopAutoCloseScheduler();
@@ -2032,13 +2070,14 @@
                 { mins: 5, msg: 'O caixa será fechado em 5 minutos' },
             ];
 
+            autoCloseWarnings = [];
             intervals.forEach(({ mins, msg }) => {
                 const ms = timeUntilClose - (mins * 60 * 1000);
                 if (ms > 0) {
-                    setTimeout(() => {
+                    autoCloseWarnings.push(setTimeout(() => {
                         if (!caixaAberto) return;
                         BuildFlow.showToast(`${msg} (${settings.caixaAutoCloseTime})`, 'warning');
-                    }, ms);
+                    }, ms));
                 }
             });
 
@@ -2054,22 +2093,26 @@
                 clearTimeout(autoCloseTimer);
                 autoCloseTimer = null;
             }
+            if (Array.isArray(autoCloseWarnings)) {
+                autoCloseWarnings.forEach(t => clearTimeout(t));
+                autoCloseWarnings = [];
+            }
         }
 
         async function showRetiradaModal() {
             if (!caixaAberto) {
-                BuildFlow.showToast('Abra o caixa antes de registrar uma retirada', 'warning');
+                BuildFlow.showToast('Abra o caixa antes de registrar uma sangria', 'warning');
                 return;
             }
 
             const { value, isConfirmed } = await Swal.fire({
                 ...pdvSwalOptions({ width: '440px' }),
-                title: '<i class="fa-solid fa-hand-holding-dollar"></i> Retirada de Caixa',
+                title: '<i class="fa-solid fa-arrow-right-from-bracket"></i> Sangria de Caixa',
                 html: `
                     <div class="pdv-sheet" style="text-align:left;">
                         <div style="padding:14px;border-radius:12px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);margin-bottom:16px;font-size:0.75rem;color:var(--pdv-text-muted);">
                             <i class="fa-solid fa-info-circle" style="color:var(--pdv-amber,#d97706);"></i>
-                            Registre aqui valores retirados do caixa para pagamento de despesas.
+                            Registre aqui valores retirados do caixa (sangria) para pagamento de despesas.
                         </div>
                         <div class="pdv-form-block">
                             <label>Valor (R$) <span style="color:var(--pdv-danger);">*</span></label>
@@ -2093,7 +2136,7 @@
                         </div>
                     </div>
                 `,
-                confirmButtonText: '<i class="fa-solid fa-check"></i> Registrar Retirada',
+                confirmButtonText: '<i class="fa-solid fa-check"></i> Registrar Sangria',
                 confirmButtonColor: 'var(--pdv-amber,#d97706)',
                 showCancelButton: true,
                 cancelButtonText: 'Cancelar',
@@ -2119,7 +2162,7 @@
                         return false;
                     }
                     if (!descricao) {
-                        Swal.showValidationMessage('Informe a descrição da retirada');
+                        Swal.showValidationMessage('Informe a descrição da sangria');
                         return false;
                     }
                     return { valor, descricao, categoria };
@@ -2131,16 +2174,101 @@
             try {
                 Swal.showLoading();
                 const userData = JSON.parse(localStorage.getItem('user') || '{}');
-                await BuildFlow.registrarRetiradaCaixa({
+                await BuildFlow.registrarSangriaCaixa({
                     valor: value.valor,
                     descricao: value.descricao,
                     categoria: value.categoria,
                     caixaId: caixaAberto._id || caixaAberto.id,
                     userName: userData.name || 'Operador'
                 });
-                BuildFlow.showToast(`Retirada de ${BuildFlow.formatCurrency(value.valor)} registrada: ${BuildFlow.escapeHtml(value.descricao)}`, 'success');
+                BuildFlow.showToast(`Sangria de ${BuildFlow.formatCurrency(value.valor)} registrada: ${BuildFlow.escapeHtml(value.descricao)}`, 'success');
             } catch (error) {
-                BuildFlow.showToast(error.message || 'Erro ao registrar retirada', 'danger');
+                BuildFlow.showToast(error.message || 'Erro ao registrar sangria', 'danger');
+            }
+        }
+
+        async function showSuprimentoModal() {
+            if (!caixaAberto) {
+                BuildFlow.showToast('Abra o caixa antes de registrar um suprimento', 'warning');
+                return;
+            }
+
+            const { value, isConfirmed } = await Swal.fire({
+                ...pdvSwalOptions({ width: '440px' }),
+                title: '<i class="fa-solid fa-arrow-right-to-bracket"></i> Suprimento de Caixa',
+                html: `
+                    <div class="pdv-sheet" style="text-align:left;">
+                        <div style="padding:14px;border-radius:12px;background:rgba(22,163,74,0.1);border:1px solid rgba(22,163,74,0.25);margin-bottom:16px;font-size:0.75rem;color:var(--pdv-text-muted);">
+                            <i class="fa-solid fa-info-circle" style="color:var(--pdv-success,#16a34a);"></i>
+                            Registre aqui valores que entram no caixa (troco, reposição de dinheiro, etc.).
+                        </div>
+                        <div class="pdv-form-block">
+                            <label>Valor (R$) <span style="color:var(--pdv-danger);">*</span></label>
+                            <input type="text" id="suprimento-valor" class="pdv-input" inputmode="decimal" autocomplete="off" placeholder="R$ 0,00" value="R$ 0,00">
+                        </div>
+                        <div class="pdv-form-block">
+                            <label>Descrição <span style="color:var(--pdv-danger);">*</span></label>
+                            <input type="text" id="suprimento-descricao" class="pdv-input" placeholder="Ex: Troco adicionado ao caixa" autocomplete="off" style="width:100%;">
+                        </div>
+                        <div class="pdv-form-block">
+                            <label>Categoria</label>
+                            <select id="suprimento-categoria" class="pdv-input" style="width:100%;padding:12px 16px;border-radius:12px;">
+                                <option value="Geral">Geral</option>
+                                <option value="Troco">Troco</option>
+                                <option value="Reposição">Reposição</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                        </div>
+                    </div>
+                `,
+                confirmButtonText: '<i class="fa-solid fa-check"></i> Registrar Suprimento',
+                confirmButtonColor: 'var(--pdv-success,#16a34a)',
+                showCancelButton: true,
+                cancelButtonText: 'Cancelar',
+                didOpen: () => {
+                    const elValor = document.getElementById('suprimento-valor');
+                    const formatField = () => {
+                        const n = BuildFlow.parseDiscountInput(elValor.value);
+                        elValor.value = BuildFlow.formatCurrency(n);
+                    };
+                    elValor.addEventListener('focus', () => {
+                        const raw = BuildFlow.parseDiscountInput(elValor.value);
+                        elValor.value = raw > 0 ? raw.toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '';
+                    });
+                    elValor.addEventListener('blur', formatField);
+                    document.getElementById('suprimento-descricao').focus();
+                },
+                preConfirm: () => {
+                    const valor = BuildFlow.parseDiscountInput(document.getElementById('suprimento-valor').value);
+                    const descricao = document.getElementById('suprimento-descricao').value.trim();
+                    const categoria = document.getElementById('suprimento-categoria').value;
+                    if (valor <= 0) {
+                        Swal.showValidationMessage('Informe um valor maior que zero');
+                        return false;
+                    }
+                    if (!descricao) {
+                        Swal.showValidationMessage('Informe a descrição do suprimento');
+                        return false;
+                    }
+                    return { valor, descricao, categoria };
+                }
+            });
+
+            if (!isConfirmed || !value) return;
+
+            try {
+                Swal.showLoading();
+                const userData = JSON.parse(localStorage.getItem('user') || '{}');
+                await BuildFlow.registrarSuprimentoCaixa({
+                    valor: value.valor,
+                    descricao: value.descricao,
+                    categoria: value.categoria,
+                    caixaId: caixaAberto._id || caixaAberto.id,
+                    userName: userData.name || 'Operador'
+                });
+                BuildFlow.showToast(`Suprimento de ${BuildFlow.formatCurrency(value.valor)} registrado: ${BuildFlow.escapeHtml(value.descricao)}`, 'success');
+            } catch (error) {
+                BuildFlow.showToast(error.message || 'Erro ao registrar suprimento', 'danger');
             }
         }
 
@@ -2167,16 +2295,26 @@
                     ? caixaAberto.dataAbertura
                     : new Date(caixaAberto.dataAbertura);
                 const agora = new Date();
-                const sales = await BuildFlow.getSales({
-                    start: dataAbertura.toISOString(),
-                    end: agora.toISOString(),
-                    status: 'FINALIZED',
-                    limit: 'all'
-                });
+                const caixaId = BuildFlow.normalizeId(caixaAberto._id || caixaAberto.id);
+                const startISO = dataAbertura.toISOString();
+                const endISO = agora.toISOString();
 
-                const retiradas = await BuildFlow.getRetiradasCaixa({
-                    start: dataAbertura.toISOString(),
-                    end: agora.toISOString()
+                let summaryData = null;
+                try {
+                    const res = await BuildFlow.getSales({
+                        caixaId,
+                        start: startISO,
+                        end: endISO,
+                        status: 'FINALIZED',
+                        summary: '1'
+                    });
+                    if (res && res.summary) summaryData = res.summary;
+                } catch (e) {}
+
+                const movimentos = await BuildFlow.getSangriasCaixa({
+                    caixaId,
+                    start: startISO,
+                    end: endISO
                 });
 
                 let totalVendas = 0;
@@ -2187,38 +2325,106 @@
                 let totalDescontos = 0;
                 let numeroVendas = 0;
                 let totalRetiradas = 0;
+                let totalSuprimentos = 0;
 
-                for (const sale of Array.isArray(sales) ? sales : []) {
-                    const createdAt = new Date(sale.createdAt);
-                    if (createdAt < dataAbertura || createdAt > agora) continue;
-                    if (sale.status !== 'FINALIZED') continue;
+                if (summaryData) {
+                    totalVendas = Number(summaryData.totalVendas) || 0;
+                    totalDescontos = Number(summaryData.totalDescontos) || 0;
+                    numeroVendas = Number(summaryData.numeroVendas) || 0;
+                    for (const m of summaryData.methods || []) {
+                        const value = Number(m.total) || 0;
+                        if (m.splitPayment && m.splitPayment.cash != null) {
+                            totalDinheiro += Number(m.splitPayment.cash) || 0;
+                            const rest = Number(m.splitPayment.rest) || 0;
+                            switch (m.splitPayment.method) {
+                                case 'Cartão de Crédito':
+                                    totalCartaoCredito += rest;
+                                    break;
+                                case 'Cartão de Débito':
+                                    totalCartaoDebito += rest;
+                                    break;
+                                case 'PIX':
+                                    totalPIX += rest;
+                                    break;
+                            }
+                            continue;
+                        }
+                        switch (m.method) {
+                            case 'Dinheiro':
+                                totalDinheiro += value;
+                                break;
+                            case 'Cartão de Crédito':
+                                totalCartaoCredito += value;
+                                break;
+                            case 'Cartão de Débito':
+                                totalCartaoDebito += value;
+                                break;
+                            case 'PIX':
+                                totalPIX += value;
+                                break;
+                        }
+                    }
+                } else {
+                    const sales = await BuildFlow.getSales({
+                        caixaId,
+                        start: startISO,
+                        end: endISO,
+                        status: 'FINALIZED',
+                        limit: 'all'
+                    });
+                    for (const sale of Array.isArray(sales) ? sales : []) {
+                        const createdAt = new Date(sale.createdAt);
+                        if (createdAt < dataAbertura || createdAt > agora) continue;
+                        if (sale.status !== 'FINALIZED') continue;
 
-                    totalVendas += Number(sale.total) || 0;
-                    totalDescontos += Number(sale.totalDiscount) || 0;
-                    numeroVendas++;
+                        totalVendas += Number(sale.total) || 0;
+                        totalDescontos += Number(sale.totalDiscount) || 0;
+                        numeroVendas++;
 
-                    switch (sale.paymentMethod) {
-                        case 'Dinheiro':
-                            totalDinheiro += Number(sale.total) || 0;
-                            break;
-                        case 'Cartão de Crédito':
-                            totalCartaoCredito += Number(sale.total) || 0;
-                            break;
-                        case 'Cartão de Débito':
-                            totalCartaoDebito += Number(sale.total) || 0;
-                            break;
-                        case 'PIX':
-                            totalPIX += Number(sale.total) || 0;
-                            break;
+                        if (sale.paymentMethod === 'Dividido' && sale.splitPayment && sale.splitPayment.cash != null) {
+                            totalDinheiro += Number(sale.splitPayment.cash) || 0;
+                            const rest = Number(sale.splitPayment.rest) || 0;
+                            switch (sale.splitPayment.method) {
+                                case 'Cartão de Crédito':
+                                    totalCartaoCredito += rest;
+                                    break;
+                                case 'Cartão de Débito':
+                                    totalCartaoDebito += rest;
+                                    break;
+                                case 'PIX':
+                                    totalPIX += rest;
+                                    break;
+                            }
+                            continue;
+                        }
+
+                        switch (sale.paymentMethod) {
+                            case 'Dinheiro':
+                                totalDinheiro += Number(sale.total) || 0;
+                                break;
+                            case 'Cartão de Crédito':
+                                totalCartaoCredito += Number(sale.total) || 0;
+                                break;
+                            case 'Cartão de Débito':
+                                totalCartaoDebito += Number(sale.total) || 0;
+                                break;
+                            case 'PIX':
+                                totalPIX += Number(sale.total) || 0;
+                                break;
+                        }
                     }
                 }
 
-                for (const ret of Array.isArray(retiradas) ? retiradas : []) {
-                    totalRetiradas += Number(ret.valor) || 0;
+                for (const ret of Array.isArray(movimentos) ? movimentos : []) {
+                    if (ret.tipo === 'suprimento') {
+                        totalSuprimentos += Number(ret.valor) || 0;
+                    } else {
+                        totalRetiradas += Number(ret.valor) || 0;
+                    }
                 }
 
                 const valorInicial = Number(caixaAberto.valorInicial) || 0;
-                const valorFinal = valorInicial + totalVendas - totalRetiradas;
+                const valorFinal = valorInicial + totalVendas - totalRetiradas + totalSuprimentos;
 
                 const formatMoney = (v) => BuildFlow.formatCurrency(Number(v) || 0);
 
@@ -2227,7 +2433,7 @@
                 const html = `
                     <div class="pdv-caixa-resumo">
                         <div style="padding:8px 0;margin-bottom:12px;font-size:0.7rem;color:var(--pdv-text-muted);text-align:center;border-bottom:1px dashed var(--pdv-border);">
-                            <i class="fa-solid fa-calendar"></i> Período: ${periodoLabel} | Vendas carregadas: ${Array.isArray(sales) ? sales.length : 0}
+                            <i class="fa-solid fa-calendar"></i> Período: ${periodoLabel} | Vendas no período: ${numeroVendas}
                         </div>
                         <div class="resumo-section-title"><i class="fa-solid fa-cash-register"></i> Resumo do Caixa</div>
                         <div class="resumo-row">
@@ -2240,8 +2446,14 @@
                         </div>
                         ${totalRetiradas > 0 ? `
                         <div class="resumo-row" style="border-top:1px dashed var(--pdv-border);padding-top:8px;margin-top:4px;">
-                            <span class="label" style="color:var(--pdv-amber,#d97706);"><i class="fa-solid fa-hand-holding-dollar"></i> Total de Retiradas</span>
+                            <span class="label" style="color:var(--pdv-amber,#d97706);"><i class="fa-solid fa-arrow-right-from-bracket"></i> Total de Sangrias</span>
                             <span class="value" style="color:var(--pdv-amber,#d97706);">-${formatMoney(totalRetiradas)}</span>
+                        </div>
+                        ` : ''}
+                        ${totalSuprimentos > 0 ? `
+                        <div class="resumo-row" style="border-top:1px dashed var(--pdv-border);padding-top:8px;margin-top:4px;">
+                            <span class="label" style="color:var(--pdv-success,#16a34a);"><i class="fa-solid fa-arrow-right-to-bracket"></i> Total de Suprimentos</span>
+                            <span class="value" style="color:var(--pdv-success,#16a34a);">+${formatMoney(totalSuprimentos)}</span>
                         </div>
                         ` : ''}
                         <div class="resumo-row" style="border-top:2px solid var(--pdv-border);padding-top:12px;margin-top:4px;">
@@ -2927,6 +3139,11 @@
             // Verificar status do caixa (rápido) — executa enquanto produtos carregam
             await checkCaixaStatus();
 
+            // Re-agendar fechamento automático se o caixa já estiver aberto (ex.: página recarregada)
+            if (caixaAberto) {
+                startAutoCloseScheduler();
+            }
+
             // Se caixa estiver fechado, abrir modal IMEDIATAMENTE (produtos ainda carregando em paralelo)
             if (!caixaAberto && caixaLoaded) {
                 await showAbrirCaixaModal();
@@ -2937,6 +3154,8 @@
 
             // Aguardar produtos terminarem e renderizar
             dbProducts = await productPromise;
+            productsCache = dbProducts;
+            productsCacheTime = Date.now();
             await renderCategories();
             reconcileCartWithStock();
             renderProducts('all');
@@ -2946,7 +3165,7 @@
             document.getElementById('showProductsBtn').addEventListener('click', showProductsQuickView);
             document.getElementById('showHistoryBtn').addEventListener('click', showHistoryQuickView);
             document.getElementById('showFilterBtn').addEventListener('click', showProductFilterQuickView);
-            document.getElementById('caixaFooterBtn').addEventListener('click', handleCaixaAction);
+            document.getElementById('suprimentoBtn').addEventListener('click', showSuprimentoModal);
             document.getElementById('showKitsBtn').addEventListener('click', showKitsQuickView);
 
             // Removido o código que selecionava cat-btn hard-coded, pois agora renderizamos dinamicamente
@@ -3012,7 +3231,7 @@
                 }
                 if (e.key === 'F8') {
                     e.preventDefault();
-                    handleCaixaAction();
+                    showSuprimentoModal();
                 }
                 if (e.key === 'F10') {
                     e.preventDefault();
@@ -3276,6 +3495,18 @@
 
             // Iniciar sincronização em tempo real
             pollTimer = setInterval(pollRemoteCart, 2000);
+
+            // Pausar polling quando a aba estiver oculta (economiza requisições)
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    if (pollTimer) {
+                        clearInterval(pollTimer);
+                        pollTimer = null;
+                    }
+                } else if (!pollTimer) {
+                    pollTimer = setInterval(pollRemoteCart, 2000);
+                }
+            });
         }
 
         window.addEventListener('beforeunload', () => {
@@ -3348,6 +3579,8 @@
                 total: summary.total,
                 status,
                 paymentMethod,
+                caixaId: BuildFlow.normalizeId(caixaAberto?._id || caixaAberto?.id),
+                splitPayment: paymentDetails.splitPayment || null,
                 amountPaid: paymentDetails.amountPaid != null ? paymentDetails.amountPaid : null,
                 change: paymentDetails.change != null ? paymentDetails.change : null
             };
@@ -3368,6 +3601,14 @@
                             <label>Valor recebido</label>
                             <input type="text" id="cash-amount-received" class="pdv-input" inputmode="decimal" autocomplete="off" placeholder="R$ 0,00">
                         </div>
+                        <div class="pdv-cash-quick">
+                            <button type="button" class="cash-quick-btn" data-val="exact">Exato</button>
+                            <button type="button" class="cash-quick-btn" data-val="10">R$ 10</button>
+                            <button type="button" class="cash-quick-btn" data-val="20">R$ 20</button>
+                            <button type="button" class="cash-quick-btn" data-val="50">R$ 50</button>
+                            <button type="button" class="cash-quick-btn" data-val="100">R$ 100</button>
+                            <button type="button" class="cash-quick-btn" data-val="200">R$ 200</button>
+                        </div>
                         <div class="pdv-cash-change-box" id="cash-change-box">
                             <span>Troco</span>
                             <strong id="cash-change-value">${BuildFlow.formatCurrency(0)}</strong>
@@ -3385,6 +3626,11 @@
                     const box = document.getElementById('cash-change-box');
                     const hint = document.getElementById('cash-hint');
 
+                    const setReceived = (v) => {
+                        receivedEl.value = v.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+                        updateChange();
+                    };
+
                     const updateChange = () => {
                         const received = BuildFlow.parseDiscountInput(receivedEl.value);
                         const change = Math.max(0, received - due);
@@ -3400,6 +3646,16 @@
                                 : 'Informe o valor que o cliente pagou em dinheiro.';
                         }
                     };
+
+                    document.querySelectorAll('.cash-quick-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            if (btn.dataset.val === 'exact') {
+                                setReceived(due);
+                            } else {
+                                setReceived(Number(btn.dataset.val) || 0);
+                            }
+                        });
+                    });
 
                     receivedEl.addEventListener('input', updateChange);
                     receivedEl.addEventListener('blur', () => {
@@ -3429,6 +3685,69 @@
             return result.value;
         }
 
+        async function promptSplitPayment(totalDue) {
+            const due = Math.max(0, Number(totalDue) || 0);
+            const { value, isConfirmed } = await Swal.fire({
+                ...pdvSwalOptions({ width: '440px' }),
+                title: '<i class="fa-solid fa-cash-register"></i> Pagamento dividido',
+                html: `
+                    <div class="pdv-sheet pdv-cash-panel">
+                        <div class="pdv-cash-total-due">
+                            <span>Total a pagar</span>
+                            <strong>${BuildFlow.formatCurrency(due)}</strong>
+                        </div>
+                        <div class="pdv-form-block">
+                            <label>Valor em dinheiro (R$)</label>
+                            <input type="text" id="split-cash" class="pdv-input" inputmode="decimal" autocomplete="off" placeholder="R$ 0,00">
+                        </div>
+                        <div class="pdv-form-block">
+                            <label>Restante via</label>
+                            <select id="split-method" class="pdv-input" style="width:100%;padding:12px 16px;border-radius:12px;">
+                                <option value="Cartão de Crédito">Cartão de Crédito</option>
+                                <option value="Cartão de Débito">Cartão de Débito</option>
+                                <option value="PIX">PIX</option>
+                            </select>
+                        </div>
+                        <div class="pdv-cash-change-box" id="split-remainder">
+                            <span>Restante</span>
+                            <strong id="split-rest-value">${BuildFlow.formatCurrency(due)}</strong>
+                        </div>
+                    </div>
+                `,
+                confirmButtonText: 'Confirmar',
+                showCancelButton: true,
+                cancelButtonText: 'Voltar',
+                confirmButtonColor: 'var(--pdv-primary)',
+                didOpen: () => {
+                    const cashEl = document.getElementById('split-cash');
+                    const restEl = document.getElementById('split-rest-value');
+                    const updateRest = () => {
+                        const cash = BuildFlow.parseDiscountInput(cashEl.value);
+                        restEl.textContent = BuildFlow.formatCurrency(Math.max(0, due - cash));
+                    };
+                    cashEl.addEventListener('input', updateRest);
+                    cashEl.addEventListener('blur', () => {
+                        const n = BuildFlow.parseDiscountInput(cashEl.value);
+                        cashEl.value = n > 0 ? BuildFlow.formatCurrency(n) : '';
+                    });
+                    cashEl.focus();
+                },
+                preConfirm: () => {
+                    const cash = BuildFlow.parseDiscountInput(document.getElementById('split-cash').value);
+                    if (cash <= 0 || cash >= due) {
+                        Swal.showValidationMessage('O valor em dinheiro deve ser maior que 0 e menor que o total.');
+                        return false;
+                    }
+                    const method = document.getElementById('split-method').value;
+                    const rest = Math.max(0, due - cash);
+                    return { cash, method, rest };
+                }
+            });
+
+            if (!isConfirmed || !value) return null;
+            return { ...value, splitPayment: { cash: value.cash, method: value.method, rest: value.rest } };
+        }
+
         async function showStockValidationErrors(validation, title = 'Estoque insuficiente') {
             const list = (validation.errors || [])
                 .map(e => `<li style="margin-bottom:8px;text-align:left;">${BuildFlow.escapeHtml(e.message)}</li>`)
@@ -3444,6 +3763,7 @@
         }
 
         async function finalizeSale(status = 'FINALIZED') {
+            if (isFinalizing) return;
             if (!caixaAberto) {
                 await showAbrirCaixaModal();
                 await checkCaixaStatus();
@@ -3455,68 +3775,85 @@
                 return;
             }
 
+            isFinalizing = true;
+            const finalizeBtn = document.getElementById('finalizeSaleBtn');
+            const reserveBtn = document.getElementById('reserveSaleBtn');
+            if (finalizeBtn) finalizeBtn.disabled = true;
+            if (reserveBtn) reserveBtn.disabled = true;
+
             try {
-                dbProducts = await BuildFlow.getProducts({ limit: 'all' });
+                dbProducts = await loadProducts();
             } catch {
+                isFinalizing = false;
+                if (finalizeBtn) finalizeBtn.disabled = false;
+                if (reserveBtn) reserveBtn.disabled = false;
                 BuildFlow.showToast('Não foi possível validar o estoque. Tente novamente.', 'danger');
                 return;
             }
 
-            const stockCheck = BuildFlow.validateCartAgainstStock(cart, dbProducts);
-            if (!stockCheck.ok) {
-                await showStockValidationErrors(stockCheck);
-                return;
-            }
-            if (stockCheck.warnings && stockCheck.warnings.length > 0) {
-                const list = stockCheck.warnings.map(w =>
-                    `<li style="margin-bottom:8px;text-align:left;">${BuildFlow.escapeHtml(w.message)}</li>`
-                ).join('');
-                const confirm = await Swal.fire({
-                    ...pdvSwalOptions({ width: '520px' }),
-                    icon: 'warning',
-                    title: 'Estoque insuficiente',
-                    html: `
-                        <div style="font-size:0.9rem;margin-bottom:12px;">Os seguintes produtos ficarão com saldo negativo no estoque:</div>
-                        <ul style="margin:0;padding-left:1.2rem;font-size:0.9rem;">${list}</ul>
-                        <div style="margin-top:16px;padding:12px;border-radius:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);font-size:0.85rem;color:var(--pdv-danger)">
-                            <i class="fa-solid fa-triangle-exclamation"></i> O saldo negativo deverá ser regularizado com uma nova entrada de mercadoria.
-                        </div>
-                    `,
-                    showCancelButton: true,
-                    confirmButtonText: 'Continuar mesmo assim',
-                    confirmButtonColor: 'var(--pdv-danger)',
-                    cancelButtonText: 'Cancelar',
-                    reverseButtons: true
-                });
-                if (!confirm.isConfirmed) return;
-            }
-
-            let paymentMethod = 'Dinheiro';
-            
-            if (status === 'FINALIZED') {
-                const selectedMethod = await promptPaymentMethod();
-                if (!selectedMethod) return;
-                paymentMethod = selectedMethod;
-            } else {
-                paymentMethod = 'Reserva';
-            }
-
-            let paymentDetails = {};
-            const summary = getCartSaleSummary();
-            if (status === 'FINALIZED') {
-                if (paymentMethod === 'Dinheiro') {
-                    const cash = await promptCashPayment(summary.total);
-                    if (!cash) return;
-                    paymentDetails = cash;
-                } else {
-                    paymentDetails = {
-                        amountPaid: summary.total,
-                        change: 0
-                    };
-                }
-            }
-            
             try {
+                const stockCheck = BuildFlow.validateCartAgainstStock(cart, dbProducts);
+                if (!stockCheck.ok) {
+                    await showStockValidationErrors(stockCheck);
+                    return;
+                }
+                if (stockCheck.warnings && stockCheck.warnings.length > 0) {
+                    const list = stockCheck.warnings.map(w =>
+                        `<li style="margin-bottom:8px;text-align:left;">${BuildFlow.escapeHtml(w.message)}</li>`
+                    ).join('');
+                    const confirm = await Swal.fire({
+                        ...pdvSwalOptions({ width: '520px' }),
+                        icon: 'warning',
+                        title: 'Estoque insuficiente',
+                        html: `
+                            <div style="font-size:0.9rem;margin-bottom:12px;">Os seguintes produtos ficarão com saldo negativo no estoque:</div>
+                            <ul style="margin:0;padding-left:1.2rem;font-size:0.9rem;">${list}</ul>
+                            <div style="margin-top:16px;padding:12px;border-radius:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);font-size:0.85rem;color:var(--pdv-danger)">
+                                <i class="fa-solid fa-triangle-exclamation"></i> O saldo negativo deverá ser regularizado com uma nova entrada de mercadoria.
+                            </div>
+                        `,
+                        showCancelButton: true,
+                        confirmButtonText: 'Continuar mesmo assim',
+                        confirmButtonColor: 'var(--pdv-danger)',
+                        cancelButtonText: 'Cancelar',
+                        reverseButtons: true
+                    });
+                    if (!confirm.isConfirmed) return;
+                }
+
+                let paymentMethod = 'Dinheiro';
+                
+                if (status === 'FINALIZED') {
+                    const selectedMethod = await promptPaymentMethod();
+                    if (!selectedMethod) return;
+                    paymentMethod = selectedMethod;
+                } else {
+                    paymentMethod = 'Reserva';
+                }
+
+                let paymentDetails = {};
+                const summary = getCartSaleSummary();
+                if (status === 'FINALIZED') {
+                    if (paymentMethod === 'Dinheiro') {
+                        const cash = await promptCashPayment(summary.total);
+                        if (!cash) return;
+                        paymentDetails = cash;
+                    } else if (paymentMethod === 'Dividido') {
+                        const split = await promptSplitPayment(summary.total);
+                        if (!split) return;
+                        paymentDetails = {
+                            amountPaid: split.cash,
+                            change: 0,
+                            splitPayment: split.splitPayment
+                        };
+                    } else {
+                        paymentDetails = {
+                            amountPaid: summary.total,
+                            change: 0
+                        };
+                    }
+                }
+                
                 const saleData = buildSaleDataFromCart(status, paymentMethod, paymentDetails);
 
                 const response = await BuildFlow.createSale(saleData);
@@ -3575,7 +3912,7 @@
                 globalDiscount = 0;
                 updateCart();
                 
-                dbProducts = await BuildFlow.getProducts({ limit: 'all' });
+                dbProducts = await loadProducts(true);
                 invalidateProductSalesRank();
                 if (currentProductSort === 'best_sellers') {
                     try {
@@ -3599,6 +3936,10 @@
                 } else {
                     BuildFlow.showToast(msg, 'danger');
                 }
+            } finally {
+                isFinalizing = false;
+                if (finalizeBtn) finalizeBtn.disabled = false;
+                if (reserveBtn) reserveBtn.disabled = false;
             }
         }
 
@@ -3630,12 +3971,26 @@
         }
 
         async function promptPaymentMethod() {
-            const methods = [
+            const iconMap = {
+                'Dinheiro': 'fa-money-bill-wave',
+                'Cartão de Crédito': 'fa-credit-card',
+                'Cartão de Débito': 'fa-credit-card',
+                'PIX': 'fa-qrcode',
+                'Dividido': 'fa-cash-register'
+            };
+            const defaultMethods = [
                 { id: 'Dinheiro', label: 'Dinheiro', icon: 'fa-money-bill-wave' },
                 { id: 'Cartão de Crédito', label: 'Cartão de Crédito', icon: 'fa-credit-card' },
                 { id: 'Cartão de Débito', label: 'Cartão de Débito', icon: 'fa-credit-card' },
                 { id: 'PIX', label: 'PIX', icon: 'fa-qrcode' }
             ];
+            const configured = (BuildFlow.getSettings().paymentMethods || []).filter(Boolean);
+            const methods = configured.length > 0
+                ? configured.map(id => ({ id, label: id, icon: iconMap[id] || 'fa-credit-card' }))
+                : defaultMethods;
+            if (configured.length > 0 && !configured.includes('Dividido')) {
+                methods.push({ id: 'Dividido', label: 'Pagamento Dividido', icon: 'fa-cash-register' });
+            }
             const html = `
                 <div class="pdv-payment-methods">
                     ${methods.map((m, i) => `
@@ -4182,7 +4537,7 @@
                     <div class="pdv-sheet">
                         <div class="pdv-form-block">
                             <label>Quantidade <small style="font-weight:600;text-transform:none;opacity:0.85;">(máx. ${maxQty} disponível)</small></label>
-                            <input type="number" id="swal-edit-qty" class="pdv-input" value="${item.qty}" min="1" max="${maxQty || 1}">
+                            <input type="number" id="swal-edit-qty" class="pdv-input" value="${item.qty}" min="1">
                         </div>
                         <div class="pdv-form-block">
                             <label>Desconto no item</label>

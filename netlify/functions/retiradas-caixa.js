@@ -14,11 +14,15 @@ exports.handler = async (event) => {
   try {
     switch (event.httpMethod) {
       case 'GET': {
-        const { caixaId, start, end } = event.queryStringParameters || {};
+        const { caixaId, start, end, tipo } = event.queryStringParameters || {};
         const query = {};
 
         if (caixaId) {
           query.caixaId = new ObjectId(caixaId);
+        }
+
+        if (tipo) {
+          query.tipo = tipo;
         }
 
         if (start || end) {
@@ -44,19 +48,21 @@ exports.handler = async (event) => {
           const categoria = String(body.categoria || '').trim();
           const caixaId = body.caixaId;
           const userName = body.userName || user.name || 'Operador';
+          const tipo = body.tipo === 'suprimento' ? 'suprimento' : 'retirada';
 
           if (valor <= 0) {
-            return { statusCode: 400, body: JSON.stringify({ message: 'Valor da retirada deve ser maior que zero' }) };
+            return { statusCode: 400, body: JSON.stringify({ message: 'Valor do movimento deve ser maior que zero' }) };
           }
 
           if (!descricao) {
-            return { statusCode: 400, body: JSON.stringify({ message: 'Descrição da retirada é obrigatória' }) };
+            return { statusCode: 400, body: JSON.stringify({ message: 'Descrição é obrigatória' }) };
           }
 
           const retirada = {
             valor,
             descricao,
             categoria: categoria || 'Geral',
+            tipo,
             caixaId: caixaId ? new ObjectId(caixaId) : null,
             userId: user.userId || user.id,
             userName,
@@ -67,11 +73,11 @@ exports.handler = async (event) => {
 
           await db.collection('logs').insertOne({
             userId: user.userId,
-            action: 'REGISTER_RETIRADA',
+            action: tipo === 'suprimento' ? 'REGISTER_SUPRIMENTO' : 'REGISTER_SANGRIA',
             entity: 'retiradas_caixa',
             entityId: result.insertedId,
             timestamp: new Date(),
-            details: `Retirada de R$ ${valor.toFixed(2)} registrada: ${descricao} por ${userName}`
+            details: `${tipo === 'suprimento' ? 'Suprimento' : 'Sangria'} de R$ ${valor.toFixed(2)} registrada: ${descricao} por ${userName}`
           });
 
           return {
@@ -90,7 +96,7 @@ exports.handler = async (event) => {
 
         const { id } = JSON.parse(event.body || '{}');
         if (!id) {
-          return { statusCode: 400, body: JSON.stringify({ message: 'ID da retirada é obrigatório' }) };
+          return { statusCode: 400, body: JSON.stringify({ message: 'ID da sangria é obrigatório' }) };
         }
 
         await collection.deleteOne({ _id: new ObjectId(id) });

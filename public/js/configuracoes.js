@@ -297,6 +297,7 @@ function loadPDVSettings() {
         if (row) row.style.display = settings.caixaAutoClose ? '' : 'none';
     }
     if (document.getElementById('caixaAutoCloseTime')) document.getElementById('caixaAutoCloseTime').value = settings.caixaAutoCloseTime || '18:00';
+    if (document.getElementById('paymentMethods')) document.getElementById('paymentMethods').value = Array.isArray(settings.paymentMethods) ? settings.paymentMethods.join(', ') : '';
 }
 
 function savePDVSettings() {
@@ -305,11 +306,17 @@ function savePDVSettings() {
     const caixaAutoClose = document.getElementById('caixaAutoClose').checked;
     const caixaAutoCloseTime = document.getElementById('caixaAutoCloseTime').value || '18:00';
 
+    const paymentMethodsEl = document.getElementById('paymentMethods');
+    const paymentMethods = paymentMethodsEl
+        ? paymentMethodsEl.value.split(',').map(s => s.trim()).filter(Boolean)
+        : [];
+
     const settings = JSON.parse(localStorage.getItem('buildflow_settings')) || {};
     settings.caixaDefaultOpening = caixaDefaultOpening;
     settings.caixaRequirePassword = caixaRequirePassword;
     settings.caixaAutoClose = caixaAutoClose;
     settings.caixaAutoCloseTime = caixaAutoCloseTime;
+    settings.paymentMethods = paymentMethods;
 
     localStorage.setItem('buildflow_settings', JSON.stringify(settings));
     BuildFlow.showToast('Configurações do PDV salvas com sucesso!', 'success');

@@ -1512,20 +1512,27 @@ const BuildFlow = {
     });
   },
 
-  async getRetiradasCaixa(params = {}) {
+  async getSangriasCaixa(params = {}) {
     const query = new URLSearchParams(params).toString();
     const path = query ? `/retiradas-caixa?${query}` : "/retiradas-caixa";
     return await this.apiFetch(path);
   },
 
-  async registrarRetiradaCaixa(data) {
+  async registrarSangriaCaixa(data) {
     return await this.apiFetch("/retiradas-caixa", {
       method: "POST",
       body: JSON.stringify({ action: "registrar", ...data }),
     });
   },
 
-  async removerRetiradaCaixa(id) {
+  async registrarSuprimentoCaixa(data) {
+    return await this.apiFetch("/retiradas-caixa", {
+      method: "POST",
+      body: JSON.stringify({ action: "registrar", tipo: "suprimento", ...data }),
+    });
+  },
+
+  async removerSangriaCaixa(id) {
     return await this.apiFetch("/retiradas-caixa", {
       method: "DELETE",
       body: JSON.stringify({ id }),
@@ -1592,6 +1599,7 @@ const BuildFlow = {
         caixaAutoCloseTime: "18:00",
         caixaCloseAlert: true,
         caixaCloseAlertMinutes: 30,
+        paymentMethods: [],
     };
     const saved = JSON.parse(localStorage.getItem("buildflow_settings")) || {};
     return { ...defaults, ...saved };
