@@ -17,29 +17,14 @@
       .period-filter {
         display: flex;
         gap: 4px;
-        background: var(--bg-hover);
-        padding: 3px;
-        border-radius: 10px;
         width: fit-content;
       }
       .period-filter button {
         background: none;
         border: none;
-        padding: 6px 16px;
-        border-radius: 8px;
-        font-size: 0.78rem;
-        font-weight: 600;
-        color: var(--text-muted);
         cursor: pointer;
         transition: all 0.15s;
-      }
-      .period-filter button.active {
-        background: var(--bg-card);
-        color: var(--text-primary);
-        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-      }
-      .period-filter button:hover:not(.active) {
-        color: var(--text-primary);
+        color: var(--text-muted);
       }
       .modal-overlay {
         display: none;
@@ -316,9 +301,6 @@
       @media (max-width: 1200px) {
         .insights-grid { grid-template-columns: 1fr !important; }
       }
-      @media (max-width: 500px) {
-        #insightComparisonDetail { flex-direction: column !important; }
-      }
       @media (max-width: 768px) {
         .dashboard-tables-grid .card-table:last-child table {
           table-layout: fixed !important;
@@ -450,7 +432,7 @@
         </div>
       </aside>
 
-      <main class="main-content">
+      <main class="main-content dashboard-page">
         <nav class="top-nav">
           <div class="search-bar" id="dashboardSearchBar">
             <i class="fa-solid fa-magnifying-glass"></i>
@@ -472,13 +454,13 @@
 
         <header class="page-header">
           <h2>Bem-vindo de volta, <span>Admin</span></h2>
-          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div class="dashboard-header-meta">
             <p id="dashboardDateLine">Carregando resumo do dia...</p>
             <span id="caixaStatusBadge" class="caixa-badge caixa-loading">Caixa...</span>
           </div>
         </header>
 
-          <div style="display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
+          <div class="dashboard-toolbar">
             <div class="period-filter">
               <button data-period="day">Dia</button>
               <button data-period="week">Semana</button>
@@ -509,62 +491,80 @@
           </div>
 
           <section class="grid-stats">
-            <div class="card-stat" style="position: relative;">
+            <div class="card-stat dashboard-stat dashboard-stat--revenue">
+              <div class="dashboard-stat__top">
+                <div class="dashboard-stat__icon">
+                  <i class="fa-solid fa-wallet"></i>
+                </div>
+                <div class="stat-value">
+                  <h3 id="revenueText">Carregando...</h3>
+                </div>
+                <button type="button" class="dashboard-stat__help" onclick="showRevenueInfo()" title="Como é calculado">
+                  <i class="fa-solid fa-circle-question"></i>
+                </button>
+              </div>
               <div class="stat-info">
                 <p id="revenueLabel">Faturamento do Mês</p>
-                <h3 id="revenueText">Carregando...</h3>
               </div>
-              <div class="stat-icon bg-blue-op">
-                <i class="fa-solid fa-wallet"></i>
-              </div>
-              <i class="fa-solid fa-circle-question" style="position: absolute; top: 8px; right: 10px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; opacity: 0.6; transition: opacity 0.2s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'" onclick="showRevenueInfo()"></i>
             </div>
-            <div class="card-stat" style="position: relative;">
+            <div class="card-stat dashboard-stat dashboard-stat--sales">
+              <div class="dashboard-stat__top">
+                <div class="dashboard-stat__icon">
+                  <i class="fa-solid fa-basket-shopping"></i>
+                </div>
+                <div class="stat-value">
+                  <h3 id="salesCountText">Carregando...</h3>
+                </div>
+                <button type="button" class="dashboard-stat__help" onclick="showSalesCountInfo()" title="Como é calculado">
+                  <i class="fa-solid fa-circle-question"></i>
+                </button>
+              </div>
               <div class="stat-info">
                 <p id="salesCountLabel">Vendas do Mês</p>
-                <h3 id="salesCountText">Carregando...</h3>
               </div>
-              <div class="stat-icon bg-emerald-op">
-                <i class="fa-solid fa-basket-shopping"></i>
-              </div>
-              <i class="fa-solid fa-circle-question" style="position: absolute; top: 8px; right: 10px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; opacity: 0.6; transition: opacity 0.2s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'" onclick="showSalesCountInfo()"></i>
             </div>
-            <div class="card-stat" style="position: relative;">
+            <div class="card-stat dashboard-stat dashboard-stat--stock">
+              <div class="dashboard-stat__top">
+                <div class="dashboard-stat__icon">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div class="stat-value">
+                  <h3 id="lowStockText">Carregando...</h3>
+                </div>
+                <button type="button" class="dashboard-stat__help" onclick="showLowStockInfo()" title="Como é calculado">
+                  <i class="fa-solid fa-circle-question"></i>
+                </button>
+              </div>
               <div class="stat-info">
                 <p>Produtos em Baixa</p>
-                <h3 id="lowStockText">Carregando...</h3>
               </div>
-              <div class="stat-icon bg-amber-op">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-              </div>
-              <i class="fa-solid fa-circle-question" style="position: absolute; top: 8px; right: 10px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; opacity: 0.6; transition: opacity 0.2s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'" onclick="showLowStockInfo()"></i>
             </div>
-            <div class="card-stat" style="position: relative;">
+            <div class="card-stat dashboard-stat dashboard-stat--profit">
+              <div class="dashboard-stat__top">
+                <div class="dashboard-stat__icon">
+                  <i class="fa-solid fa-chart-simple"></i>
+                </div>
+                <div class="stat-value">
+                  <h3 id="profitText">Carregando...</h3>
+                </div>
+                <button type="button" class="dashboard-stat__help" onclick="showProfitInfo()" title="Como é calculado">
+                  <i class="fa-solid fa-circle-question"></i>
+                </button>
+              </div>
               <div class="stat-info">
                 <p id="profitLabel">Lucro do Mês (Est.)</p>
-                <h3 id="profitText">Carregando...</h3>
               </div>
-              <div class="stat-icon bg-violet-op">
-                <i class="fa-solid fa-chart-simple"></i>
-              </div>
-              <i class="fa-solid fa-circle-question" style="position: absolute; top: 8px; right: 10px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; opacity: 0.6; transition: opacity 0.2s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'" onclick="showProfitInfo()"></i>
             </div>
           </section>
 
         <div class="dashboard-tables-grid">
           <section class="card-table">
             <div class="table-header">
-              <h3 id="recentSalesTitle">Vendas Recentes</h3>
-              <button
-                class="btn"
-                onclick="location.href = '/sales-history'"
-                style="
-                  background: var(--bg-hover);
-                  padding: 8px 16px;
-                  border-radius: 10px;
-                  font-size: 0.75rem;
-                "
-              >
+              <h3 id="recentSalesTitle" class="dashboard-table-title">
+                <i class="fa-solid fa-receipt icon-sales"></i>
+                <span>Vendas Recentes</span>
+              </h3>
+              <button class="btn dashboard-link-btn" onclick="location.href = '/sales-history'">
                 Ver Todas
               </button>
             </div>
@@ -597,22 +597,16 @@
 
           <section class="card-table">
             <div class="table-header">
-              <h3 id="recentProductsTitle">Movimentos de Caixa</h3>
-              <button
-                class="btn"
-                onclick="location.href = '/saidas'"
-                style="
-                  background: var(--bg-hover);
-                  padding: 8px 16px;
-                  border-radius: 10px;
-                  font-size: 0.75rem;
-                "
-              >
+              <h3 id="recentProductsTitle" class="dashboard-table-title">
+                <i class="fa-solid fa-cash-register icon-cash"></i>
+                <span>Movimentos de Caixa</span>
+              </h3>
+              <button class="btn dashboard-link-btn" onclick="location.href = '/sales-history'">
                 Ver Caixa
               </button>
             </div>
             <div class="table-scroll-wrapper">
-              <table>
+              <table class="cash-movements-table">
                 <thead class="table-sticky-head">
                   <tr>
                     <th style="width: 36px;">#</th>
@@ -642,58 +636,43 @@
         </div>
 
         <section class="quick-access-section" style="margin-top: 32px;">
-          <div class="section-title">
-            <div class="section-title-inner">
-              <h3 style="display:flex;align-items:center;gap:10px;">
-                <span style="width:3px;height:18px;border-radius:2px;background:var(--brand);display:inline-block;"></span>
-                Insights de Vendas
-              </h3>
-              <p id="insightsSubtitle">Comparativo mensal e produtos mais vendidos no período.</p>
-            </div>
+          <div class="dashboard-section-head">
+            <h3><span class="section-accent"></span> Insights de Vendas</h3>
+            <p id="insightsSubtitle">Comparativo mensal e produtos mais vendidos no período.</p>
           </div>
-          <div class="insights-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:20px;">
-            <!-- Card: Comparativo -->
-            <div style="background:linear-gradient(135deg, rgba(79,70,229,0.06) 0%, transparent 100%);border:1px solid var(--border);border-radius:20px;padding:24px;">
-              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
+          <div class="insights-grid">
+            <div class="insight-card insight-card--compare">
+              <div class="insight-card__header">
                 <div>
-                  <p id="comparativoLabel" style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Comparativo Mensal</p>
-                  <h3 id="insightComparison" style="font-size:2rem;font-weight:800;letter-spacing:-0.02em;margin:0;line-height:1.1;">Carregando...</h3>
+                  <p id="comparativoLabel" class="insight-card__label">Comparativo Mensal</p>
+                  <h3 id="insightComparison" class="insight-card__value">Carregando...</h3>
                 </div>
-                <div style="width:38px;height:38px;border-radius:10px;background:rgba(79,70,229,0.1);display:flex;align-items:center;justify-content:center;color:var(--brand);font-size:1rem;flex-shrink:0;">
+                <div class="insight-card__icon insight-card__icon--brand">
                   <i class="fa-solid fa-arrow-trend-up"></i>
                 </div>
               </div>
-              <div id="insightComparisonDetail" style="display:flex;gap:16px;align-items:stretch;">Carregando...</div>
+              <div id="insightComparisonDetail" class="insight-compare-grid">Carregando...</div>
             </div>
 
-            <!-- Card: Top 10 -->
-            <div style="background:linear-gradient(135deg, rgba(139,92,246,0.06) 0%, transparent 100%);border:1px solid var(--border);border-radius:20px;padding:24px;">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div class="insight-card insight-card--top">
+              <div class="insight-card__header">
                 <div>
-                  <p style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px;">Top 10 Produtos</p>
-                  <h3 id="topProdutosLabel" style="font-size:1rem;font-weight:700;margin:0;">Mais Vendidos do Mês</h3>
+                  <p class="insight-card__label">Top 10 Produtos</p>
+                  <h3 id="topProdutosLabel" class="insight-card__title">Mais Vendidos do Mês</h3>
                 </div>
-                <div style="width:38px;height:38px;border-radius:10px;background:rgba(139,92,246,0.1);display:flex;align-items:center;justify-content:center;color:#8b5cf6;font-size:1rem;flex-shrink:0;">
+                <div class="insight-card__icon insight-card__icon--violet">
                   <i class="fa-solid fa-ranking-star"></i>
                 </div>
               </div>
-              <div id="insightTopProducts" style="display:flex;flex-direction:column;gap:4px;max-height:320px;overflow-y:auto;">Carregando...</div>
+              <div id="insightTopProducts" class="insight-top-list">Carregando...</div>
             </div>
           </div>
         </section>
 
         <section class="quick-access-section">
-          <div class="section-title">
-            <div class="section-title-inner">
-              <h3>
-                <i class="fa-solid fa-bolt"></i> Funcionalidades do Sistema —
-                Acesso Rápido
-              </h3>
-              <p>
-                Atalhos para operações de armazém, etiquetas e módulos
-                principais.
-              </p>
-            </div>
+          <div class="dashboard-section-head">
+            <h3><i class="fa-solid fa-bolt" style="color:var(--brand);font-size:0.95rem;"></i> Funcionalidades do Sistema — Acesso Rápido</h3>
+            <p>Atalhos para operações de armazém, etiquetas e módulos principais.</p>
           </div>
           <div class="quick-access-grid">
             <a
@@ -872,8 +851,8 @@
           document.getElementById("comparativoLabel").textContent = labels.comparativo;
           document.getElementById("topProdutosLabel").textContent = labels.top;
           document.getElementById("insightsSubtitle").textContent = labels.subtitle;
-          document.getElementById("recentSalesTitle").textContent = `Top 5 Vendas Recentes ${labels.tableSuffix}`;
-          document.getElementById("recentProductsTitle").textContent = `Movimentos de Caixa ${labels.tableSuffix}`;
+          document.getElementById("recentSalesTitle").querySelector('span').textContent = `Top 5 Vendas Recentes ${labels.tableSuffix}`;
+          document.getElementById("recentProductsTitle").querySelector('span').textContent = `Movimentos de Caixa ${labels.tableSuffix}`;
 
           setMetricText(
             "revenueText",
@@ -912,7 +891,7 @@
               const row = document.createElement("tr");
               row.innerHTML = `
                             <td>${new Date(sale.createdAt).toLocaleString("pt-BR")}</td>
-                            <td style="font-weight: 600; color: var(--emerald);">R$ ${(Number(sale.total) || 0).toFixed(2)}</td>
+                            <td class="value-positive">R$ ${(Number(sale.total) || 0).toFixed(2)}</td>
                             <td><span class="badge ${sale.status === "FINALIZED" ? "badge-success" : "badge-warning"}">${sale.status === "FINALIZED" ? "Finalizada" : "Pendente"}</span></td>
                         `;
               salesBody.appendChild(row);
@@ -931,17 +910,19 @@
           } else {
             data.cashMovements.slice(0, 5).forEach((movement, i) => {
               const row = document.createElement("tr");
-              const dateText = movement.createdAt ? new Date(movement.createdAt).toLocaleString("pt-BR") : "—";
+              const dateText = movement.createdAt ? new Date(movement.createdAt).toLocaleDateString("pt-BR") : "—";
               const value = Number(movement.valor) || 0;
-              const tipoLabel = movement.tipo === "suprimento" ? "Suprimento" : "Sangria";
-              const valueStyle = movement.tipo === "suprimento" ? "color:var(--emerald);" : "color:var(--pdv-amber,#d97706);";
-              const sign = movement.tipo === "suprimento" ? "+" : "-";
+              const isSuprimento = movement.tipo === "suprimento";
+              const tipoLabel = isSuprimento ? "Suprimento" : "Sangria";
+              const tipoIcon = isSuprimento ? "fa-arrow-up" : "fa-arrow-down";
+              const valueClass = isSuprimento ? "value-positive" : "value-negative";
+              const sign = isSuprimento ? "+" : "−";
               const descricaoText = movement.descricao ? movement.descricao : movement.categoria ? movement.categoria : "—";
               row.innerHTML = `
                             <td style="text-align: center; font-weight: 700; color: var(--text-muted);">${i + 1}</td>
-                            <td>${tipoLabel}</td>
+                            <td><span class="movement-type movement-type--${isSuprimento ? 'suprimento' : 'sangria'}"><i class="fa-solid ${tipoIcon}"></i> ${tipoLabel}</span></td>
                             <td>${BuildFlow.escapeHtml(descricaoText)}</td>
-                            <td style="font-weight: 600; ${valueStyle}">${sign} R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                            <td class="${valueClass}">${sign} R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
                             <td>${dateText}</td>
                         `;
               productsBody.appendChild(row);
@@ -974,18 +955,18 @@
               const prevPct = (prevRev / maxVal) * 100;
 
               comparisonDetail.innerHTML = `
-                <div style="flex:1;background:rgba(255,255,255,0.03);border-radius:12px;padding:12px 14px;border:1px solid var(--border);">
-                  <p style="font-size:0.6rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin:0 0 4px;">${currentPeriodName}</p>
-                  <p style="font-size:1.1rem;font-weight:800;margin:0;color:var(--text-primary);">R$ ${currRev.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-                  <div style="margin-top:6px;height:3px;background:var(--bg-hover);border-radius:3px;overflow:hidden;">
-                    <div style="width:${currPct}%;height:100%;background:var(--brand);border-radius:3px;"></div>
+                <div class="insight-period-box">
+                  <p class="insight-period-box__label">${currentPeriodName}</p>
+                  <p class="insight-period-box__value">R$ ${currRev.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+                  <div class="insight-progress">
+                    <div class="insight-progress__bar insight-progress__bar--brand" style="width:${currPct}%;"></div>
                   </div>
                 </div>
-                <div style="flex:1;background:rgba(255,255,255,0.03);border-radius:12px;padding:12px 14px;border:1px solid var(--border);">
-                  <p style="font-size:0.6rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin:0 0 4px;">${prevPeriodName}</p>
-                  <p style="font-size:1.1rem;font-weight:800;margin:0;color:var(--text-secondary);">R$ ${prevRev.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-                  <div style="margin-top:6px;height:3px;background:var(--bg-hover);border-radius:3px;overflow:hidden;">
-                    <div style="width:${prevPct}%;height:100%;background:var(--text-muted);border-radius:3px;"></div>
+                <div class="insight-period-box">
+                  <p class="insight-period-box__label">${prevPeriodName}</p>
+                  <p class="insight-period-box__value insight-period-box__value--muted">R$ ${prevRev.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+                  <div class="insight-progress">
+                    <div class="insight-progress__bar insight-progress__bar--muted" style="width:${prevPct}%;"></div>
                   </div>
                 </div>
               `;
@@ -993,15 +974,15 @@
               comparisonEl.innerHTML = `R$ ${currRev.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
               comparisonEl.style.color = "var(--text-primary)";
               comparisonDetail.innerHTML = `
-                <div style="flex:1;background:rgba(255,255,255,0.03);border-radius:12px;padding:12px 14px;border:1px solid var(--border);">
-                  <p style="font-size:0.6rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin:0 0 4px;">${currentPeriodName}</p>
-                  <p style="font-size:1.1rem;font-weight:800;margin:0;color:var(--text-primary);">R$ ${currRev.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-                  <div style="margin-top:6px;height:3px;background:var(--bg-hover);border-radius:3px;overflow:hidden;">
-                    <div style="width:100%;height:100%;background:var(--brand);border-radius:3px;"></div>
+                <div class="insight-period-box">
+                  <p class="insight-period-box__label">${currentPeriodName}</p>
+                  <p class="insight-period-box__value">R$ ${currRev.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+                  <div class="insight-progress">
+                    <div class="insight-progress__bar insight-progress__bar--brand" style="width:100%;"></div>
                   </div>
                 </div>
-                <div style="flex:1;background:rgba(255,255,255,0.03);border-radius:12px;padding:12px 14px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;">
-                  <span style="color:var(--text-muted);font-size:0.75rem;">Sem dados do período anterior</span>
+                <div class="insight-period-box insight-period-box--empty">
+                  <span>Sem dados do período anterior</span>
                 </div>
               `;
             }
@@ -1010,21 +991,22 @@
             const rankColors = ['#10b981', '#6366f1', '#f59e0b'];
             topProductsEl.innerHTML = data.topProducts.map((p, i) => {
               const barPct = Math.max(2, (p.qty / topQty) * 100);
-              const isTop3 = i < 3;
+              const rankClass = i < 3 ? ` insight-top-rank--${i + 1}` : '';
+              const barColor = i < 3 ? rankColors[i] : 'var(--border)';
               const detailData = encodeURIComponent(JSON.stringify(p));
               return `
-              <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;transition:background 0.15s;cursor:pointer;" onclick="showProductDetail(this)" data-product="${detailData}" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
-                <span style="width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800;flex-shrink:0;${isTop3 ? `background:${rankColors[i]};color:white;` : 'background:var(--bg-hover);color:var(--text-muted);'}">${i + 1}</span>
-                <div style="flex:1;min-width:0;">
-                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-                    <span style="font-size:0.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-primary);">${BuildFlow.escapeHtml(p.name)}</span>
-                    <span style="font-size:0.78rem;font-weight:700;color:var(--text-muted);flex-shrink:0;margin-left:8px;">${p.qty} un</span>
+              <div class="insight-top-item" onclick="showProductDetail(this)" data-product="${detailData}">
+                <span class="insight-top-rank${rankClass}">${i + 1}</span>
+                <div class="insight-top-body">
+                  <div class="insight-top-row">
+                    <span class="insight-top-name">${BuildFlow.escapeHtml(p.name)}</span>
+                    <span class="insight-top-qty">${p.qty} un</span>
                   </div>
-                  <div style="display:flex;align-items:center;gap:8px;">
-                    <div style="flex:1;height:4px;background:var(--bg-hover);border-radius:4px;overflow:hidden;">
-                      <div style="width:${barPct}%;height:100%;background:${isTop3 ? rankColors[i] : 'var(--border)'};border-radius:4px;transition:width 0.3s;"></div>
+                  <div class="insight-top-meta">
+                    <div class="insight-top-bar">
+                      <div class="insight-top-bar__fill" style="width:${barPct}%;background:${barColor};"></div>
                     </div>
-                    <span style="font-size:0.65rem;color:var(--text-muted);font-weight:600;flex-shrink:0;white-space:nowrap;">R$ ${(p.revenue || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} · ${BuildFlow.escapeHtml(p.category)}</span>
+                    <span class="insight-top-revenue">R$ ${(p.revenue || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} · ${BuildFlow.escapeHtml(p.category)}</span>
                   </div>
                 </div>
               </div>
@@ -1032,8 +1014,8 @@
           } else {
             comparisonEl.textContent = "Sem dados";
             comparisonEl.style.color = "var(--text-muted)";
-            comparisonDetail.innerHTML = `<div style="flex:1;text-align:center;padding:12px;color:var(--text-muted);font-size:0.8rem;">Nenhuma venda registrada no período.</div>`;
-            topProductsEl.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:0.85rem;">Nenhum produto vendido no período.</div>';
+            comparisonDetail.innerHTML = `<div class="insight-empty">Nenhuma venda registrada no período.</div>`;
+            topProductsEl.innerHTML = '<div class="insight-empty">Nenhum produto vendido no período.</div>';
           }
         } catch (error) {
           console.error("Dashboard load error:", error);
