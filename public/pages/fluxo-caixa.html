@@ -20,17 +20,17 @@
             padding: 16px 4px 0; overflow-x: auto;
         }
         .fc-bar-wrap {
-            flex: 1; min-width: 22px; display: flex; flex-direction: column;
-            align-items: center; gap: 4px; height: 100%; justify-content: flex-end;
+            flex: 1; min-width: 40px; display: flex; flex-direction: column;
+            align-items: center; gap: 6px; height: 100%; justify-content: flex-end;
             position: relative;
         }
         .fc-bar {
-            width: 100%; max-width: 14px; border-radius: 4px 4px 2px 2px;
+            width: 100%; max-width: 30px; border-radius: 4px 4px 2px 2px;
             transition: height 0.3s ease;
         }
         .fc-bar--in { background: linear-gradient(180deg, #10b981, #059669); }
         .fc-bar--out { background: linear-gradient(180deg, #ef4444, #dc2626); }
-        .fc-bar-wrap span { font-size: 0.55rem; color: var(--text-muted); white-space: nowrap; }
+        .fc-bar-wrap span { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
         .fc-bar-wrap.fc-today .fc-bar { box-shadow: 0 0 0 2px var(--brand); }
         .fc-bar-wrap.fc-today span { color: var(--brand); font-weight: 700; }
         .fc-line {

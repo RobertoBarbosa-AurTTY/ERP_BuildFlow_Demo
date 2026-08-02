@@ -272,6 +272,16 @@ exports.handler = withAuth(async (event, context, user) => {
       }
     }
 
+    // Caixa aberto (alerta para o dono/gerente)
+    const caixaAbertoDoc = await db.collection('caixa').findOne({ status: 'aberto' });
+    const caixaAberto = caixaAbertoDoc ? {
+      id: caixaAbertoDoc._id.toString(),
+      numeroCaixa: caixaAbertoDoc.numeroCaixa || '01',
+      dataAbertura: caixaAbertoDoc.dataAbertura,
+      horasAbertas: caixaAbertoDoc.dataAbertura ? Math.floor((now.getTime() - new Date(caixaAbertoDoc.dataAbertura).getTime()) / 3600000) : 0,
+      abertoPor: caixaAbertoDoc.userName || null
+    } : null;
+
     return {
       statusCode: 200,
       body: JSON.stringify({
@@ -286,6 +296,7 @@ exports.handler = withAuth(async (event, context, user) => {
         prevRevenue,
         revenueChange,
         topProducts,
+        caixaAberto,
       }),
     };
     });

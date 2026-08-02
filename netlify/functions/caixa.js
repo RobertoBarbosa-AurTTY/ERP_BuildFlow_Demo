@@ -1,7 +1,103 @@
 const { getDb } = require('../../src/lib/mongodb');
 const { withAuth } = require('../../src/lib/helpers');
+const { checkPermission } = require('../../src/lib/auth');
 const { ObjectId } = require('mongodb');
 const bcrypt = require('bcryptjs');
+
+function parseDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatMoney(v) {
+  return Number(v || 0).toFixed(2);
+}
+
+async function computeCaixaTotals(db, caixaDoc) {
+  const fim = caixaDoc.dataFechamento ? new Date(caixaDoc.dataFechamento) : new Date();
+  const salesCol = db.collection('sales');
+  // Vendas da sessão: por caixaId quando disponível; fallback para vendas antigas sem o campo
+  const sales = await salesCol.find({
+    status: 'FINALIZED',
+    $or: [
+      { caixaId: caixaDoc._id },
+      { caixaId: { $exists: false }, createdAt: { $gte: caixaDoc.dataAbertura, $lte: fim } }
+    ]
+  }, {
+    projection: { total: 1, totalDiscount: 1, paymentMethod: 1, splitPayment: 1 }
+  }).toArray();
+
+  const retiradas = await db.collection('retiradas_caixa').find({
+    caixaId: caixaDoc._id,
+    createdAt: { $gte: caixaDoc.dataAbertura, $lte: fim }
+  }).toArray();
+
+  const totals = {
+    totalVendas: 0,
+    totalDinheiro: 0,
+    totalCartaoCredito: 0,
+    totalCartaoDebito: 0,
+    totalPIX: 0,
+    totalDescontos: 0,
+    numeroVendas: 0,
+    totalRetiradas: 0,
+    totalSuprimentos: 0
+  };
+
+  for (const sale of sales) {
+    totals.totalVendas += Number(sale.total) || 0;
+    totals.totalDescontos += Number(sale.totalDiscount) || 0;
+    totals.numeroVendas++;
+
+    if (sale.paymentMethod === 'Dividido' && sale.splitPayment && sale.splitPayment.cash != null) {
+      totals.totalDinheiro += Number(sale.splitPayment.cash) || 0;
+      const rest = Number(sale.splitPayment.rest) || 0;
+      switch (sale.splitPayment.method) {
+        case 'Cartão de Crédito':
+          totals.totalCartaoCredito += rest;
+          break;
+        case 'Cartão de Débito':
+          totals.totalCartaoDebito += rest;
+          break;
+        case 'PIX':
+          totals.totalPIX += rest;
+          break;
+        default:
+          break;
+      }
+      continue;
+    }
+
+    switch (sale.paymentMethod) {
+      case 'Dinheiro':
+        totals.totalDinheiro += Number(sale.total) || 0;
+        break;
+      case 'Cartão de Crédito':
+        totals.totalCartaoCredito += Number(sale.total) || 0;
+        break;
+      case 'Cartão de Débito':
+        totals.totalCartaoDebito += Number(sale.total) || 0;
+        break;
+      case 'PIX':
+        totals.totalPIX += Number(sale.total) || 0;
+        break;
+      default:
+        break;
+    }
+  }
+
+  for (const ret of retiradas) {
+    if (ret.tipo === 'suprimento') {
+      totals.totalSuprimentos += Number(ret.valor) || 0;
+    } else {
+      totals.totalRetiradas += Number(ret.valor) || 0;
+    }
+  }
+
+  totals.valorFinal = Number(caixaDoc.valorInicial || 0) + totals.totalVendas - totals.totalRetiradas + totals.totalSuprimentos;
+  return totals;
+}
 
 exports.handler = withAuth(async (event, context, user) => {
   
@@ -42,7 +138,7 @@ exports.handler = withAuth(async (event, context, user) => {
           };
         }
 
-        const registros = await caixa.find({}).sort({ dataAbertura: -1 }).limit(50).toArray();
+        const registros = await caixa.find({}).sort({ dataAbertura: -1 }).limit(Math.min(parseInt(event.queryStringParameters?.limit) || 50, 500)).toArray();
         return { statusCode: 200, body: JSON.stringify(registros) };
       }
 
@@ -264,7 +360,101 @@ exports.handler = withAuth(async (event, context, user) => {
           };
         }
 
-        return { statusCode: 400, body: JSON.stringify({ message: 'Ação inválida. Use "abrir" ou "fechar".' }) };
+        if (action === 'ajustar' || action === 'recalcular') {
+          if (!checkPermission(user, ['Admin', 'Gerente'])) {
+            return { statusCode: 403, body: JSON.stringify({ message: 'Acesso negado' }) };
+          }
+
+          const id = String(body.id || '');
+          let parsedId;
+          try {
+            parsedId = new ObjectId(id);
+          } catch {
+            return { statusCode: 400, body: JSON.stringify({ message: 'ID do caixa inválido' }) };
+          }
+
+          const registro = await caixa.findOne({ _id: parsedId });
+          if (!registro) {
+            return { statusCode: 404, body: JSON.stringify({ message: 'Registro de caixa não encontrado' }) };
+          }
+
+          const mudancas = [];
+          const set = {};
+
+          const applyField = (campo, valor) => {
+            const antes = registro[campo];
+            if (antes === valor) return;
+            set[campo] = valor;
+            mudancas.push({ campo, antes, depois: valor });
+          };
+
+          if (action === 'ajustar') {
+            const dataAbertura = parseDate(body.dataAbertura);
+            if (body.dataAbertura !== undefined && !dataAbertura) {
+              return { statusCode: 400, body: JSON.stringify({ message: 'Data de abertura inválida' }) };
+            }
+            if (dataAbertura) applyField('dataAbertura', dataAbertura);
+
+            const dataFechamento = body.dataFechamento ? parseDate(body.dataFechamento) : null;
+            if (body.dataFechamento !== undefined && body.dataFechamento !== null && body.dataFechamento !== '' && !dataFechamento) {
+              return { statusCode: 400, body: JSON.stringify({ message: 'Data de fechamento inválida' }) };
+            }
+            if (body.dataFechamento !== undefined) applyField('dataFechamento', dataFechamento);
+
+            if (body.valorInicial !== undefined) applyField('valorInicial', Math.max(0, Number(body.valorInicial) || 0));
+            if (body.valorFinal !== undefined) applyField('valorFinal', Math.max(0, Number(body.valorFinal) || 0));
+            if (body.totalDinheiro !== undefined) applyField('totalDinheiro', Math.max(0, Number(body.totalDinheiro) || 0));
+            if (body.totalCartaoCredito !== undefined) applyField('totalCartaoCredito', Math.max(0, Number(body.totalCartaoCredito) || 0));
+            if (body.totalCartaoDebito !== undefined) applyField('totalCartaoDebito', Math.max(0, Number(body.totalCartaoDebito) || 0));
+            if (body.totalPIX !== undefined) applyField('totalPIX', Math.max(0, Number(body.totalPIX) || 0));
+            if (body.totalDescontos !== undefined) applyField('totalDescontos', Math.max(0, Number(body.totalDescontos) || 0));
+            if (body.observacao !== undefined) applyField('observacao', String(body.observacao || '').trim());
+          }
+
+          if (body.recalcular === true) {
+            if (set.dataAbertura && set.dataFechamento && set.dataAbertura > set.dataFechamento) {
+              return { statusCode: 400, body: JSON.stringify({ message: 'Abertura não pode ser após o fechamento' }) };
+            }
+            const paraCalcular = {
+              _id: parsedId,
+              dataAbertura: set.dataAbertura || registro.dataAbertura,
+              dataFechamento: set.dataFechamento !== undefined ? set.dataFechamento : registro.dataFechamento,
+              valorInicial: set.valorInicial !== undefined ? set.valorInicial : registro.valorInicial
+            };
+            const totals = await computeCaixaTotals(db, paraCalcular);
+            for (const [campo, valor] of Object.entries(totals)) {
+              applyField(campo, valor);
+            }
+          }
+
+          if (mudancas.length === 0) {
+            return { statusCode: 400, body: JSON.stringify({ message: 'Nenhuma alteração informada.' }) };
+          }
+
+          set.updatedAt = new Date();
+          await caixa.updateOne({ _id: parsedId }, { $set: set, $push: { ajustes: {
+            quando: new Date(),
+            userId: user.userId,
+            por: user.name || 'Usuário',
+            mudancas
+          } } });
+
+          const resumo = mudancas.map((m) => `${m.campo}: ${formatMoney(typeof m.antes === 'number' ? m.antes : (m.antes ? new Date(m.antes).toISOString() : '—'))} → ${formatMoney(typeof m.depois === 'number' ? m.depois : (m.depois ? new Date(m.depois).toISOString() : '—'))}`).join('; ');
+
+          await db.collection('logs').insertOne({
+            userId: user.userId,
+            action: 'ADJUST_CAIXA',
+            entity: 'caixa',
+            entityId: parsedId,
+            timestamp: new Date(),
+            details: `Caixa ${registro.numeroCaixa || '01'} ajustado${body.recalcular === true ? ' (com recálculo do período)' : ''}: ${resumo}`
+          });
+
+          const registroFinal = await caixa.findOne({ _id: parsedId });
+          return { statusCode: 200, body: JSON.stringify({ message: 'Caixa ajustado com sucesso', caixa: registroFinal }) };
+        }
+
+        return { statusCode: 400, body: JSON.stringify({ message: 'Ação inválida. Use "abrir", "fechar", "ajustar" ou "recalcular".' }) };
       }
 
       default:
