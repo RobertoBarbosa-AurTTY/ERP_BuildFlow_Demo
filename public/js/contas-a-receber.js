@@ -45,6 +45,10 @@
     return new Date(value).toLocaleDateString("pt-BR");
   }
 
+  function getLocalDateString() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
   function statusBadge(status) {
     const map = {
       pending: "badge-amber",
@@ -507,7 +511,7 @@
     try {
       await BuildFlow.apiFetch("/accounts-receivable", {
         method: "PUT",
-        body: JSON.stringify({ id, action: "receive" }),
+        body: JSON.stringify({ id, action: "receive", receivedDate: getLocalDateString() }),
       });
       Swal.fire({ icon: "success", title: "Recebimento registrado!", timer: 1600, showConfirmButton: false });
       await loadData();

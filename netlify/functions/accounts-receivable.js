@@ -18,6 +18,15 @@ function endOfDay(date = new Date()) {
   return d;
 }
 
+function parseLocalDate(value) {
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 function addDays(date, days) {
   const d = new Date(date);
   d.setDate(d.getDate() + days);
@@ -271,7 +280,7 @@ exports.handler = withAuth(async (event, context, user) => {
         customerName,
         category: body.category || "vendas",
         amount,
-        dueDate: startOfDay(new Date(body.dueDate)),
+        dueDate: startOfDay(parseLocalDate(body.dueDate)),
         receivedDate: null,
         status: "pending",
         paymentMethod: body.paymentMethod || "pix",
@@ -361,7 +370,7 @@ exports.handler = withAuth(async (event, context, user) => {
       const now = new Date();
 
       if (action === "receive") {
-        const receivedDate = updates.receivedDate ? startOfDay(new Date(updates.receivedDate)) : today;
+        const receivedDate = updates.receivedDate ? startOfDay(parseLocalDate(updates.receivedDate)) : today;
         await collection.updateOne(
           { _id: new ObjectId(id) },
           {
@@ -438,7 +447,7 @@ exports.handler = withAuth(async (event, context, user) => {
         if (value === null) return badRequest("Valor inválido");
         patch.amount = value;
       }
-      if (patch.dueDate) patch.dueDate = startOfDay(new Date(patch.dueDate));
+      if (patch.dueDate) patch.dueDate = startOfDay(parseLocalDate(patch.dueDate));
       if (patch.reminderDays !== undefined) {
         patch.reminderDays = Math.max(0, Math.min(30, Number(patch.reminderDays) || 3));
       }

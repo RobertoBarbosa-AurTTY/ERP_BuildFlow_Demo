@@ -15,6 +15,15 @@ function endOfDay(date = new Date()) {
   return d;
 }
 
+function parseLocalDate(value) {
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 function addDays(date, days) {
   const d = new Date(date);
   d.setDate(d.getDate() + days);
@@ -277,7 +286,7 @@ exports.handler = withAuth(async (event, context, user) => {
           supplier: (body.supplier || "").trim(),
           category: body.category || "outros",
           amount,
-          dueDate: startOfDay(new Date(body.dueDate)),
+          dueDate: startOfDay(parseLocalDate(body.dueDate)),
           paidDate: null,
           status: "pending",
           paymentMethod: body.paymentMethod || "boleto",
@@ -286,7 +295,7 @@ exports.handler = withAuth(async (event, context, user) => {
           notes: (body.notes || "").trim(),
           reminderDays: Math.max(0, Math.min(30, Number(body.reminderDays) || 3)),
           recurring: body.recurring?.enabled
-            ? { enabled: true, frequency: body.recurring.frequency || "monthly", endDate: body.recurring.endDate ? startOfDay(new Date(body.recurring.endDate)) : null }
+            ? { enabled: true, frequency: body.recurring.frequency || "monthly", endDate: body.recurring.endDate ? startOfDay(parseLocalDate(body.recurring.endDate)) : null }
             : { enabled: false },
           tags: Array.isArray(body.tags) ? body.tags.slice(0, 10) : [],
           createdBy: user.userId || user.email,
@@ -373,7 +382,7 @@ exports.handler = withAuth(async (event, context, user) => {
         const now = new Date();
 
         if (action === "pay") {
-          const paidDate = updates.paidDate ? startOfDay(new Date(updates.paidDate)) : today;
+          const paidDate = updates.paidDate ? startOfDay(parseLocalDate(updates.paidDate)) : today;
           await collection.updateOne(
             { _id: new ObjectId(id) },
             {
@@ -451,7 +460,7 @@ exports.handler = withAuth(async (event, context, user) => {
             return { statusCode: 400, body: JSON.stringify({ message: "Valor inválido" }) };
           }
         }
-        if (patch.dueDate) patch.dueDate = startOfDay(new Date(patch.dueDate));
+        if (patch.dueDate) patch.dueDate = startOfDay(parseLocalDate(patch.dueDate));
         if (patch.reminderDays !== undefined) {
           patch.reminderDays = Math.max(0, Math.min(30, Number(patch.reminderDays) || 3));
         }
