@@ -38,8 +38,9 @@ const BuildFlow = {
 
       if (!response.ok) throw new Error(data.message || "Erro na autenticação");
 
+      // Segurança: o token fica APENAS no cookie HttpOnly. Aqui guardamos
+      // apenas dados de exibição do usuário (sem credenciais).
       localStorage.setItem("user", JSON.stringify(data.user));
-      if (data.token) localStorage.setItem("token", data.token);
       return data;
     } catch (error) {
       console.error("Login error:", error);
@@ -73,14 +74,13 @@ const BuildFlow = {
   performLogout() {
     document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     localStorage.removeItem("user");
-    localStorage.removeItem("token");
     window.location.href = "/";
   },
 
   getAuthHeaders(includeJson = false) {
+    // Autenticação via cookie HttpOnly (SameSite=Lax). Não usamos
+    // Authorization para não expor o token a XSS.
     const headers = {};
-    const token = localStorage.getItem("token");
-    if (token) headers["Authorization"] = `Bearer ${token}`;
     if (includeJson) headers["Content-Type"] = "application/json";
     return headers;
   },
@@ -323,7 +323,6 @@ const BuildFlow = {
 
     if (response.status === 401) {
       localStorage.removeItem("user");
-      localStorage.removeItem("token");
       if (
         !["/", "/login"].includes(window.location.pathname)
       ) {
@@ -340,14 +339,23 @@ const BuildFlow = {
   },
 
   async checkAuth() {
-    const user = localStorage.getItem("user");
-    if (
-      !user &&
-      !["/", "/login"].includes(window.location.pathname)
-    ) {
-      window.location.href = "/";
+    // Verificação de sessão contra o servidor (cookie HttpOnly é a fonte
+    // da verdade). localStorage guarda apenas dados de exibição.
+    try {
+      const data = await this.apiFetch("/auth-me");
+      if (data && data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+        return data.user;
+      }
+    } catch (error) {
+      // apiFetch já redireciona em 401 quando necessário
+      if (!["/", "/login"].includes(window.location.pathname)) {
+        window.location.href = "/";
+        return null;
+      }
     }
-    return user ? JSON.parse(user) : null;
+    const cached = localStorage.getItem("user");
+    return cached ? JSON.parse(cached) : null;
   },
 
   // Produtos / Estoque
@@ -388,6 +396,21 @@ const BuildFlow = {
         title: "Contas a Pagar",
         desc: "Boletos, vencimentos e alertas financeiros",
         href: "/bills",
+      },
+      {
+        title: "Contas a Receber",
+        desc: "Recebimentos, clientes e parcelas a vencer",
+        href: "/receivables",
+      },
+      {
+        title: "Clientes",
+        desc: "Cadastro e gerenciamento de clientes",
+        href: "/customers",
+      },
+      {
+        title: "Fluxo de Caixa",
+        desc: "Projeção de entradas, saídas e DRE",
+        href: "/cash-flow",
       },
       {
         title: "Configurações",
@@ -1640,6 +1663,15 @@ const BuildFlow = {
     localStorage.setItem("buildflow_version", currentVersion);
   },
 
+  registerServiceWorker() {
+    if (!("serviceWorker" in navigator)) return;
+    const isLocal = /^https?:$/.test(window.location.protocol) && /localhost|127\.0\.0\.1/.test(window.location.hostname);
+    if (window.location.protocol !== "https:" && !isLocal) return;
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    });
+  },
+
   // UI Utilities
   applyTheme() {
     const settings = this.getSettings();
@@ -1725,6 +1757,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   BuildFlow.initGlobalSearch();
   BuildFlow.initUserMenu();
   BuildFlow.checkVersionUpdate();
+  BuildFlow.registerServiceWorker();
 });
 
 // Animation CSS

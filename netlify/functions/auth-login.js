@@ -1,38 +1,41 @@
 const { getDb } = require('../../src/lib/mongodb');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { rateLimit } = require('../../src/lib/rate-limit');
+const { parseBody, sanitizeString } = require('../../src/lib/validate');
+const { badRequest, unauthorized, serverError, send } = require('../../src/lib/helpers');
 
 exports.handler = async (event, context) => {
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return send(405, { message: 'Método não permitido' });
+  }
+
+  // Rate limit: 10 tentativas por 15 minutos por IP
+  const limited = await rateLimit(event, 'auth-login', { max: 10 });
+  if (limited) return limited;
+
+  const parsed = parseBody(event);
+  if (parsed.error) return badRequest(parsed.error);
+
+  const email = sanitizeString(parsed.value.email, 120).toLowerCase();
+  const password = parsed.value.password;
+
+  if (!email || typeof password !== 'string' || !password) {
+    return badRequest('Informe e-mail e senha');
   }
 
   try {
-    if (!event.body) {
-      return { statusCode: 400, body: JSON.stringify({ message: 'Corpo da requisição ausente' }) };
-    }
-
-    const { email, password } = JSON.parse(event.body);
-
     const db = await getDb();
-    const users = db.collection('users');
-
-    const user = await users.findOne({ email });
+    const user = await db.collection('users').findOne({ email });
 
     if (!user) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ message: 'Credenciais inválidas' })
-      };
+      return unauthorized();
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ message: 'Credenciais inválidas' })
-      };
+      return unauthorized();
     }
 
     const token = jwt.sign(
@@ -52,6 +55,7 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 200,
       headers: {
+        'Content-Type': 'application/json',
         'Set-Cookie': `token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400`
       },
       body: JSON.stringify({
@@ -65,12 +69,6 @@ exports.handler = async (event, context) => {
       })
     };
   } catch (error) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ 
-        message: 'Erro interno no servidor',
-        error: error.message
-      })
-    };
+    return serverError(error);
   }
 };

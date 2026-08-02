@@ -4,11 +4,19 @@
   "description": "BuildFlow with Serverless and MongoDB Atlas",
   "main": "index.js",
   "scripts": {
-    "build": "echo 'No build step required'",
+    "build": "npm run lint && npm test",
     "dev": "netlify dev",
     "seed": "node src/seed.js",
     "reset-db": "node src/reset-db.js",
-    "clear-sales": "node src/clear-sales.js"
+    "clear-sales": "node src/clear-sales.js",
+    "lint": "eslint \"src/**/*.js\" \"netlify/**/*.js\" \"scripts/**/*.js\" \"tests/**/*.js\" --no-error-on-unmatched-pattern",
+    "test": "node --test \"tests/unit/*.test.js\"",
+    "test:integration": "node --test --test-concurrency=1 \"tests/integration/*.test.js\"",
+    "capture-baseline": "node scripts/capture-baseline.js",
+    "compare-baseline": "node scripts/compare-baseline.js",
+    "ensure-indexes": "node src/ensure-indexes.js",
+    "migrate-expiry": "node src/migrate-expiry.js",
+    "migrate-schema": "node src/migrate-schema.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -17,11 +25,10 @@
     "jsbarcode": "^3.12.3",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.3.0",
-    "pdf-parse": "^1.1.1",
-    "pdfjs-dist": "^4.7.76",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "eslint": "^10.8.0",
     "netlify-cli": "^26.0.2"
   }
 }

@@ -1,16 +1,14 @@
 const { getDb } = require('../../src/lib/mongodb');
-const { verifyToken, checkPermission } = require('../../src/lib/auth');
+const { checkPermission } = require('../../src/lib/auth');
+const { withAuth } = require('../../src/lib/helpers');
 const XLSX = require('xlsx');
 
-exports.handler = async (event, context) => {
+exports.handler = withAuth(async (event, context, user) => {
   if (event.httpMethod !== 'GET') {
     return { statusCode: 405, body: JSON.stringify({ message: 'Method Not Allowed' }) };
   }
 
-  const user = verifyToken(event);
-  if (!user) {
-    return { statusCode: 401, body: JSON.stringify({ message: 'Não autorizado' }) };
-  }
+  
 
   if (!checkPermission(user, ['Admin'])) {
     return { statusCode: 403, body: JSON.stringify({ message: 'Apenas administradores podem exportar dados' }) };
@@ -93,7 +91,7 @@ exports.handler = async (event, context) => {
     console.error('Erro ao exportar dados:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: 'Erro ao exportar dados', error: error.message })
+      body: JSON.stringify({ message: 'Erro ao exportar dados' })
     };
   }
-};
+});

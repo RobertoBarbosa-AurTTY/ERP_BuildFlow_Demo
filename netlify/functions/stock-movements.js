@@ -1,14 +1,8 @@
 const { getDb } = require("../../src/lib/mongodb");
-const { verifyToken } = require("../../src/lib/auth");
+const { withAuth } = require("../../src/lib/helpers");
 
-exports.handler = async (event) => {
-  const user = verifyToken(event);
-  if (!user) {
-    return {
-      statusCode: 401,
-      body: JSON.stringify({ message: "Não autorizado" }),
-    };
-  }
+exports.handler = withAuth(async (event, _context, _user) => {
+  
 
   if (event.httpMethod !== "GET") {
     return { statusCode: 405, body: "Method Not Allowed" };
@@ -35,8 +29,7 @@ exports.handler = async (event) => {
       statusCode: 500,
       body: JSON.stringify({
         message: "Erro ao carregar movimentações",
-        error: error.message,
       }),
     };
   }
-};
+});

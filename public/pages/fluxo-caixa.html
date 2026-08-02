@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BuildFlow - Fluxo de Caixa</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        .fc-controls {
+            display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center;
+        }
+        .fc-controls select, .fc-controls input[type="date"] {
+            background: var(--bg-hover); border: 1px solid var(--border); border-radius: 10px;
+            padding: 10px 14px; color: var(--text-primary); font-size: 0.8125rem;
+        }
+        .fc-chart {
+            display: flex; align-items: flex-end; gap: 6px; height: 220px;
+            padding: 16px 4px 0; overflow-x: auto;
+        }
+        .fc-bar-wrap {
+            flex: 1; min-width: 22px; display: flex; flex-direction: column;
+            align-items: center; gap: 4px; height: 100%; justify-content: flex-end;
+            position: relative;
+        }
+        .fc-bar {
+            width: 100%; max-width: 14px; border-radius: 4px 4px 2px 2px;
+            transition: height 0.3s ease;
+        }
+        .fc-bar--in { background: linear-gradient(180deg, #10b981, #059669); }
+        .fc-bar--out { background: linear-gradient(180deg, #ef4444, #dc2626); }
+        .fc-bar-wrap span { font-size: 0.55rem; color: var(--text-muted); white-space: nowrap; }
+        .fc-bar-wrap.fc-today .fc-bar { box-shadow: 0 0 0 2px var(--brand); }
+        .fc-bar-wrap.fc-today span { color: var(--brand); font-weight: 700; }
+        .fc-line {
+            position: absolute; left: 0; right: 0; height: 2px;
+            background: rgba(99, 102, 241, 0.9); border-radius: 2px; z-index: 2;
+        }
+        .fc-legend { display: flex; gap: 20px; margin: 8px 0 0; font-size: 0.75rem; color: var(--text-muted); }
+        .fc-legend i { margin-right: 5px; }
+        .dre-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        .dre-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+        .dre-table td:last-child { text-align: right; font-weight: 600; white-space: nowrap; }
+        .dre-table .dre-total td { font-weight: 800; font-size: 1rem; border-top: 2px solid var(--border); border-bottom: none; }
+        .dre-table .dre-sub td { color: var(--text-secondary); }
+        .fc-days-table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+        .fc-days-table th, .fc-days-table td { padding: 13px 16px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+        .fc-days-table th { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+        .fc-days-table td:first-child, .fc-days-table th:first-child { text-align: left; }
+        .fc-days-table tr.fc-today-row td { background: rgba(79,70,229,0.06); }
+        .pos { color: #10b981; } .neg { color: #ef4444; }
+        @media (max-width: 768px) {
+            .page-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
+            .fc-controls { flex-direction: column !important; align-items: stretch !important; }
+            .fc-controls select, .fc-controls input[type="date"] { width: 100% !important; box-sizing: border-box !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        
+
+        <main class="main-content">
+            <nav class="top-nav">
+                <div class="search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search" placeholder="Buscar em todo o sistema...">
+                </div>
+                <div class="nav-actions"></div>
+            </nav>
+
+            <header class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;">
+                <div>
+                    <h2>Fluxo de <span>Caixa</span></h2>
+                    <p>Projeção de entradas e saídas para os próximos 30 dias, com DRE do período.</p>
+                </div>
+            </header>
+
+            <div class="fc-controls">
+                <select id="periodSelect">
+                    <option value="month">Mês atual</option>
+                    <option value="week">Últimos 7 dias</option>
+                    <option value="day">Hoje</option>
+                </select>
+                <input type="date" id="dateSelect" title="Data base (opcional)">
+                <button type="button" class="btn btn-brand" id="applyBtn" style="padding:10px 20px;width:auto;">
+                    <i class="fa-solid fa-rotate"></i> Aplicar
+                </button>
+            </div>
+
+            <section class="grid-stats">
+                <div class="card-stat">
+                    <div class="stat-info"><p>Entradas (30 dias)</p><h3 id="kpiIn">—</h3></div>
+                    <div class="stat-icon bg-emerald-op"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                </div>
+                <div class="card-stat">
+                    <div class="stat-info"><p>Saídas (30 dias)</p><h3 id="kpiOut">—</h3></div>
+                    <div class="stat-icon bg-red-op"><i class="fa-solid fa-arrow-trend-down"></i></div>
+                </div>
+                <div class="card-stat">
+                    <div class="stat-info"><p>Saldo Projetado</p><h3 id="kpiBalance">—</h3></div>
+                    <div class="stat-icon bg-violet-op"><i class="fa-solid fa-scale-balanced"></i></div>
+                </div>
+                <div class="card-stat">
+                    <div class="stat-info"><p>Resultado DRE</p><h3 id="kpiDre">—</h3></div>
+                    <div class="stat-icon bg-blue-op"><i class="fa-solid fa-file-invoice"></i></div>
+                </div>
+            </section>
+
+            <section class="card-table" style="margin-bottom:24px;">
+                <div class="table-header">
+                    <h3>Projeção Diária — 30 dias</h3>
+                    <div class="fc-legend">
+                        <span><i class="fa-solid fa-square" style="color:#10b981;"></i> Entrada</span>
+                        <span><i class="fa-solid fa-square" style="color:#ef4444;"></i> Saída</span>
+                        <span><i class="fa-solid fa-minus" style="color:#6366f1;"></i> Saldo acumulado</span>
+                    </div>
+                </div>
+                <div class="fc-chart" id="flowChart"></div>
+            </section>
+
+            <section class="card-table" style="margin-bottom:24px;">
+                <div class="table-header"><h3>DRE — <span id="drePeriodLabel">Mês atual</span></h3></div>
+                <table class="dre-table" id="dreTable">
+                    <tbody>
+                        <tr><td>Receita Bruta</td><td id="dreReceitaBruta">—</td></tr>
+                        <tr class="dre-sub"><td>Deduções e descontos</td><td id="dreDeducoes">—</td></tr>
+                        <tr><td>Receita Líquida</td><td id="dreReceitaLiquida">—</td></tr>
+                        <tr class="dre-sub"><td>CMV (custo das mercadorias)</td><td id="dreCmv">—</td></tr>
+                        <tr><td>Lucro Bruto</td><td id="dreLucroBruto">—</td></tr>
+                        <tr class="dre-sub"><td>Despesas pagas</td><td id="dreDespesas">—</td></tr>
+                        <tr class="dre-sub"><td>Outros recebimentos</td><td id="dreOutros">—</td></tr>
+                        <tr class="dre-total"><td>Resultado Operacional</td><td id="dreResultado">—</td></tr>
+                    </tbody>
+                </table>
+            </section>
+            <section class="card-table">
+                <div class="table-header"><h3>Detalhamento Diário</h3></div>
+                <table class="fc-days-table" id="daysTable">
+                    <thead>
+                        <tr>
+                            <th>Dia</th>
+                            <th>Entradas</th>
+                            <th>Saídas</th>
+                            <th>Saldo dia</th>
+                            <th>Acumulado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted);">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../js/layout.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/fluxo-caixa.js"></script>
+</body>
+</html>

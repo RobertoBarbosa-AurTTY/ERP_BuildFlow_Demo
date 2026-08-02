@@ -1,15 +1,10 @@
 const { getDb } = require("../../src/lib/mongodb");
-const { verifyToken, checkPermission } = require("../../src/lib/auth");
+const { checkPermission } = require("../../src/lib/auth");
+const { withAuth } = require("../../src/lib/helpers");
 const { ObjectId } = require("mongodb");
 
-exports.handler = async (event, context) => {
-  const user = verifyToken(event);
-  if (!user) {
-    return {
-      statusCode: 401,
-      body: JSON.stringify({ message: "Não autorizado" }),
-    };
-  }
+exports.handler = withAuth(async (event, context, user) => {
+  
 
   const db = await getDb();
   const products = db.collection("products");
@@ -207,8 +202,7 @@ exports.handler = async (event, context) => {
       statusCode: 500,
       body: JSON.stringify({
         message: "Erro no servidor",
-        error: error.message,
       }),
     };
   }
-};
+});

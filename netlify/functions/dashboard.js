@@ -1,18 +1,19 @@
 const { ObjectId } = require('mongodb');
 const { getDb } = require('../../src/lib/mongodb');
-const { verifyToken } = require('../../src/lib/auth');
+const { withAuth } = require('../../src/lib/helpers');
+const { cached } = require('../../src/lib/cache');
 
-exports.handler = async (event, context) => {
-  const user = verifyToken(event);
-  if (!user) {
-    return { statusCode: 401, body: JSON.stringify({ message: 'Não autorizado' }) };
-  }
+exports.handler = withAuth(async (event, context, user) => {
+  
 
   try {
     const db = await getDb();
     const period = event.queryStringParameters?.period || 'month';
     const tzOffset = parseInt(event.queryStringParameters?.tzOffset) || 0;
     const selectedDate = event.queryStringParameters?.date;
+
+    const cacheKey = `dash:${period}:${selectedDate || ''}:${tzOffset}`;
+    const payload = await cached(cacheKey, 60 * 1000, async () => {
 
     const now = new Date();
     const localEpoch = now.getTime() - tzOffset * 60000;
@@ -287,14 +288,15 @@ exports.handler = async (event, context) => {
         topProducts,
       }),
     };
+    });
+    return payload;
   } catch (error) {
     console.error('Dashboard function error:', error);
     return { 
       statusCode: 500, 
       body: JSON.stringify({ 
-        message: 'Erro ao carregar dashboard',
-        error: error.message
+        message: 'Erro ao carregar dashboard'
       }) 
     };
   }
-};
+});

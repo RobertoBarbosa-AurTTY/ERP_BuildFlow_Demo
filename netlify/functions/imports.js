@@ -1,14 +1,8 @@
 const { getDb } = require('../../src/lib/mongodb');
-const { verifyToken } = require('../../src/lib/auth');
+const { withAuth } = require('../../src/lib/helpers');
 
-exports.handler = async (event, context) => {
-    const user = verifyToken(event);
-    if (!user) {
-        return {
-            statusCode: 401,
-            body: JSON.stringify({ message: 'Não autorizado' })
-        };
-    }
+exports.handler = withAuth(async (event, context, user) => {
+    
 
     try {
         if (event.httpMethod === 'POST') {
@@ -44,9 +38,8 @@ exports.handler = async (event, context) => {
         return {
             statusCode: 500,
             body: JSON.stringify({
-                message: 'Erro interno do servidor',
-                error: error.message
+                message: 'Erro interno do servidor'
             })
         };
     }
-};
+});

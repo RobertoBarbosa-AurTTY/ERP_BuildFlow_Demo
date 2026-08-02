@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BuildFlow - Clientes</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        .ap-filters {
+            display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center;
+        }
+        .ap-filters input[type="text"] {
+            background: var(--bg-hover); border: 1px solid var(--border); border-radius: 10px;
+            padding: 10px 14px; color: var(--text-primary); font-size: 0.8125rem; min-width: 260px;
+        }
+        .ap-badge {
+            display: inline-block; padding: 4px 10px; border-radius: 999px;
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .badge-green { background: rgba(16,185,129,0.15); color: #10b981; }
+        .badge-muted { background: var(--bg-hover); color: var(--text-muted); }
+        .ap-actions { display: flex; gap: 6px; white-space: nowrap; }
+        .btn-icon {
+            width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border);
+            background: var(--bg-hover); color: var(--text-secondary); cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .btn-icon:hover { border-color: var(--brand); color: var(--brand); }
+        .btn-icon--danger:hover { border-color: var(--red); color: var(--red); }
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none;
+            align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(8px);
+        }
+        .modal-card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px;
+            width: 100%; max-width: 620px; padding: 32px; max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .modal-header h3 { font-size: 1.35rem; font-weight: 800; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-grid .full { grid-column: span 2; }
+        .form-group label {
+            font-size: 0.7rem; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; margin-bottom: 6px; display: block;
+        }
+        .form-input {
+            width: 100%; background: var(--bg-input); border: 2px solid var(--border);
+            border-radius: 10px; padding: 10px 14px; color: var(--text-primary); font-size: 0.9rem;
+        }
+        .form-input:focus { border-color: var(--brand); outline: none; }
+        .form-check {
+            display: flex; align-items: center; gap: 8px; font-size: 0.875rem;
+            text-transform: none; font-weight: 500; cursor: pointer;
+        }
+        .modal-footer { display: flex; gap: 12px; margin-top: 24px; }
+        .btn-cancel { flex: 1; padding: 14px; border-radius: 10px; border: none; background: var(--bg-hover); cursor: pointer; font-weight: 700; }
+        .btn-save { flex: 1; padding: 14px; border-radius: 10px; border: none; background: var(--brand); color: white; cursor: pointer; font-weight: 700; }
+        @media (max-width: 768px) {
+            .page-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
+            .page-header .btn { width: 100% !important; justify-content: center !important; }
+            .ap-filters { flex-direction: column !important; align-items: stretch !important; }
+            .ap-filters input[type="text"] { width: 100% !important; box-sizing: border-box !important; min-width: 0 !important; }
+            .modal-card { padding: 20px !important; border-radius: 16px !important; margin: 12px !important; width: auto !important; }
+            .form-grid { grid-template-columns: 1fr !important; }
+            .form-grid .full { grid-column: span 1 !important; }
+            .modal-footer { flex-direction: column !important; gap: 8px !important; }
+            .modal-footer button { width: 100% !important; }
+            .card-table th, .card-table td { padding: 8px 8px !important; font-size: 0.7rem !important; }
+            .card-table td:nth-child(5), .card-table th:nth-child(5) { display: none !important; }
+            .card-table td.ap-actions { padding: 4px 2px !important; display: flex; gap: 2px !important; }
+            .card-table .btn-icon { width: 22px !important; height: 22px !important; font-size: 0.55rem !important; min-width: 0 !important; padding: 0 !important; flex-shrink: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        
+
+        <main class="main-content">
+            <nav class="top-nav">
+                <div class="search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search" placeholder="Buscar clientes por nome, CPF, e-mail ou telefone...">
+                </div>
+                <div class="nav-actions"></div>
+            </nav>
+
+            <header class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;">
+                <div>
+                    <h2>Clientes</h2>
+                    <p>Cadastre e gerencie seus clientes, associados às contas a receber.</p>
+                </div>
+                <button id="newCustomerBtn" class="btn btn-brand" style="padding:12px 24px;width:auto;">
+                    <i class="fa-solid fa-plus"></i> Novo Cliente
+                </button>
+            </header>
+
+            <div class="ap-filters">
+                <input type="text" id="searchBar" placeholder="Buscar...">
+            </div>
+
+            <section class="card-table">
+                <div class="table-header">
+                    <h3>Lista de Clientes</h3>
+                    <span style="font-size:0.8rem;color:var(--text-muted)"><span id="customerCount">0</span> clientes</span>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>CPF/CNPJ</th>
+                            <th>E-mail</th>
+                            <th>Telefone</th>
+                            <th>Endereço</th>
+                            <th>Situação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td colspan="7" style="text-align:center;padding:40px;">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modalTitle">Novo Cliente</h3>
+                <button type="button" id="modalClose" class="btn-icon"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="customerForm">
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label>Nome *</label>
+                        <input class="form-input" id="fieldName" required placeholder="Nome completo ou razão social">
+                    </div>
+                    <div class="form-group">
+                        <label>CPF / CNPJ</label>
+                        <input class="form-input" id="fieldCpfCnpj" placeholder="000.000.000-00 ou CNPJ">
+                    </div>
+                    <div class="form-group">
+                        <label>E-mail</label>
+                        <input class="form-input" id="fieldEmail" type="email" placeholder="cliente@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Telefone</label>
+                        <input class="form-input" id="fieldPhone" placeholder="(11) 99999-9999">
+                    </div>
+                    <div class="form-group">
+                        <label>Endereço</label>
+                        <input class="form-input" id="fieldAddress" placeholder="Rua, número, bairro, cidade">
+                    </div>
+                    <div class="form-group full">
+                        <label>Observações</label>
+                        <textarea class="form-input" id="fieldNotes" rows="2" placeholder="Anotações adicionais"></textarea>
+                    </div>
+                    <div class="form-group full">
+                        <label class="form-check">
+                            <input type="checkbox" id="fieldActive" checked> Cliente ativo
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" id="modalCancel">Cancelar</button>
+                    <button type="submit" class="btn-save"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../js/layout.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/clientes.js"></script>
+</body>
+</html>

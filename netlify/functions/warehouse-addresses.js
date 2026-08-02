@@ -1,16 +1,14 @@
 const { getDb } = require('../../src/lib/mongodb');
-const { verifyToken, checkPermission } = require('../../src/lib/auth');
+const { checkPermission } = require('../../src/lib/auth');
+const { withAuth } = require('../../src/lib/helpers');
 const { ObjectId } = require('mongodb');
 
 function buildCode(loc) {
   return [loc.aisle, loc.shelf, loc.level, loc.slot].filter(Boolean).join('-');
 }
 
-exports.handler = async (event) => {
-  const user = verifyToken(event);
-  if (!user) {
-    return { statusCode: 401, body: JSON.stringify({ message: 'Não autorizado' }) };
-  }
+exports.handler = withAuth(async (event, context, user) => {
+  
 
   const db = await getDb();
   const collection = db.collection('warehouse_addresses');
@@ -137,7 +135,7 @@ exports.handler = async (event) => {
     console.error('warehouse-addresses error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: 'Erro no servidor', error: error.message })
+      body: JSON.stringify({ message: 'Erro no servidor' })
     };
   }
-};
+});

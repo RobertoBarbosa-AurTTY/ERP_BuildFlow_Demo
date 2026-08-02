@@ -1,11 +1,8 @@
 const { getDb } = require('../../src/lib/mongodb');
-const { verifyToken } = require('../../src/lib/auth');
+const { withAuth } = require('../../src/lib/helpers');
 
-exports.handler = async (event, context) => {
-  const user = verifyToken(event);
-  if (!user) {
-    return { statusCode: 401, body: JSON.stringify({ message: 'Não autorizado' }) };
-  }
+exports.handler = withAuth(async (event, context, user) => {
+  
 
   const db = await getDb();
   const categoriesCol = db.collection('categories');
@@ -57,4 +54,4 @@ exports.handler = async (event, context) => {
     console.error('Categories error:', error);
     return { statusCode: 500, body: JSON.stringify({ message: 'Erro ao gerenciar categorias' }) };
   }
-};
+});

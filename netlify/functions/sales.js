@@ -1,12 +1,11 @@
 const { getDb } = require('../../src/lib/mongodb');
-const { verifyToken } = require('../../src/lib/auth');
+const { withAuth } = require('../../src/lib/helpers');
 const { ObjectId } = require('mongodb');
+const { nextSequence } = require('../../src/lib/counters');
+const stock = require('../../src/lib/stock');
 
-exports.handler = async (event, context) => {
-  const user = verifyToken(event);
-  if (!user) {
-    return { statusCode: 401, body: JSON.stringify({ message: 'Não autorizado' }) };
-  }
+exports.handler = withAuth(async (event, context, user) => {
+  
 
   const db = await getDb();
   const sales = db.collection('sales');
@@ -55,7 +54,11 @@ exports.handler = async (event, context) => {
         // Executar count e find em paralelo
         const [totalCount, data] = await Promise.all([
           sales.countDocuments(query),
-          sales.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum).toArray()
+          sales.find(query, {
+            projection: {
+              userId: 0
+            }
+          }).sort({ createdAt: -1 }).skip(skip).limit(limitNum).toArray()
         ]);
 
         const totalPages = limitNum === 0 ? 1 : Math.ceil(totalCount / limitNum);
@@ -81,77 +84,35 @@ exports.handler = async (event, context) => {
         const oldSale = await sales.findOne({ _id: new ObjectId(id) });
         if (!oldSale) return { statusCode: 404, body: 'Venda não encontrada' };
 
+        const productsCol = db.collection('products');
+        const oldItems = oldSale.items || [];
+        const newStatus = updateData.status || oldSale.status;
+
         // Se o status mudou para FINALIZED (de RESERVED)
-        if (updateData.status === 'FINALIZED' && oldSale.status === 'RESERVED') {
-          const bulkOps = oldSale.items.map(item => ({
-            updateOne: {
-              filter: { _id: new ObjectId(item.id) },
-              update: { 
-                $inc: { 
-                  reserved: -item.qty,
-                  quantity: -item.qty
-                } 
-              }
-            }
-          }));
-          await db.collection('products').bulkWrite(bulkOps);
+        if (newStatus === 'FINALIZED' && oldSale.status === 'RESERVED') {
+          const finalized = await stock.finalizeReserved(productsCol, oldItems);
+          if (!finalized.ok) {
+            return { statusCode: 409, body: JSON.stringify({ message: 'Conflito de estoque. Saldo insuficiente para finalizar a venda.' }) };
+          }
         } 
         // Se o status mudou para CANCELLED
-        else if (updateData.status === 'CANCELLED' && oldSale.status !== 'CANCELLED') {
-          const bulkOps = oldSale.items.map(item => ({
-            updateOne: {
-              filter: { _id: new ObjectId(item.id) },
-              update: oldSale.status === 'RESERVED' 
-                ? { $inc: { reserved: -item.qty } }
-                : { $inc: { quantity: item.qty } }
-            }
-          }));
-          await db.collection('products').bulkWrite(bulkOps);
+        else if (newStatus === 'CANCELLED' && oldSale.status !== 'CANCELLED') {
+          if (oldSale.status === 'RESERVED') {
+            await stock.releaseReserved(productsCol, oldItems);
+          } else if (oldSale.status === 'FINALIZED') {
+            await stock.restoreStock(productsCol, oldItems);
+          }
         }
         // Se houver edição de itens (simplificado: remove estoque antigo e aplica novo)
         else if (updateData.items && oldSale.status !== 'CANCELLED') {
-          // Reverter estoque antigo
-          const revertOps = oldSale.items.map(item => ({
-            updateOne: {
-              filter: { _id: new ObjectId(item.id) },
-              update: oldSale.status === 'RESERVED'
-                ? { $inc: { reserved: -item.qty } }
-                : { $inc: { quantity: item.qty } }
-            }
-          }));
-          await db.collection('products').bulkWrite(revertOps);
+          // Reverter estoque antigo conforme o status antigo
+          await stock.revertStock(productsCol, oldItems, oldSale.status);
 
-          // Aplicar estoque novo de forma atômica (condição impede saldo negativo)
-          const isReservedNew = updateData.status === 'RESERVED' || (!updateData.status && oldSale.status === 'RESERVED');
-          const appliedNew = [];
-          let applyFailed = false;
-          for (const item of updateData.items) {
-            let filter, update;
-            if (isReservedNew) {
-              filter = { _id: new ObjectId(item.id) };
-              update = { $inc: { reserved: item.qty } };
-            } else {
-              filter = { _id: new ObjectId(item.id), quantity: { $gte: item.qty } };
-              update = { $inc: { quantity: -item.qty } };
-            }
-            const upd = await db.collection('products').updateOne(filter, update);
-            if (upd.modifiedCount !== 1) {
-              applyFailed = true;
-              break;
-            }
-            appliedNew.push({ id: item.id, qty: item.qty, isReserved: isReservedNew });
-          }
-
-          if (applyFailed) {
-            // Reverter o que foi aplicado e restaurar estoque antigo
-            await db.collection('products').bulkWrite(appliedNew.map(a => ({
-              updateOne: {
-                filter: { _id: new ObjectId(a.id) },
-                update: a.isReserved
-                  ? { $inc: { reserved: -a.qty } }
-                  : { $inc: { quantity: a.qty } }
-              }
-            })).concat(revertOps));
+          // Aplicar estoque novo conforme o status novo (condição impede saldo negativo)
+          const appliedNew = await stock.applyStock(productsCol, updateData.items, newStatus);
+          if (!appliedNew.ok) {
+            // Reverter parcial do novo e restaurar estoque antigo
+            await stock.revertStock(productsCol, oldItems, oldSale.status);
             return { statusCode: 409, body: JSON.stringify({ message: 'Conflito de estoque. Saldo insuficiente para a edição.' }) };
           }
         }
@@ -168,7 +129,7 @@ exports.handler = async (event, context) => {
           entity: 'sales',
           entityId: new ObjectId(id),
           timestamp: new Date(),
-          details: `Venda ${id} atualizada. Novo status: ${updateData.status || oldSale.status}`
+          details: `Venda ${id} atualizada. Novo status: ${newStatus}`
         });
 
         return { statusCode: 200, body: JSON.stringify({ message: 'Venda atualizada com sucesso' }) };
@@ -212,10 +173,11 @@ exports.handler = async (event, context) => {
           demand.set(id, (demand.get(id) || 0) + qty);
         }
 
-        const numericId = parseInt(`${Date.now().toString().slice(-8)}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`);
+        // Número sequencial atômico (sem colisão, ao contrário do timestamp+random)
+        const saleNumber = await nextSequence('saleNumber');
 
         const sale = {
-          saleNumber: numericId,
+          saleNumber,
           items,
           total: Number(total) || 0,
           subtotal: grossSubtotal != null ? Number(grossSubtotal) : (subtotal != null ? Number(subtotal) : undefined),
@@ -242,47 +204,16 @@ exports.handler = async (event, context) => {
         const result = await sales.insertOne(sale);
 
         // Atualizar estoque de forma atômica (condição impede saldo negativo)
-        const appliedStock = [];
-        for (const [productId, wantQty] of demand.entries()) {
-          let filter, update;
-          if (saleStatus === 'RESERVED') {
-            filter = {
-              _id: new ObjectId(productId),
-              $expr: {
-                $gte: [
-                  { $subtract: [{ $ifNull: ['$quantity', 0] }, { $ifNull: ['$reserved', 0] }] },
-                  wantQty
-                ]
-              }
-            };
-            update = { $inc: { reserved: wantQty } };
-          } else {
-            filter = { _id: new ObjectId(productId), quantity: { $gte: wantQty } };
-            update = { $inc: { quantity: -wantQty } };
-          }
-          const upd = await productsCol.updateOne(filter, update);
-          if (upd.modifiedCount !== 1) {
-            // Falhou: reverter o que já foi aplicado
-            const rollback = appliedStock.map(s => ({
-              updateOne: {
-                filter: { _id: new ObjectId(s.productId) },
-                update: saleStatus === 'RESERVED'
-                  ? { $inc: { reserved: -s.wantQty } }
-                  : { $inc: { quantity: s.wantQty } }
-              }
-            }));
-            if (rollback.length > 0) {
-              await productsCol.bulkWrite(rollback);
-            }
-            await sales.deleteOne({ _id: result.insertedId });
-            return {
-              statusCode: 409,
-              body: JSON.stringify({
-                message: 'Conflito de estoque. Produto não encontrado ou saldo insuficiente. Tente novamente.'
-              })
-            };
-          }
-          appliedStock.push({ productId, wantQty });
+        const demandItems = Array.from(demand.entries()).map(([productId, qty]) => ({ id: productId, qty }));
+        const applied = await stock.applyStock(productsCol, demandItems, saleStatus);
+        if (!applied.ok) {
+          await sales.deleteOne({ _id: result.insertedId });
+          return {
+            statusCode: 409,
+            body: JSON.stringify({
+              message: 'Conflito de estoque. Produto não encontrado ou saldo insuficiente. Tente novamente.'
+            })
+          };
         }
 
         // 3. Log de auditoria
@@ -316,22 +247,11 @@ exports.handler = async (event, context) => {
         if (!saleToDelete) return { statusCode: 404, body: JSON.stringify({ message: 'Venda não encontrada' }) };
 
         // Restaurar estoque dos produtos
+        const productsToRestore = saleToDelete.items || [];
         if (saleToDelete.status === 'FINALIZED') {
-          const restoreOps = saleToDelete.items.map(item => ({
-            updateOne: {
-              filter: { _id: new ObjectId(item.id) },
-              update: { $inc: { quantity: item.qty } }
-            }
-          }));
-          await db.collection('products').bulkWrite(restoreOps);
+          await stock.restoreStock(db.collection('products'), productsToRestore);
         } else if (saleToDelete.status === 'RESERVED') {
-          const releaseOps = saleToDelete.items.map(item => ({
-            updateOne: {
-              filter: { _id: new ObjectId(item.id) },
-              update: { $inc: { reserved: -item.qty } }
-            }
-          }));
-          await db.collection('products').bulkWrite(releaseOps);
+          await stock.releaseReserved(db.collection('products'), productsToRestore);
         }
 
         // Remover logs relacionados
@@ -353,9 +273,8 @@ exports.handler = async (event, context) => {
     return { 
       statusCode: 500, 
       body: JSON.stringify({ 
-        message: 'Erro ao processar venda',
-        error: error.message
+        message: 'Erro ao processar venda'
       }) 
     };
   }
-};
+});

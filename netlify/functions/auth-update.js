@@ -92,7 +92,7 @@ exports.handler = async (event, context) => {
     console.error('Auth update error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: 'Erro ao atualizar perfil', error: error.message })
+      body: JSON.stringify({ message: 'Erro ao atualizar perfil' })
     };
   }
 };

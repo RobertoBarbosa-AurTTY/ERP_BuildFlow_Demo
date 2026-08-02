@@ -693,6 +693,32 @@ body:not(.light-theme) .swal2-html-container [style*="background:#f8fafc"] {
     overflow: visible !important;
 }
 
+.swal2-popup.sale-detail-swal.caixa-report-swal .swal-prod-edit-btn {
+    border-radius: 10px !important;
+    padding: 10px 28px !important;
+    font-weight: 700 !important;
+    background: #4f46e5 !important;
+    color: #fff !important;
+    border: none !important;
+    margin: 0 6px !important;
+    box-shadow: none !important;
+}
+
+.swal2-popup.sale-detail-swal.caixa-report-swal .swal-prod-delete-btn {
+    border-radius: 10px !important;
+    padding: 10px 28px !important;
+    font-weight: 700 !important;
+    background: #ef4444 !important;
+    color: #fff !important;
+    border: none !important;
+    margin: 0 6px !important;
+    box-shadow: none !important;
+}
+
+.swal2-popup.sale-detail-swal.caixa-report-swal .swal2-actions {
+    gap: 4px !important;
+}
+
 @media (max-width: 768px) {
     .caixa-report-meta {
         grid-template-columns: repeat(2, minmax(0, 1fr));

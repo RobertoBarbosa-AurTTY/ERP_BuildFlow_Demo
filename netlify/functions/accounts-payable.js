@@ -1,5 +1,6 @@
 const { getDb } = require("../../src/lib/mongodb");
-const { verifyToken, checkPermission } = require("../../src/lib/auth");
+const { checkPermission } = require("../../src/lib/auth");
+const { withAuth } = require("../../src/lib/helpers");
 const { ObjectId } = require("mongodb");
 
 function startOfDay(date = new Date()) {
@@ -50,8 +51,8 @@ function nextDueDate(currentDueDate, frequency) {
 
 async function buildSummary(collection, today, extraQuery = {}) {
   const weekEnd = endOfDay(addDays(today, 7));
-  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-  const monthEnd = endOfDay(new Date(today.getFullYear(), today.getMonth() + 1, 0));
+  const monthStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
+  const monthEnd = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 0, 23, 59, 59, 999));
 
   const isDefault = Object.keys(extraQuery).length === 0;
 
@@ -138,11 +139,8 @@ async function buildSummary(collection, today, extraQuery = {}) {
   };
 }
 
-exports.handler = async (event) => {
-  const user = verifyToken(event);
-  if (!user) {
-    return { statusCode: 401, body: JSON.stringify({ message: "Não autorizado" }) };
-  }
+exports.handler = withAuth(async (event, context, user) => {
+  
 
   const db = await getDb();
   const collection = db.collection("accounts_payable");
@@ -490,7 +488,7 @@ exports.handler = async (event) => {
     console.error("accounts-payable error:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: "Erro no servidor", error: error.message }),
+      body: JSON.stringify({ message: "Erro no servidor" }),
     };
   }
-};
+});

@@ -381,6 +381,12 @@
                 ><span>Relatórios</span></a
               >
             </li>
+            <li class="nav-item">
+              <a href="/cash-flow" class="nav-link"
+                ><i class="fa-solid fa-money-bill-trend-up"></i
+                ><span>Fluxo de Caixa</span></a
+              >
+            </li>
           </ul>
           </div>
           <div class="sidebar-group">
@@ -401,6 +407,18 @@
               <a href="/bills" class="nav-link"
                 ><i class="fa-solid fa-file-invoice-dollar"></i
                 ><span>Contas a Pagar</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="/receivables" class="nav-link"
+                ><i class="fa-solid fa-hand-holding-dollar"></i
+                ><span>Contas a Receber</span></a
+              >
+            </li>
+            <li class="nav-item">
+              <a href="/customers" class="nav-link"
+                ><i class="fa-solid fa-users"></i
+                ><span>Clientes</span></a
               >
             </li>
           </ul>
@@ -736,6 +754,18 @@
                 >Boletos, vencimentos e alertas financeiros.</span
               >
             </a>
+            <a href="/receivables" class="quick-access-card">
+              <strong>Contas a Receber</strong>
+              <span class="qa-desc"
+                >Recebimentos, clientes e parcelas a vencer.</span
+              >
+            </a>
+            <a href="/cash-flow" class="quick-access-card">
+              <strong>Fluxo de Caixa</strong>
+              <span class="qa-desc"
+                >Projeção de entradas, saídas e DRE.</span
+              >
+            </a>
             <a href="/sales-history" class="quick-access-card">
               <strong>Histórico de Vendas</strong>
               <span class="qa-desc"
@@ -760,6 +790,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/layout.js"></script>
     <script src="js/main.js"></script>
     <script>
       function setMetricText(id, value) {

@@ -576,55 +576,7 @@
 </head>
 <body>
     <div class="layout">
-                        <aside class="sidebar">
-            <div class="sidebar-logo">
-                <div class="sidebar-logo-icon"><i class="fa-solid fa-layer-group"></i></div>
-                <div class="sidebar-logo-text">Build<span>Flow</span></div>
-            </div>
-            <div class="sidebar-inner">
-                <div class="sidebar-group">
-                    <div class="sidebar-group-header">Menu Principal</div>
-                    <ul class="nav-list">
-                        <li class="nav-item"><a href="/dashboard" class="nav-link"><i class="fa-solid fa-chart-pie"></i><span>Dashboard</span></a></li>
-                        <li class="nav-item"><a href="/stock" class="nav-link active"><i class="fa-solid fa-boxes-stacked"></i><span>Estoque</span></a></li>
-                        <li class="nav-item"><a href="/receiving" class="nav-link"><i class="fa-solid fa-file-import"></i><span>Entradas</span></a></li>
-                        <li class="nav-item"><a href="/pos" class="nav-link"><i class="fa-solid fa-cart-shopping"></i><span>PDV / Vendas</span></a></li>
-                    </ul>
-                </div>
-                <div class="sidebar-group">
-                    <div class="sidebar-group-header">Relatórios & Analíticos</div>
-                    <ul class="nav-list">
-                        <li class="nav-item"><a href="/reports" class="nav-link"><i class="fa-solid fa-chart-line"></i><span>Relatórios</span></a></li>
-                    </ul>
-                </div>
-                <div class="sidebar-group">
-                    <div class="sidebar-group-header">Históricos</div>
-                    <ul class="nav-list">
-                        <li class="nav-item"><a href="/sales-history" class="nav-link"><i class="fa-solid fa-clock-rotate-left"></i><span>Histórico de Vendas</span></a></li>
-                    </ul>
-                </div>
-                <div class="sidebar-group">
-                    <div class="sidebar-group-header">Financeiro</div>
-                    <ul class="nav-list">
-                        <li class="nav-item"><a href="/bills" class="nav-link"><i class="fa-solid fa-file-invoice-dollar"></i><span>Contas a Pagar</span></a></li>
-                    </ul>
-                </div>
-                <div class="sidebar-group">
-                    <div class="sidebar-group-header">Sistema</div>
-                    <ul class="nav-list">
-                        <li class="nav-item"><a href="/settings" class="nav-link"><i class="fa-solid fa-sliders"></i><span>Configurações</span></a></li>
-                        <li class="nav-item"><a href="/manual" class="nav-link"><i class="fa-solid fa-circle-question"></i><span>Ajuda</span></a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="sidebar-user">
-                <div class="user-avatar">AD</div>
-                <div class="user-info">
-                    <p>Admin Master</p>
-                    <span>Gerente</span>
-                </div>
-            </div>
-        </aside>
+                        
 
         <main class="main-content">
             <nav class="top-nav">
@@ -726,179 +678,7 @@
         </main>
     </div>
 
-    <!-- Modal de Ficha do Produto Analítica -->
-    <div id="productDetailsModal" class="modal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h3><i class="fa-solid fa-box-open"></i> Ficha do Produto</h3>
-                <button class="close-modal" onclick="document.getElementById('productDetailsModal').style.display='none'">&times;</button>
-            </div>
-            <div class="modal-body">
-                <!-- Cabeçalho Principal Uniforme -->
-                <div class="product-main-info" style="display: flex; gap: 25px; margin-bottom: 30px; align-items: stretch;">
-                    <div class="product-img-box" id="productImageContainer" style="width: 120px; min-height: 120px; background: #1a1d23; border: 2px solid var(--border); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: var(--brand); box-shadow: inset 0 0 20px rgba(0,0,0,0.2); overflow: hidden; flex-shrink: 0;">
-                        <i class="fa-solid fa-box-open"></i>
-                    </div>
-                    <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
-                        <!-- Linha 1: Nome + Status -->
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
-                            <h2 id="detailName" style="font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; margin: 0; line-height: 1.2; color: var(--text-primary);">-</h2>
-                            <div id="detailStatusBadge" style="flex-shrink: 0; margin-top: 4px;"></div>
-                        </div>
-
-                        <!-- Linha 2: SKU + Código de Barras com ícones e copy -->
-                        <div style="display: flex; flex-wrap: wrap; gap: 24px; margin-top: 6px;">
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <i class="fa-solid fa-hashtag sku-icon"></i>
-                                <span style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">SKU</span>
-                                <span id="detailSKU" class="copyable-item" onclick="copyToClipboard(this, 'SKU')" style="font-family: monospace; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">
-                                    #---
-                                    <i class="fa-regular fa-copy copy-icon"></i>
-                                </span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <i class="fa-solid fa-barcode" style="color: var(--emerald); font-size: 0.8rem;"></i>
-                                <span style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Código de Barras</span>
-                                <span id="detailBarcodeNumber" class="copyable-item" onclick="copyToClipboard(this, 'Código de Barras')" style="font-family: monospace; font-size: 0.85rem; font-weight: 500; color: var(--text-secondary);">
-                                    —
-                                    <i class="fa-regular fa-copy copy-icon"></i>
-                                </span>
-                            </div>
-                        </div>
-
-                        <!-- Linha 3: Tags (Categoria + Marca + Fornecedor) uniformes -->
-                        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px;">
-                            <span style="background: rgba(79, 70, 229, 0.08); color: var(--brand); padding: 4px 14px; border-radius: 100px; font-size: 0.7rem; font-weight: 600; border: 1px solid rgba(79, 70, 229, 0.15); display: inline-flex; align-items: center; gap: 6px;">
-                                <i class="fa-solid fa-folder"></i> <span id="detailCategory">Categoria</span>
-                            </span>
-                            <span style="background: rgba(16, 185, 129, 0.08); color: var(--emerald); padding: 4px 14px; border-radius: 100px; font-size: 0.7rem; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.15); display: inline-flex; align-items: center; gap: 6px;">
-                                <i class="fa-solid fa-tag"></i> <span id="detailBrand">Marca</span>
-                            </span>
-                            <span style="background: rgba(100, 116, 139, 0.08); color: var(--text-muted); padding: 4px 14px; border-radius: 100px; font-size: 0.7rem; font-weight: 600; border: 1px solid rgba(100, 116, 139, 0.15); display: inline-flex; align-items: center; gap: 6px;">
-                                <i class="fa-solid fa-truck"></i> <span id="detailSupplierTag">Fornecedor</span>
-                            </span>
-                        </div>
-
-                        <!-- Linha 4: Datas (uniforme) -->
-                        <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);">
-                            <div>
-                                <span style="font-size: 0.6rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block;">Data de Entrada</span>
-                                <span id="detailDataEntrada" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">-</span>
-                            </div>
-                            <div>
-                                <span style="font-size: 0.6rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block;">Última Atualização</span>
-                                <span id="detailDataAtualizacao" style="font-size: 0.8rem; font-weight: 600; color: var(--emerald);">-</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="modal-detail-grid" style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 30px;">
-                    <!-- Coluna Esquerda: Métricas e Localização -->
-                    <div style="display: flex; flex-direction: column; gap: 25px;">
-                        <!-- Seção Localização -->
-                        <div style="background: #161920; border-radius: 18px; padding: 20px; border: 1px solid var(--border);">
-                            <h4 style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-                                <i class="fa-solid fa-location-dot" style="color: var(--red);"></i> Endereçamento no Armazém
-                            </h4>
-                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                                <div style="text-align: center; border-right: 1px solid var(--border);">
-                                    <p style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 4px;">ESTANTE</p>
-                                    <p id="locShelf" style="font-weight: 800; font-size: 1.1rem; color: var(--text-primary);">-</p>
-                                </div>
-                                <div style="text-align: center; border-right: 1px solid var(--border);">
-                                    <p style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 4px;">NÍVEL</p>
-                                    <p id="locLevel" style="font-weight: 800; font-size: 1.1rem; color: var(--text-primary);">-</p>
-                                </div>
-                                <div style="text-align: center;">
-                                    <p style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 4px;">APTO</p>
-                                    <p id="locApt" style="font-weight: 800; font-size: 1.1rem; color: var(--text-primary);">-</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Seção Performance -->
-                        <div style="background: #161920; border-radius: 18px; padding: 20px; border: 1px solid var(--border);">
-                            <h4 style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-                                <i class="fa-solid fa-chart-line" style="color: var(--brand);"></i> Performance de Vendas
-                            </h4>
-                            <div class="perf-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                                <div>
-                                    <p style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 4px;">TOTAL VENDIDO</p>
-                                    <p id="perfSold" style="font-weight: 800; font-size: 1.2rem; color: var(--emerald);">0 un</p>
-                                </div>
-                                <div>
-                                    <p style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 4px;">LUCRO ESTIMADO</p>
-                                    <p id="perfProfit" style="font-weight: 800; font-size: 1.2rem; color: var(--brand);">R$ 0,00</p>
-                                </div>
-                                <div style="grid-column: span 2;">
-                                    <p style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 4px;">ÚLTIMA MOVIMENTAÇÃO</p>
-                                    <p id="perfLastMove" style="font-weight: 600; font-size: 0.85rem; color: var(--text-secondary);">Carregando...</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Coluna Direita: Valores e Estoque -->
-                    <div style="display: flex; flex-direction: column; gap: 20px;">
-                        <div style="padding: 20px; background: rgba(79, 70, 229, 0.05); border: 1px solid rgba(79, 70, 229, 0.2); border-radius: 18px;">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                <div>
-                                    <p style="font-size: 0.7rem; color: var(--brand); font-weight: 800; text-transform: uppercase; margin-bottom: 5px;">Disponível</p>
-                                    <h3 id="detailAvailable" style="font-size: 2.2rem; font-weight: 800; color: var(--text-primary);">-</h3>
-                                </div>
-                                <div style="text-align: right;">
-                                    <p style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 5px;">Total Físico</p>
-                                    <p id="detailQuantity" style="font-size: 1.1rem; font-weight: 700; color: var(--text-secondary);">-</p>
-                                </div>
-                            </div>
-                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(79, 70, 229, 0.2); display: flex; justify-content: space-between;">
-                                <span style="font-size: 0.75rem; color: var(--text-muted);">Reservado para Vendas:</span>
-                                <span id="detailReserved" style="font-size: 0.85rem; font-weight: 700; color: var(--pdv-secondary);">0 un</span>
-                            </div>
-                        </div>
-
-                        <div style="padding: 20px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 18px;">
-                            <p style="font-size: 0.7rem; color: var(--emerald); font-weight: 800; text-transform: uppercase; margin-bottom: 10px;">Preço de Venda</p>
-                            <h3 id="detailPrice" style="font-size: 2.2rem; font-weight: 800; color: var(--emerald);">-</h3>
-                            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 5px;">Preço unitário</p>
-                        </div>
-
-                    </div>
-                </div>
-
-                <div style="margin-top: 24px; background: #161920; border-radius: 18px; padding: 20px; border: 1px solid var(--border); width: 100%; box-sizing: border-box;">
-                    <h4 style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-                        <i class="fa-solid fa-chart-pie" style="color: var(--brand);"></i> Margens e Investimento
-                    </h4>
-                    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;">
-                        <div>
-                            <p style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 4px;">LUCRO UNITÁRIO</p>
-                            <p id="detailUnitProfit" style="font-weight: 800; font-size: 1.5rem; color: var(--brand);">R$ 0,00</p>
-                        </div>
-                        <div>
-                            <p style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 4px;">MARGEM DE LUCRO</p>
-                            <p id="detailProfitMargin" style="font-weight: 800; font-size: 1.5rem; color: var(--brand);">0,00%</p>
-                        </div>
-                        <div>
-                            <p style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 4px;">INVESTIMENTO TOTAL</p>
-                            <p id="detailTotalInvestment" style="font-weight: 800; font-size: 1.5rem; color: var(--emerald);">R$ 0,00</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Botões de Ação -->
-                <div class="action-btns" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 40px;">
-                    <button id="editProductBtn" class="btn btn-outline" style="height: 50px; border-radius: 14px;">
-                        <i class="fa-solid fa-pen-to-square"></i> Editar Registro
-                    </button>
-                    <button id="deleteProductBtn" class="btn" style="background: rgba(239, 68, 68, 0.1); color: var(--red); height: 50px; border-radius: 14px; border: 1px solid rgba(239, 68, 68, 0.2);">
-                        <i class="fa-solid fa-trash-can"></i> Remover do Sistema
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Modal de Edição de Produto -->
 
     <!-- Modal de Edição de Produto -->
     <div id="editProductModal" class="modal">
@@ -1037,6 +817,7 @@
     <div id="copyTooltip" class="copy-tooltip"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../js/layout.js"></script>
     <script src="../js/main.js"></script>
     <script>
         // Função de copiar para área de transferência
@@ -1698,82 +1479,190 @@
             }
 
             async function showProductDetails(product) {
-                const modal = document.getElementById('productDetailsModal');
-                
-                // Atualiza os campos do cabeçalho
-                document.getElementById('detailName').textContent = product.name;
-                
-                const skuElement = document.getElementById('detailSKU');
-                const skuText = product.sku || '---';
-                skuElement.innerHTML = `#${skuText} <i class="fa-regular fa-copy copy-icon"></i>`;
-                skuElement.onclick = () => copyToClipboard(skuElement, 'SKU');
-                
-                const barcodeElement = document.getElementById('detailBarcodeNumber');
-                const barcodeText = product.barcode || '—';
-                barcodeElement.innerHTML = `${barcodeText} <i class="fa-regular fa-copy copy-icon"></i>`;
-                barcodeElement.onclick = () => copyToClipboard(barcodeElement, 'Código de Barras');
-                
-                const imageContainer = document.getElementById('productImageContainer');
-                if (product.imageUrl) {
-                    const img = document.createElement('img');
-                    img.src = product.imageUrl;
-                    img.alt = product.name;
-                    img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
-                    img.onerror = () => {
-                        imageContainer.innerHTML = '<i class="fa-solid fa-box-open"></i>';
-                    };
-                    imageContainer.innerHTML = '';
-                    imageContainer.appendChild(img);
-                } else {
-                    imageContainer.innerHTML = '<i class="fa-solid fa-box-open"></i>';
-                }
-                
-                document.getElementById('detailCategory').textContent = product.category || '—';
-                document.getElementById('detailBrand').textContent = product.brand || 'Marca Própria';
-                document.getElementById('detailSupplierTag').textContent = product.supplier || 'Fornecedor não informado';
-                
-                const reserved = product.reserved || 0;
-                const available = Math.max(0, Number(product.quantity || 0) - Number(reserved));
-                
-                document.getElementById('detailQuantity').textContent = `${Number(product.quantity || 0)} un`;
-                document.getElementById('detailReserved').textContent = `${reserved} un`;
-                document.getElementById('detailAvailable').textContent = `${available} un`;
-                
-                document.getElementById('detailPrice').textContent = `R$ ${Number(product.price || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-
-                const unitProfit = Number(product.price || 0) - Number(product.costPrice || 0);
-                const profitMargin = Number(product.costPrice || 0) > 0
-                    ? (unitProfit / Number(product.costPrice || 0)) * 100
+                const p = product;
+                const skuText = p.sku || '---';
+                const barcodeText = p.barcode || '—';
+                const reserved = p.reserved || 0;
+                const available = Math.max(0, Number(p.quantity || 0) - Number(reserved));
+                const unitProfit = Number(p.price || 0) - Number(p.costPrice || 0);
+                const profitMargin = Number(p.costPrice || 0) > 0
+                    ? (unitProfit / Number(p.costPrice || 0)) * 100
                     : 0;
-                const totalInvestment = Number(product.costPrice || 0) * Number(product.quantity || 0);
-
-                document.getElementById('detailUnitProfit').textContent = `R$ ${unitProfit.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                document.getElementById('detailProfitMargin').textContent = `${profitMargin.toLocaleString('pt-BR', {minimumFractionDigits: 2})}%`;
-                document.getElementById('detailTotalInvestment').textContent = `R$ ${totalInvestment.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                
+                const totalInvestment = Number(p.costPrice || 0) * Number(p.quantity || 0);
+                const status = p.status || 'Em estoque';
+                const badgeClass = status === 'Em estoque' ? 'badge-success' : 'badge-warning';
+                const loc = BuildFlow.getProductLocation(p);
                 const formatDate = (dateStr) => {
                     if (!dateStr) return '—';
-                    const date = new Date(dateStr);
-                    return `${date.toLocaleDateString('pt-BR')} às ${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+                    const d = new Date(dateStr);
+                    return `${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
                 };
-                document.getElementById('detailDataEntrada').textContent = formatDate(product.dataEntrada);
-                document.getElementById('detailDataAtualizacao').textContent = formatDate(product.dataAtualizacao);
-                
-                const loc = BuildFlow.getProductLocation(product);
-                document.getElementById('locShelf').textContent = loc.aisle && loc.shelf ? `${loc.aisle}-${loc.shelf}` : '—';
-                document.getElementById('locLevel').textContent = loc.level || '—';
-                document.getElementById('locApt').textContent = loc.slot || '—';
+                const imgHtml = p.imageUrl
+                    ? `<img src="${BuildFlow.escapeHtml(p.imageUrl)}" alt="${BuildFlow.escapeHtml(p.name)}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid fa-box-open\\'></i>'">`
+                    : '<i class="fa-solid fa-box-open"></i>';
 
-                document.getElementById('perfSold').textContent = 'Carregando...';
-                document.getElementById('perfProfit').textContent = 'Carregando...';
-                document.getElementById('perfLastMove').textContent = 'Carregando...';
+                const html = `
+                    <div class="sale-detail-sheet">
+                        <div class="caixa-report-hero" style="background:linear-gradient(135deg,rgba(79,70,229,0.12) 0%,var(--bg-input) 100%);border-color:rgba(79,70,229,0.25);">
+                            <div class="caixa-report-hero__icon" style="width:52px;height:52px;border-radius:14px;background:rgba(79,70,229,0.15);color:var(--brand);font-size:1.3rem;overflow:hidden;">
+                                ${imgHtml}
+                            </div>
+                            <div class="caixa-report-hero__info">
+                                <span class="caixa-report-hero__label">Produto</span>
+                                <strong>${BuildFlow.escapeHtml(p.name)}</strong>
+                            </div>
+                            <span class="badge ${badgeClass}">${status}</span>
+                        </div>
+                        <div class="sale-detail-meta caixa-report-meta" style="grid-template-columns:repeat(4,minmax(0,1fr));">
+                            <div class="sale-detail-kv">
+                                <label>SKU</label>
+                                <span style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:monospace;" onclick="copyToClipboard(this,'SKU')">#${skuText} <i class="fa-regular fa-copy copy-icon" style="font-size:0.7rem;"></i></span>
+                            </div>
+                            <div class="sale-detail-kv">
+                                <label>Código de Barras</label>
+                                <span style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:monospace;" onclick="copyToClipboard(this,'Código de Barras')">${barcodeText} <i class="fa-regular fa-copy copy-icon" style="font-size:0.7rem;"></i></span>
+                            </div>
+                            <div class="sale-detail-kv">
+                                <label>Data de Entrada</label>
+                                <span>${formatDate(p.dataEntrada)}</span>
+                            </div>
+                            <div class="sale-detail-kv">
+                                <label>Última Atualização</label>
+                                <span>${formatDate(p.dataAtualizacao)}</span>
+                            </div>
+                        </div>
+                        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
+                            <span style="background:rgba(79,70,229,0.08);color:var(--brand);padding:3px 12px;border-radius:100px;font-size:0.68rem;font-weight:600;border:1px solid rgba(79,70,229,0.15);display:inline-flex;align-items:center;gap:5px;"><i class="fa-solid fa-folder"></i> ${BuildFlow.escapeHtml(p.category || '—')}</span>
+                            <span style="background:rgba(16,185,129,0.08);color:var(--emerald);padding:3px 12px;border-radius:100px;font-size:0.68rem;font-weight:600;border:1px solid rgba(16,185,129,0.15);display:inline-flex;align-items:center;gap:5px;"><i class="fa-solid fa-tag"></i> ${BuildFlow.escapeHtml(p.brand || 'Marca Própria')}</span>
+                            <span style="background:rgba(100,116,139,0.08);color:var(--text-muted);padding:3px 12px;border-radius:100px;font-size:0.68rem;font-weight:600;border:1px solid rgba(100,116,139,0.15);display:inline-flex;align-items:center;gap:5px;"><i class="fa-solid fa-truck"></i> ${BuildFlow.escapeHtml(p.supplier || 'Fornecedor não informado')}</span>
+                        </div>
+                        <div class="caixa-report-body">
+                            <div class="caixa-report-col caixa-report-col--summary">
+                                <div class="sale-detail-items">
+                                    <div class="sale-detail-items__head">
+                                        <span>Localização no Armazém</span>
+                                        <span></span>
+                                    </div>
+                                    <div style="display:grid;grid-template-columns:repeat(3,1fr);padding:12px 14px;text-align:center;">
+                                        <div style="border-right:1px solid var(--border);">
+                                            <p style="font-size:0.62rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;">ESTANTE</p>
+                                            <p style="font-weight:800;font-size:1.1rem;color:var(--text-primary);margin:0;">${loc.aisle && loc.shelf ? BuildFlow.escapeHtml(`${loc.aisle}-${loc.shelf}`) : '—'}</p>
+                                        </div>
+                                        <div style="border-right:1px solid var(--border);">
+                                            <p style="font-size:0.62rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;">NÍVEL</p>
+                                            <p style="font-weight:800;font-size:1.1rem;color:var(--text-primary);margin:0;">${BuildFlow.escapeHtml(loc.level || '—')}</p>
+                                        </div>
+                                        <div>
+                                            <p style="font-size:0.62rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;">APTO</p>
+                                            <p style="font-weight:800;font-size:1.1rem;color:var(--text-primary);margin:0;">${BuildFlow.escapeHtml(loc.slot || '—')}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="sale-detail-items" id="perfContainer">
+                                    <div class="sale-detail-items__head">
+                                        <span>Performance de Vendas</span>
+                                        <span></span>
+                                    </div>
+                                    <div class="sale-detail-row sale-detail-row--muted">
+                                        <span>Total vendido</span>
+                                        <span class="sale-detail-row__value" id="swalPerfSold" style="color:var(--emerald);">Carregando...</span>
+                                    </div>
+                                    <div class="sale-detail-row sale-detail-row--muted">
+                                        <span>Lucro estimado</span>
+                                        <span class="sale-detail-row__value" id="swalPerfProfit" style="color:var(--brand);">Carregando...</span>
+                                    </div>
+                                    <div class="sale-detail-row sale-detail-row--muted">
+                                        <span>Última movimentação</span>
+                                        <span class="sale-detail-row__value" id="swalPerfLastMove" style="font-weight:500;font-size:0.78rem;color:var(--text-secondary);">Carregando...</span>
+                                    </div>
+                                </div>
+                                <div class="sale-detail-items">
+                                    <div class="sale-detail-items__head">
+                                        <span>Margens e Investimento</span>
+                                        <span></span>
+                                    </div>
+                                    <div class="sale-detail-row sale-detail-row--muted">
+                                        <span>Lucro unitário</span>
+                                        <span class="sale-detail-row__value" style="color:var(--brand);">R$ ${unitProfit.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                                    </div>
+                                    <div class="sale-detail-row sale-detail-row--muted">
+                                        <span>Margem de lucro</span>
+                                        <span class="sale-detail-row__value" style="color:var(--brand);">${profitMargin.toLocaleString('pt-BR', {minimumFractionDigits: 2})}%</span>
+                                    </div>
+                                    <div class="sale-detail-row sale-detail-row--muted">
+                                        <span>Investimento total</span>
+                                        <span class="sale-detail-row__value" style="color:var(--emerald);">R$ ${totalInvestment.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="caixa-report-col caixa-report-col--movements">
+                                <div class="sale-detail-items">
+                                    <div class="sale-detail-items__head">
+                                        <span>Disponível</span>
+                                        <span>Total Físico</span>
+                                    </div>
+                                    <div style="padding:14px;display:flex;justify-content:space-between;align-items:center;">
+                                        <span style="font-size:1.8rem;font-weight:900;color:var(--text-primary);">${available} un</span>
+                                        <span style="font-size:1rem;font-weight:700;color:var(--text-secondary);">${Number(p.quantity || 0)} un</span>
+                                    </div>
+                                    <div style="padding:8px 14px 14px;border-top:1px dashed rgba(79,70,229,0.2);display:flex;justify-content:space-between;">
+                                        <span style="font-size:0.72rem;color:var(--text-muted);">Reservado para vendas:</span>
+                                        <span style="font-size:0.85rem;font-weight:700;color:var(--pdv-secondary);">${reserved} un</span>
+                                    </div>
+                                </div>
+                                <div class="sale-detail-total" style="background:linear-gradient(90deg,rgba(16,185,129,0.15),transparent);border-color:rgba(16,185,129,0.35);">
+                                    <span style="font-size:0.68rem;">Preço de Venda</span>
+                                    <strong style="color:var(--emerald);font-size:1.5rem;">R$ ${Number(p.price || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
 
-                const badgeArea = document.getElementById('detailStatusBadge');
-                const status = product.status || 'Em estoque';
-                const badgeClass = status === 'Em estoque' ? 'badge-success' : 'badge-warning';
-                badgeArea.innerHTML = `<span class="badge ${badgeClass}">${status}</span>`;
+                const result = await Swal.fire({
+                    title: 'Ficha do Produto',
+                    html: html,
+                    width: 960,
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="fa-solid fa-pen-to-square"></i> Editar Registro',
+                    confirmButtonColor: '#4f46e5',
+                    cancelButtonText: '<i class="fa-solid fa-trash-can"></i> Remover',
+                    cancelButtonColor: '#ef4444',
+                    buttonsStyling: false,
+                    customClass: {
+                        popup: 'sale-detail-swal caixa-report-swal',
+                        title: 'sale-detail-swal__title',
+                        htmlContainer: 'sale-detail-swal__html',
+                        confirmButton: 'sale-detail-swal__confirm swal-prod-edit-btn',
+                        cancelButton: 'sale-detail-swal__confirm swal-prod-delete-btn'
+                    }
+                });
 
-                modal.style.display = 'flex';
+                if (result.isConfirmed) {
+                    openEditModal(product);
+                } else if (result.dismiss === Swal.DismissReason.cancel) {
+                    const confirmDelete = await Swal.fire({
+                        title: 'Tem certeza?',
+                        text: `Deseja excluir ${product.name} do estoque?`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ef4444',
+                        cancelButtonColor: '#64748b',
+                        confirmButtonText: 'Sim, excluir!',
+                        cancelButtonText: 'Cancelar'
+                    });
+                    if (confirmDelete.isConfirmed) {
+                        try {
+                            BuildFlow.showToast('Excluindo produto...', 'info');
+                            await BuildFlow.deleteProduct(product._id);
+                            BuildFlow.showToast('Produto removido com sucesso!', 'success');
+                            await loadCategories();
+                            loadProducts();
+                        } catch (err) {
+                            BuildFlow.showToast('Erro ao excluir produto', 'danger');
+                        }
+                    }
+                }
 
                 (async () => {
                     try {
@@ -1804,39 +1693,15 @@
                             }, 0);
                         }, 0);
 
-                        document.getElementById('perfSold').textContent = `${totalSold} un`;
-                        document.getElementById('perfProfit').textContent = `R$ ${totalProfit.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-
-                        const soldValue = filteredSales.reduce((sum, sale) => {
-                            return sum + sale.items.reduce((sub, item) => {
-                                if (BuildFlow.normalizeId(item.id) !== productId) return sub;
-                                return sub + (Number(item.qty) || 0) * (Number(item.price) || 0);
-                            }, 0);
-                        }, 0);
-
-                        const seriesPoints = filteredSales
-                            .map(sale => {
-                                const when = sale.createdAt ? new Date(sale.createdAt).getTime() : Date.now();
-                                const val = sale.items.reduce((sub, item) => {
-                                    return BuildFlow.normalizeId(item.id) === productId
-                                        ? sub + (Number(item.qty) || 0) * (Number(item.price) || 0)
-                                        : sub;
-                                }, 0);
-                                return { x: when, y: val };
-                            })
-                            .sort((a, b) => a.x - b.x);
-
-                        if (!seriesPoints.length) seriesPoints.push({ x: Date.now(), y: 0 });
-
-                        try {
-                            renderPerformanceLineChart('perfLineChart', seriesPoints);
-                        } catch (e) {
-                            console.error('Erro ao desenhar gráfico de linha:', e);
-                        }
+                        const soldEl = document.getElementById('swalPerfSold');
+                        const profitEl = document.getElementById('swalPerfProfit');
+                        if (soldEl) soldEl.textContent = `${totalSold} un`;
+                        if (profitEl) profitEl.textContent = `R$ ${totalProfit.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                     } catch (error) {
-                        console.error('Erro ao carregar desempenho de vendas:', error);
-                        document.getElementById('perfSold').textContent = '0 un';
-                        document.getElementById('perfProfit').textContent = 'R$ 0,00';
+                        const soldEl = document.getElementById('swalPerfSold');
+                        const profitEl = document.getElementById('swalPerfProfit');
+                        if (soldEl) soldEl.textContent = '0 un';
+                        if (profitEl) profitEl.textContent = 'R$ 0,00';
                     }
 
                     try {
@@ -1860,43 +1725,13 @@
                                 lastMovementText = `${when.toLocaleDateString('pt-BR')} às ${when.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} (Saída)`;
                             }
                         }
-                        document.getElementById('perfLastMove').textContent = lastMovementText;
+                        const moveEl = document.getElementById('swalPerfLastMove');
+                        if (moveEl) moveEl.textContent = lastMovementText;
                     } catch (error) {
-                        console.error('Erro ao carregar última movimentação:', error);
-                        document.getElementById('perfLastMove').textContent = 'Não foi possível carregar a movimentação.';
+                        const moveEl = document.getElementById('swalPerfLastMove');
+                        if (moveEl) moveEl.textContent = 'Não foi possível carregar a movimentação.';
                     }
                 })();
-
-                document.getElementById('editProductBtn').onclick = () => {
-                    modal.style.display = 'none';
-                    openEditModal(product);
-                };
-
-                document.getElementById('deleteProductBtn').onclick = async () => {
-                    modal.style.display = 'none';
-                    Swal.fire({
-                        title: 'Tem certeza?',
-                        text: `Deseja excluir ${product.name} do estoque?`,
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#ef4444',
-                        cancelButtonColor: '#64748b',
-                        confirmButtonText: 'Sim, excluir!',
-                        cancelButtonText: 'Cancelar'
-                    }).then(async (result) => {
-                        if (result.isConfirmed) {
-                            try {
-                                BuildFlow.showToast('Excluindo produto...', 'info');
-                                await BuildFlow.deleteProduct(product._id); 
-                                BuildFlow.showToast('Produto removido com sucesso!', 'success');
-                                await loadCategories();
-                                loadProducts();
-                            } catch (err) {
-                                BuildFlow.showToast('Erro ao excluir produto', 'danger');
-                            }
-                        }
-                    });
-                };
             }
 
             async function openEditModal(product) {
@@ -1989,15 +1824,12 @@
 
             document.querySelectorAll('.close-modal').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    document.getElementById('productDetailsModal').style.display = 'none';
                     document.getElementById('editProductModal').style.display = 'none';
                 });
             });
 
             window.onclick = (event) => {
-                const detailsModal = document.getElementById('productDetailsModal');
                 const editModal = document.getElementById('editProductModal');
-                if (event.target == detailsModal) detailsModal.style.display = 'none';
                 if (event.target == editModal) editModal.style.display = 'none';
             };
 

@@ -40,7 +40,7 @@ exports.handler = async (event, context) => {
     console.error('Auth verify error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: 'Erro ao verificar senha', error: error.message })
+      body: JSON.stringify({ message: 'Erro ao verificar senha' })
     };
   }
 };

@@ -512,6 +512,91 @@ async function seed() {
       }
     }
 
+    // 7. Clientes e Contas a Receber de exemplo
+    const customers = db.collection("customers");
+    await customers.createIndex({ name: 1 });
+    const customerCount = await customers.countDocuments();
+    let seededCustomerIds = [];
+    if (customerCount === 0) {
+      const now = new Date();
+      const inserted = await customers.insertMany([
+        {
+          name: "Construtora Horizonte",
+          cpfCnpj: "12.345.678/0001-00",
+          email: "financeiro@horizonte.com.br",
+          phone: "(11) 4002-8922",
+          address: "Rua das Obras, 150 - São Paulo/SP",
+          notes: "Compra mensal de cimento e tubos",
+          active: true,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          name: "Maria Silva",
+          cpfCnpj: "123.456.789-00",
+          email: "maria.silva@email.com",
+          phone: "(11) 98888-7777",
+          address: "Av. Central, 850 - São Paulo/SP",
+          notes: "Pessoa física - venda a prazo",
+          active: true,
+          createdAt: now,
+          updatedAt: now,
+        },
+      ]);
+      seededCustomerIds = inserted.insertedIds
+        ? Object.values(inserted.insertedIds)
+        : [];
+      console.log("✅ Clientes iniciais inseridos");
+    }
+
+    const receivables = db.collection("accounts_receivable");
+    await receivables.createIndex({ dueDate: 1 });
+    await receivables.createIndex({ status: 1 });
+    const receivableCount = await receivables.countDocuments();
+    if (receivableCount === 0 && seededCustomerIds.length >= 2) {
+      const dueIn = (days) => {
+        const d = new Date();
+        d.setDate(d.getDate() + days);
+        return d;
+      };
+      const now = new Date();
+      await receivables.insertMany([
+        {
+          description: "Venda de materiais - Construtora Horizonte",
+          customerId: seededCustomerIds[0],
+          customerName: "Construtora Horizonte",
+          category: "vendas",
+          amount: 4500,
+          dueDate: dueIn(15),
+          status: "pending",
+          receivedDate: null,
+          paymentMethod: "boleto",
+          recurring: { enabled: false },
+          reminderDays: 3,
+          tags: [],
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          description: "Reforma - Maria Silva",
+          customerId: seededCustomerIds[1],
+          customerName: "Maria Silva",
+          category: "vendas",
+          amount: 780,
+          dueDate: dueIn(5),
+          status: "pending",
+          receivedDate: null,
+          paymentMethod: "pix",
+          recurring: { enabled: false },
+          reminderDays: 3,
+          tags: [],
+          createdAt: now,
+          updatedAt: now,
+        },
+      ]);
+      console.log("✅ Contas a receber iniciais inseridas");
+    }
+
     const warehouseAddresses = db.collection("warehouse_addresses");
     await warehouseAddresses.createIndex({ code: 1 }, { unique: true });
     const addrCount = await warehouseAddresses.countDocuments();
