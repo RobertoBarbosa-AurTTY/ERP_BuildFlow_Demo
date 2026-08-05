@@ -44,6 +44,26 @@
         .dre-table td:last-child { text-align: right; font-weight: 600; white-space: nowrap; }
         .dre-table .dre-total td { font-weight: 800; font-size: 1rem; border-top: 2px solid var(--border); border-bottom: none; }
         .dre-table .dre-sub td { color: var(--text-secondary); }
+        .dre-table tr[data-line] { cursor: pointer; }
+        .dre-table tr[data-line]:hover td { background: rgba(79,70,229,0.07); }
+        .dre-table td .drill-hint { font-size: 0.7rem; color: var(--text-muted); font-weight: 500; display: block; }
+        .fc-modal-expl { margin: 0 0 12px; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; text-align: left; }
+        .fc-modal-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        .fc-modal-table th, .fc-modal-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+        .fc-modal-table tbody tr:hover { background: rgba(79, 70, 229, 0.05); }
+        .fc-modal-table td.num, .fc-modal-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+        .fc-modal-table th { color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; }
+        .fc-modal-row-link { color: var(--brand); cursor: pointer; font-weight: 600; }
+        .fc-modal-row-link:hover { text-decoration: underline; }
+        .fc-modal-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 2px solid var(--border); font-size: 0.9rem; }
+        .fc-modal-footer strong { font-size: 1.05rem; }
+        .fc-more-btn { background: var(--bg-hover); border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; cursor: pointer; font-weight: 600; color: var(--text-primary); }
+        .fc-more-btn:hover { background: var(--brand); color: #fff; }
+        .fc-modal-empty { padding: 24px; text-align: center; color: var(--text-muted); font-size: 0.85rem; }
+        .fc-mini-dre { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .fc-mini-dre td { padding: 7px 8px; border-bottom: 1px solid var(--border); }
+        .fc-mini-dre td:last-child { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+        .fc-mini-dre .tot td { font-weight: 800; border-top: 2px solid var(--border); border-bottom: none; }
         .fc-days-table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
         .fc-days-table th, .fc-days-table td { padding: 13px 16px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
         .fc-days-table th { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -124,14 +144,14 @@
                 <div class="table-header"><h3>DRE — <span id="drePeriodLabel">Mês atual</span></h3></div>
                 <table class="dre-table" id="dreTable">
                     <tbody>
-                        <tr><td>Receita Bruta</td><td id="dreReceitaBruta">—</td></tr>
-                        <tr class="dre-sub"><td>Deduções e descontos</td><td id="dreDeducoes">—</td></tr>
-                        <tr><td>Receita Líquida</td><td id="dreReceitaLiquida">—</td></tr>
-                        <tr class="dre-sub"><td>CMV (custo das mercadorias)</td><td id="dreCmv">—</td></tr>
+                        <tr data-line="receita"><td>Receita Bruta</td><td id="dreReceitaBruta">—</td></tr>
+                        <tr class="dre-sub" data-line="deducoes"><td>Deduções e descontos</td><td id="dreDeducoes">—</td></tr>
+                        <tr data-line="liquida"><td>Receita Líquida</td><td id="dreReceitaLiquida">—</td></tr>
+                        <tr class="dre-sub" data-line="cmv"><td>CMV (custo das mercadorias)</td><td id="dreCmv">—</td></tr>
                         <tr><td>Lucro Bruto</td><td id="dreLucroBruto">—</td></tr>
-                        <tr class="dre-sub"><td>Despesas pagas</td><td id="dreDespesas">—</td></tr>
-                        <tr class="dre-sub"><td>Outros recebimentos</td><td id="dreOutros">—</td></tr>
-                        <tr class="dre-total"><td>Resultado Operacional</td><td id="dreResultado">—</td></tr>
+                        <tr class="dre-sub" data-line="despesas"><td>Despesas pagas</td><td id="dreDespesas">—</td></tr>
+                        <tr class="dre-sub" data-line="outros"><td>Outros recebimentos</td><td id="dreOutros">—</td></tr>
+                        <tr class="dre-total" data-line="resultado"><td>Resultado Operacional</td><td id="dreResultado">—</td></tr>
                     </tbody>
                 </table>
             </section>

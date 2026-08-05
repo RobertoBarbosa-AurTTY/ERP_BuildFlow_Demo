@@ -128,24 +128,22 @@
 
   function showDetails(customer) {
     const renderRow = (label, value) =>
-      `<tr><td style="padding:6px 10px 6px 0;color:var(--text-muted);font-size:0.8rem;white-space:nowrap;vertical-align:top;width:1px;">${label}</td><td style="padding:6px 0;font-size:0.9rem;">${value}</td></tr>`;
+      `<div style="padding:10px 14px;background:var(--bg-input);border-radius:10px;"><div style="color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px;">${label}</div><div style="font-size:0.9rem;">${value}</div></div>`;
     Swal.fire({
       title: "Ficha do Cliente",
       html: `<div style="text-align:left;">
-        <table style="width:100%;border-collapse:collapse;">
-          <tbody>
-            ${renderRow("Nome", `<strong>${BuildFlow.escapeHtml(customer.name)}</strong>`)}
-            ${renderRow("CPF/CNPJ", BuildFlow.escapeHtml(customer.cpfCnpj || "—"))}
-            ${renderRow("E-mail", BuildFlow.escapeHtml(customer.email || "—"))}
-            ${renderRow("Telefone", BuildFlow.escapeHtml(customer.phone || "—"))}
-            ${renderRow("Endereço", BuildFlow.escapeHtml(customer.address || "—"))}
-            ${renderRow("Situação", customer.active ? "Ativo" : "Inativo")}
-            ${renderRow("Cadastro", formatDate(customer.createdAt))}
-          </tbody>
-        </table>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;">
+          ${renderRow("Nome", `<strong>${BuildFlow.escapeHtml(customer.name)}</strong>`)}
+          ${renderRow("CPF/CNPJ", BuildFlow.escapeHtml(customer.cpfCnpj || "—"))}
+          ${renderRow("E-mail", BuildFlow.escapeHtml(customer.email || "—"))}
+          ${renderRow("Telefone", BuildFlow.escapeHtml(customer.phone || "—"))}
+          ${renderRow("Endereço", BuildFlow.escapeHtml(customer.address || "—"))}
+          ${renderRow("Situação", customer.active ? "Ativo" : "Inativo")}
+          ${renderRow("Cadastro", formatDate(customer.createdAt))}
+        </div>
         ${customer.notes ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);"><div style="color:var(--text-muted);font-size:0.8rem;margin-bottom:4px;">Observações</div><div style="font-size:0.9rem;color:var(--text-secondary);">${BuildFlow.escapeHtml(customer.notes)}</div></div>` : ""}
       </div>`,
-      width: 560,
+      width: 760,
       confirmButtonText: "Fechar",
       confirmButtonColor: "var(--brand, #4f46e5)",
     });

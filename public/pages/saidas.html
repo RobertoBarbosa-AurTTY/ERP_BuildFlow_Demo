@@ -1546,6 +1546,7 @@
             <span id="caixaStatusAberto" style="display:none;">Status: <b style="color:var(--pdv-success);"><i class="fa-solid fa-circle"></i> Aberto</b></span>
             <span id="caixaStatusFechado">Status: <b style="color:var(--pdv-text-muted);"><i class="fa-solid fa-circle"></i> Fechado</b></span>
             <span id="caixaAutoCloseInfo" style="display:none;font-size:0.7rem;color:var(--pdv-secondary);"><i class="fa-solid fa-clock"></i> <span id="caixaAutoCloseTimeDisplay"></span></span>
+            <span id="caixaLongOpenWarning" style="display:none;font-size:0.7rem;color:var(--pdv-danger);font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> <span id="caixaLongOpenWarningText"></span></span>
             <span>Data: <b id="currentDate">29/05/2026</b></span>
         </div>
         <div style="display:flex;gap:8px;">
@@ -1774,6 +1775,8 @@
         let caixaAberto = null;
         let caixaLoaded = false;
         let ultimoFechamento = null;
+        let caixaLongOpenWarned = false;
+        const CAIXA_LONG_OPEN_MS = 24 * 60 * 60 * 1000;
 
         async function checkCaixaStatus() {
             try {
@@ -1782,6 +1785,14 @@
                 ultimoFechamento = result && result.ultimoFechamento ? result.ultimoFechamento : null;
                 caixaLoaded = true;
                 updateCaixaUI();
+                if (caixaAberto && !caixaLongOpenWarned) {
+                    const abertoMs = Date.now() - new Date(caixaAberto.dataAbertura).getTime();
+                    if (abertoMs >= CAIXA_LONG_OPEN_MS) {
+                        caixaLongOpenWarned = true;
+                        const dias = Math.floor(abertoMs / 86400000);
+                        BuildFlow.showToast(`Atenção: o caixa está aberto há ${dias} dia${dias > 1 ? 's' : ''}. Feche-o para não comprometer a análise do fluxo de caixa.`, 'warning');
+                    }
+                }
             } catch (e) {
                 console.error('Erro ao verificar status do caixa:', e);
                 caixaLoaded = true;
@@ -1821,9 +1832,24 @@
                         autoCloseInfo.style.display = 'none';
                     }
                 }
+                const longOpenWarning = document.getElementById('caixaLongOpenWarning');
+                const longOpenWarningText = document.getElementById('caixaLongOpenWarningText');
+                if (longOpenWarning && longOpenWarningText) {
+                    const abertoMs = Date.now() - new Date(caixaAberto.dataAbertura).getTime();
+                    if (abertoMs >= CAIXA_LONG_OPEN_MS) {
+                        const dias = Math.floor(abertoMs / 86400000);
+                        const horas = Math.floor((abertoMs % 86400000) / 3600000);
+                        longOpenWarning.style.display = 'inline';
+                        longOpenWarningText.textContent = `Caixa aberto há ${dias > 0 ? `${dias} dia${dias > 1 ? 's' : ''}` : `${horas}h`} — feche-o para não comprometer a análise do fluxo de caixa.`;
+                    } else {
+                        longOpenWarning.style.display = 'none';
+                    }
+                }
             } else {
                 const autoCloseInfo = document.getElementById('caixaAutoCloseInfo');
                 if (autoCloseInfo) autoCloseInfo.style.display = 'none';
+                const longOpenWarning = document.getElementById('caixaLongOpenWarning');
+                if (longOpenWarning) longOpenWarning.style.display = 'none';
                 if (caixaNumber) caixaNumber.textContent = 'Terminal ---';
                 if (mobileCaixaNumber) mobileCaixaNumber.textContent = '---';
                 if (caixaStatusAberto) caixaStatusAberto.style.display = 'none';

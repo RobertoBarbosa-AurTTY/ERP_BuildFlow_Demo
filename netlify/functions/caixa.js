@@ -17,12 +17,15 @@ function formatMoney(v) {
 async function computeCaixaTotals(db, caixaDoc) {
   const fim = caixaDoc.dataFechamento ? new Date(caixaDoc.dataFechamento) : new Date();
   const salesCol = db.collection('sales');
-  // Vendas da sessão: por caixaId quando disponível; fallback para vendas antigas sem o campo
+  // Vendas da sessão: por caixaId quando disponível; fallback para vendas antigas sem o campo.
+  // Em ambos os casos as vendas precisam estar dentro da janela [abertura, fechamento]
+  // para que ajustes retroativos de data considerem apenas o período correto.
   const sales = await salesCol.find({
     status: 'FINALIZED',
+    createdAt: { $gte: caixaDoc.dataAbertura, $lte: fim },
     $or: [
       { caixaId: caixaDoc._id },
-      { caixaId: { $exists: false }, createdAt: { $gte: caixaDoc.dataAbertura, $lte: fim } }
+      { caixaId: { $exists: false } }
     ]
   }, {
     projection: { total: 1, totalDiscount: 1, paymentMethod: 1, splitPayment: 1 }
@@ -224,12 +227,14 @@ exports.handler = withAuth(async (event, context, user) => {
           const observacao = String(body.observacao || '').trim();
 
           const salesCol = db.collection('sales');
-          // Vendas da sessão: por caixaId quando disponível; fallback para vendas antigas sem o campo
+          // Vendas da sessão: por caixaId quando disponível; fallback para vendas antigas sem o campo.
+          // Restringe à janela do caixa para não contar vendas fora do período.
           const sales = await salesCol.find({
             status: 'FINALIZED',
+            createdAt: { $gte: aberto.dataAbertura, $lte: new Date() },
             $or: [
               { caixaId: aberto._id },
-              { caixaId: { $exists: false }, createdAt: { $gte: aberto.dataAbertura, $lte: new Date() } }
+              { caixaId: { $exists: false } }
             ]
           }, {
             projection: { total: 1, totalDiscount: 1, paymentMethod: 1, splitPayment: 1 }
@@ -383,7 +388,10 @@ exports.handler = withAuth(async (event, context, user) => {
 
           const applyField = (campo, valor) => {
             const antes = registro[campo];
-            if (antes === valor) return;
+            const igual = antes instanceof Date && valor instanceof Date
+              ? antes.getTime() === valor.getTime()
+              : antes === valor;
+            if (igual) return;
             set[campo] = valor;
             mudancas.push({ campo, antes, depois: valor });
           };
@@ -399,7 +407,12 @@ exports.handler = withAuth(async (event, context, user) => {
             if (body.dataFechamento !== undefined && body.dataFechamento !== null && body.dataFechamento !== '' && !dataFechamento) {
               return { statusCode: 400, body: JSON.stringify({ message: 'Data de fechamento inválida' }) };
             }
-            if (body.dataFechamento !== undefined) applyField('dataFechamento', dataFechamento);
+            if (body.dataFechamento !== undefined) {
+              applyField('dataFechamento', dataFechamento);
+              if (dataFechamento && registro.status === 'aberto') {
+                applyField('status', 'fechado');
+              }
+            }
 
             if (body.valorInicial !== undefined) applyField('valorInicial', Math.max(0, Number(body.valorInicial) || 0));
             if (body.valorFinal !== undefined) applyField('valorFinal', Math.max(0, Number(body.valorFinal) || 0));
@@ -427,8 +440,12 @@ exports.handler = withAuth(async (event, context, user) => {
             }
           }
 
-          if (mudancas.length === 0) {
+          const justificativa = String(body.justificativa || '').trim();
+          if (mudancas.length === 0 && action === 'ajustar') {
             return { statusCode: 400, body: JSON.stringify({ message: 'Nenhuma alteração informada.' }) };
+          }
+          if ((mudancas.length > 0 || action === 'recalcular') && !justificativa) {
+            return { statusCode: 400, body: JSON.stringify({ message: 'Justificativa (observação) obrigatória.' }) };
           }
 
           set.updatedAt = new Date();
@@ -436,10 +453,25 @@ exports.handler = withAuth(async (event, context, user) => {
             quando: new Date(),
             userId: user.userId,
             por: user.name || 'Usuário',
+            justificativa: justificativa || undefined,
             mudancas
           } } });
 
-          const resumo = mudancas.map((m) => `${m.campo}: ${formatMoney(typeof m.antes === 'number' ? m.antes : (m.antes ? new Date(m.antes).toISOString() : '—'))} → ${formatMoney(typeof m.depois === 'number' ? m.depois : (m.depois ? new Date(m.depois).toISOString() : '—'))}`).join('; ');
+          const resumo = mudancas.length > 0
+            ? mudancas.map((m) => {
+              const formatValue = (v) => {
+                if (typeof v === 'number') return formatMoney(v);
+                if (!v) return '—';
+                if (v instanceof Date) return v.toISOString();
+                if (typeof v === 'string') {
+                  const d = new Date(v);
+                  return Number.isNaN(d.getTime()) ? v : d.toISOString();
+                }
+                return String(v);
+              };
+              return `${m.campo}: ${formatValue(m.antes)} → ${formatValue(m.depois)}`;
+            }).join('; ')
+            : 'recálculo sem alterações — totais conferidos';
 
           await db.collection('logs').insertOne({
             userId: user.userId,
@@ -447,7 +479,7 @@ exports.handler = withAuth(async (event, context, user) => {
             entity: 'caixa',
             entityId: parsedId,
             timestamp: new Date(),
-            details: `Caixa ${registro.numeroCaixa || '01'} ajustado${body.recalcular === true ? ' (com recálculo do período)' : ''}: ${resumo}`
+            details: `Caixa ${registro.numeroCaixa || '01'} ajustado${body.recalcular === true ? ' (com recálculo do período)' : ''}: ${resumo}${justificativa ? ` — Justificativa: ${justificativa}` : ''}`
           });
 
           const registroFinal = await caixa.findOne({ _id: parsedId });

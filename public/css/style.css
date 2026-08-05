@@ -521,6 +521,33 @@ body:not(.light-theme) .swal2-html-container [style*="background:#f8fafc"] {
     font-size: 0.8rem;
 }
 
+/* Modal — layout horizontal aproveitando largura do monitor */
+.sale-detail-layout--cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr);
+    gap: 12px;
+    align-items: start;
+}
+
+.sale-detail-items--scroll {
+    max-height: 58vh;
+    overflow-y: auto;
+}
+
+.sale-detail-summary .sale-detail-items {
+    margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+    .sale-detail-layout--cols {
+        grid-template-columns: 1fr;
+    }
+
+    .sale-detail-items--scroll {
+        max-height: 40vh;
+    }
+}
+
 /* Modal — relatório do caixa (histórico) */
 .caixa-report-hero {
     display: flex;
@@ -685,7 +712,7 @@ body:not(.light-theme) .swal2-html-container [style*="background:#f8fafc"] {
 
 .swal2-popup.sale-detail-swal.caixa-report-swal {
     width: 100% !important;
-    max-width: 860px !important;
+    max-width: 1160px !important;
 }
 
 .swal2-popup.sale-detail-swal.caixa-report-swal .sale-detail-swal__html {

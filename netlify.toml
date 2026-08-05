@@ -134,6 +134,11 @@
   to = "/pages/fluxo-caixa.html"
   status = 200
 
+[[redirects]]
+  from = "/cash-audit"
+  to = "/pages/auditoria-caixa.html"
+  status = 200
+
 # Block direct access to /pages/*
 [[redirects]]
   from = "/pages/*"

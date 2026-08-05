@@ -235,6 +235,13 @@ const BuildFlow = {
 
     const footerHtml = options.footerHtml || "";
 
+    const totalsCard = totalsHtml
+      ? `<div class="sale-detail-items">${totalsHtml}</div>`
+      : "";
+    const paymentCard = paymentHtml
+      ? `<div class="sale-detail-items">${paymentHtml}</div>`
+      : "";
+
     return `
       <div class="sale-detail-sheet">
         <div class="sale-detail-meta">
@@ -255,18 +262,22 @@ const BuildFlow = {
             <span>${items.length}</span>
           </div>
         </div>
-        <div class="sale-detail-items">
-          <div class="sale-detail-items__head">
-            <span>Produto</span>
-            <span>Valor</span>
+        <div class="sale-detail-layout sale-detail-layout--cols">
+          <div class="sale-detail-items sale-detail-items--scroll">
+            <div class="sale-detail-items__head">
+              <span>Produto</span>
+              <span>Valor</span>
+            </div>
+            ${itemsHtml}
           </div>
-          ${itemsHtml}
-          ${totalsHtml}
-          ${paymentHtml}
-        </div>
-        <div class="sale-detail-total">
-          <span>Total</span>
-          <strong>${this.formatCurrency(displayTotal)}</strong>
+          <div class="sale-detail-summary">
+            ${totalsCard}
+            ${paymentCard}
+            <div class="sale-detail-total">
+              <span>Total</span>
+              <strong>${this.formatCurrency(displayTotal)}</strong>
+            </div>
+          </div>
         </div>
         ${footerHtml}
       </div>`;
@@ -282,7 +293,7 @@ const BuildFlow = {
     return Swal.fire({
       title,
       html,
-      width: options.width || 520,
+      width: options.width || 940,
       confirmButtonText: options.confirmButtonText || "Fechar",
       confirmButtonColor: "#4f46e5",
       customClass: {
@@ -1480,6 +1491,30 @@ const BuildFlow = {
       method: 'POST',
       body: JSON.stringify({ action: 'fechar', observacao })
     });
+  },
+
+  async getCaixa(id) {
+    return await this.apiFetch(`/caixa?id=${encodeURIComponent(id)}`);
+  },
+
+  async ajustarCaixa(id, dados = {}) {
+    return await this.apiFetch('/caixa', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'ajustar', id, ...dados })
+    });
+  },
+
+  async recalcularCaixa(id, justificativa = '') {
+    return await this.apiFetch('/caixa', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'recalcular', id, recalcular: true, justificativa })
+    });
+  },
+
+  async getLogs(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    const path = query ? `/logs?${query}` : "/logs";
+    return await this.apiFetch(path);
   },
 
   async getCaixaHistory() {

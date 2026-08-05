@@ -4,28 +4,13 @@
 const { getDb } = require("../../src/lib/mongodb");
 const { withAuth, badRequest } = require("../../src/lib/helpers");
 const { cached } = require("../../src/lib/cache");
-
-const PROJECTION_DAYS = 30;
-
-function tzOffsetToTimezone(tzOffset) {
-  const total = parseInt(tzOffset, 10) || 0;
-  const sign = total >= 0 ? "+" : "-";
-  const abs = Math.abs(total);
-  const hh = String(Math.floor(abs / 60)).padStart(2, "0");
-  const mm = String(abs % 60).padStart(2, "0");
-  return `${sign}${hh}:${mm}`;
-}
-
-function addDays(date, days) {
-  const d = new Date(date);
-  d.setDate(d.getDate() + days);
-  return d;
-}
-
-function dayKey(date, tzOffset) {
-  const local = new Date(date.getTime() + (parseInt(tzOffset, 10) || 0) * 60000);
-  return local.toISOString().slice(0, 10);
-}
+const {
+  PROJECTION_DAYS,
+  tzOffsetToTimezone,
+  addDays,
+  dayKey,
+  getPeriodRange,
+} = require("../../src/lib/financial-period");
 
 exports.handler = withAuth(async (event) => {
   const db = await getDb();
@@ -35,36 +20,10 @@ exports.handler = withAuth(async (event) => {
   const tz = tzOffsetToTimezone(tzOffset);
   const selectedDate = params.date;
 
-  // Mesma lógica de fuso do dashboard.js
-  const now = new Date();
-  const localEpoch = now.getTime() - tzOffset * 60000;
-  const localDate = new Date(localEpoch);
-  const localMidnightEpoch = Date.UTC(localDate.getUTCFullYear(), localDate.getUTCMonth(), localDate.getUTCDate());
-  const todayStart = new Date(localMidnightEpoch + tzOffset * 60000);
-
-  let rangeStart, rangeEnd;
-  if (period === "day") {
-    let dayStart;
-    if (selectedDate) {
-      const [y, m, d] = selectedDate.split("-").map(Number);
-      dayStart = new Date(Date.UTC(y, m - 1, d) + tzOffset * 60000);
-    } else {
-      dayStart = new Date(todayStart);
-    }
-    rangeStart = dayStart;
-    rangeEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
-  } else if (period === "week") {
-    rangeStart = new Date(todayStart.getTime() - 6 * 24 * 60 * 60 * 1000);
-    rangeEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
-  } else {
-    const monthStart = (y, m) => Date.UTC(y, m, 1) + tzOffset * 60000;
-    rangeStart = new Date(monthStart(todayStart.getFullYear(), todayStart.getMonth()));
-    rangeEnd = new Date(monthStart(todayStart.getFullYear(), todayStart.getMonth() + 1));
-  }
+  const { rangeStart, rangeEnd, todayStart, todayKey } = getPeriodRange({ period, tzOffset, selectedDate });
 
   const projStart = new Date(todayStart);
   const projEnd = addDays(projStart, PROJECTION_DAYS);
-  const todayKey = dayKey(todayStart, tzOffset);
 
   const cacheKey = `fr:${period}:${selectedDate || ""}:${tzOffset}`;
 
@@ -97,6 +56,9 @@ exports.handler = withAuth(async (event) => {
           $group: {
             _id: "$day",
             receita: { $sum: { $ifNull: ["$total", 0] } },
+            receitaBruta: {
+              $sum: { $add: [{ $ifNull: ["$total", 0] }, { $ifNull: ["$totalDiscount", 0] }] },
+            },
             descontos: { $sum: { $ifNull: ["$totalDiscount", 0] } },
             cmv: { $sum: { $ifNull: ["$cost", 0] } },
           },
@@ -208,7 +170,7 @@ exports.handler = withAuth(async (event) => {
     }
 
     // DRE do período
-    const receitaBruta = salesData.reduce((s, r) => s + r.receita, 0);
+    const receitaBruta = salesData.reduce((s, r) => s + (r.receitaBruta != null ? r.receitaBruta : 0), 0);
     const deducoes = salesData.reduce((s, r) => s + r.descontos, 0);
     const cmv = salesData.reduce((s, r) => s + r.cmv, 0);
     const despesasPagas = paidData.reduce((s, r) => s + r.total, 0);

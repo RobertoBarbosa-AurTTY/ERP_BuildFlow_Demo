@@ -282,7 +282,7 @@
         </tr></thead>
         <tbody>${rows}</tbody>
       </table></div>`,
-      width: 800,
+      width: 1100,
       confirmButtonText: "Fechar",
       confirmButtonColor: "var(--brand, #4f46e5)",
     });
@@ -317,7 +317,7 @@
           </tr></thead>
           <tbody>${rows}</tbody>
         </table></div></div>`,
-        width: 650,
+        width: 900,
         confirmButtonText: "Fechar",
         confirmButtonColor: "var(--brand, #4f46e5)",
       });
@@ -366,24 +366,22 @@
       ? `${bill.installmentNumber || "—"}/${bill.totalInstallments}`
       : "—";
     const renderRow = (label, value) =>
-      `<tr><td style="padding:6px 10px 6px 0;color:var(--text-muted);font-size:0.8rem;white-space:nowrap;vertical-align:top;width:1px;">${label}</td><td style="padding:6px 0;font-size:0.9rem;">${value}</td></tr>`;
+      `<div style="padding:10px 14px;background:var(--bg-input);border-radius:10px;"><div style="color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px;">${label}</div><div style="font-size:0.9rem;">${value}</div></div>`;
     const html = `
       <div style="text-align:left;">
         ${summaryHtml}
-        <table style="width:100%;border-collapse:collapse;">
-          <tbody>
-            ${renderRow("Descrição", `<strong>${BuildFlow.escapeHtml(bill.description)}</strong>`)}
-            ${renderRow("Fornecedor", BuildFlow.escapeHtml(bill.supplier || "—"))}
-            ${renderRow("Categoria", BuildFlow.escapeHtml(CATEGORIES[bill.category] || bill.category))}
-            ${renderRow("Valor", `<strong>${BuildFlow.formatCurrency(bill.amount)}</strong>`)}
-            ${renderRow("Vencimento", formatDate(bill.dueDate))}
-            ${renderRow("Status", statusBadge(bill.status))}
-            ${renderRow("Parcelas", parcelas)}
-            ${bill.documentNumber ? renderRow("Nº Documento", BuildFlow.escapeHtml(bill.documentNumber)) : ""}
-            ${bill.paymentMethod ? renderRow("Forma de Pagamento", BuildFlow.escapeHtml(PAYMENT_METHODS[bill.paymentMethod] || bill.paymentMethod)) : ""}
-            ${bill.paidDate ? renderRow("Pago em", formatDate(bill.paidDate)) : ""}
-          </tbody>
-        </table>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;">
+          ${renderRow("Descrição", `<strong>${BuildFlow.escapeHtml(bill.description)}</strong>`)}
+          ${renderRow("Fornecedor", BuildFlow.escapeHtml(bill.supplier || "—"))}
+          ${renderRow("Categoria", BuildFlow.escapeHtml(CATEGORIES[bill.category] || bill.category))}
+          ${renderRow("Valor", `<strong>${BuildFlow.formatCurrency(bill.amount)}</strong>`)}
+          ${renderRow("Vencimento", formatDate(bill.dueDate))}
+          ${renderRow("Status", statusBadge(bill.status))}
+          ${renderRow("Parcelas", parcelas)}
+          ${bill.documentNumber ? renderRow("Nº Documento", BuildFlow.escapeHtml(bill.documentNumber)) : ""}
+          ${bill.paymentMethod ? renderRow("Forma de Pagamento", BuildFlow.escapeHtml(PAYMENT_METHODS[bill.paymentMethod] || bill.paymentMethod)) : ""}
+          ${bill.paidDate ? renderRow("Pago em", formatDate(bill.paidDate)) : ""}
+        </div>
         ${bill.notes ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);"><div style="color:var(--text-muted);font-size:0.8rem;margin-bottom:4px;">Observações</div><div style="font-size:0.9rem;color:var(--text-secondary);">${BuildFlow.escapeHtml(bill.notes)}</div></div>` : ""}
       </div>`;
 
@@ -391,7 +389,7 @@
     Swal.fire({
       title: "Ficha da Conta",
       html: html,
-      width: 600,
+      width: 900,
       showConfirmButton: true,
       confirmButtonText: "Fechar",
       confirmButtonColor: "var(--brand, #4f46e5)",

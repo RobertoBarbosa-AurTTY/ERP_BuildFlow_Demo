@@ -15,6 +15,7 @@
       items: [
         { href: "/reports", icon: "fa-chart-line", label: "Relatórios" },
         { href: "/cash-flow", icon: "fa-money-bill-trend-up", label: "Fluxo de Caixa" },
+        { href: "/cash-audit", icon: "fa-magnifying-glass-chart", label: "Auditoria de Caixa", adminOnly: true },
       ],
     },
     {
@@ -57,6 +58,21 @@
     return currentRoute() === href;
   }
 
+  function currentRole() {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "null");
+      return user?.role || null;
+    } catch {
+      return null;
+    }
+  }
+
+  function isAdminOnlyVisible(item) {
+    if (!item.adminOnly) return true;
+    const role = currentRole();
+    return role === "Admin" || role === "Gerente";
+  }
+
   function buildNav() {
     return NAV_GROUPS.map(
       (group) => `
@@ -64,6 +80,7 @@
           <div class="sidebar-group-header">${group.title}</div>
           <ul class="nav-list">
             ${group.items
+              .filter(isAdminOnlyVisible)
               .map(
                 (item) => `
               <li class="nav-item">

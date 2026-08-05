@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BuildFlow - Auditoria de Caixa</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        .ac-controls {
+            display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center;
+        }
+        .ac-controls select, .ac-controls input[type="date"] {
+            background: var(--bg-hover); border: 1px solid var(--border); border-radius: 10px;
+            padding: 10px 14px; color: var(--text-primary); font-size: 0.8125rem;
+        }
+        .ac-alert-badge {
+            display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: 0.68rem; font-weight: 700;
+            background: rgba(239, 68, 68, 0.14); color: #ef4444; white-space: nowrap;
+        }
+        .clickable-row {
+            transition: background 0.2s ease, transform 0.2s ease;
+            cursor: pointer;
+        }
+        .clickable-row:hover {
+            background: rgba(79, 70, 229, 0.08);
+            transform: translateX(1px);
+        }
+        .ac-audit-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            align-items: start;
+        }
+        .ac-audit-panel {
+            display: flex;
+            flex-direction: column;
+            min-height: 320px;
+            max-height: 460px;
+        }
+        .ac-audit-scroll {
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+        }
+        .ac-audit-actions {
+            display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px;
+        }
+        .ac-audit-actions .btn {
+            flex: 1; min-width: 180px; justify-content: center;
+            padding: 10px 12px; font-size: 0.8rem;
+        }
+        .swal2-popup.sale-detail-swal.audit-modal-swal {
+            width: 1280px !important;
+            max-width: calc(100vw - 24px) !important;
+        }
+        .ac-entry {
+            border-left: 2px solid var(--brand); padding: 8px 12px; margin: 8px 0 0 4px;
+            background: var(--bg-input); border-radius: 0 10px 10px 0; font-size: 0.8rem;
+        }
+        .ac-entry--log { border-left-color: var(--text-muted); }
+        .ac-when { color: var(--text-muted); font-size: 0.7rem; }
+        .ac-who { font-weight: 700; color: var(--text-primary); margin-top: 2px; }
+        .ac-details { color: var(--text-secondary); margin-top: 2px; line-height: 1.4; }
+        .ac-just { color: var(--amber); margin-top: 2px; font-size: 0.78rem; }
+        @media (max-width: 1100px) {
+            .ac-audit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .ac-audit-actions .btn { min-width: 140px; }
+        }
+        @media (max-width: 640px) {
+            .ac-audit-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .ac-controls { flex-direction: column; align-items: stretch; }
+            .ac-controls select, .ac-controls input[type="date"] { width: 100% !important; box-sizing: border-box !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <main class="main-content">
+            <nav class="top-nav">
+                <div class="search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="auditSearch" placeholder="Buscar por terminal, operador ou observação...">
+                </div>
+                <div class="nav-actions"></div>
+            </nav>
+
+            <header class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;">
+                <div>
+                    <h2>Auditoria de <span>Caixa</span></h2>
+                    <p>Identifique caixas com períodos anormais, ajuste datas e valores e acompanhe a trilha de auditoria.</p>
+                </div>
+            </header>
+
+            <div class="ac-controls">
+                <select id="statusSelect">
+                    <option value="all">Todos os status</option>
+                    <option value="aberto">Abertos</option>
+                    <option value="fechado">Fechados</option>
+                </select>
+                <input type="date" id="dateStart" title="Abertura a partir de">
+                <input type="date" id="dateEnd" title="Fechamento até">
+                <button type="button" class="btn btn-brand" id="applyBtn" style="padding:10px 20px;width:auto;">
+                    <i class="fa-solid fa-rotate"></i> Aplicar
+                </button>
+            </div>
+
+            <section class="grid-stats">
+                <div class="card-stat">
+                    <div class="stat-info"><p>Caixas no filtro</p><h3 id="kpiTotal">—</h3></div>
+                    <div class="stat-icon bg-violet-op"><i class="fa-solid fa-cash-register"></i></div>
+                </div>
+                <div class="card-stat">
+                    <div class="stat-info"><p>Caixas abertos</p><h3 id="kpiOpen">—</h3></div>
+                    <div class="stat-icon bg-emerald-op"><i class="fa-solid fa-door-open"></i></div>
+                </div>
+                <div class="card-stat">
+                    <div class="stat-info"><p>Alertas (+24h)</p><h3 id="kpiAlerts">—</h3></div>
+                    <div class="stat-icon bg-red-op"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                </div>
+                <div class="card-stat">
+                    <div class="stat-info"><p>Vendas no período</p><h3 id="kpiSales">—</h3></div>
+                    <div class="stat-icon bg-blue-op"><i class="fa-solid fa-cart-shopping"></i></div>
+                </div>
+            </section>
+
+            <section class="card-table">
+                <div class="table-header">
+                    <h3>Registros de caixa</h3>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>N° Caixa</th>
+                                <th>Operador</th>
+                                <th>Abertura</th>
+                                <th>Fechamento</th>
+                                <th>Duração</th>
+                                <th>V. Inicial</th>
+                                <th>V. Final</th>
+                                <th>Vendas</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditTableBody">
+                            <tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-muted);">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../js/layout.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/auditoria-caixa.js"></script>
+</body>
+</html>
