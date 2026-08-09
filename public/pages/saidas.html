@@ -2219,15 +2219,13 @@
                 return;
             }
 
+            const CATEGORIA_VENDA = 'VENDA_NAO_REGISTRADA';
+
             const { value, isConfirmed } = await Swal.fire({
                 ...pdvSwalOptions({ width: '440px' }),
                 title: '<i class="fa-solid fa-arrow-right-to-bracket"></i> Suprimento de Caixa',
                 html: `
                     <div class="pdv-sheet" style="text-align:left;">
-                        <div style="padding:14px;border-radius:12px;background:rgba(22,163,74,0.1);border:1px solid rgba(22,163,74,0.25);margin-bottom:16px;font-size:0.75rem;color:var(--pdv-text-muted);">
-                            <i class="fa-solid fa-info-circle" style="color:var(--pdv-success,#16a34a);"></i>
-                            Registre aqui valores que entram no caixa (troco, reposição de dinheiro, etc.).
-                        </div>
                         <div class="pdv-form-block">
                             <label>Valor (R$) <span style="color:var(--pdv-danger);">*</span></label>
                             <input type="text" id="suprimento-valor" class="pdv-input" inputmode="decimal" autocomplete="off" placeholder="R$ 0,00" value="R$ 0,00">
@@ -2243,7 +2241,16 @@
                                 <option value="Troco">Troco</option>
                                 <option value="Reposição">Reposição</option>
                                 <option value="Outros">Outros</option>
+                                <option value="${CATEGORIA_VENDA}" style="color:var(--pdv-primary);font-weight:700;">Venda de item não registrado</option>
                             </select>
+                        </div>
+                        <div class="pdv-form-block" id="suprimento-venda-hint" style="display:none;padding:12px 14px;border-radius:12px;background:rgba(79,70,229,0.1);border:1px solid rgba(79,70,229,0.25);font-size:0.75rem;color:var(--pdv-text-muted);margin-bottom:12px;">
+                            <i class="fa-solid fa-basket-shopping" style="color:var(--pdv-primary,#4f46e5);margin-right:6px;"></i>
+                            Esta opção contabiliza o valor como uma <b>venda</b> (sem estoque), aparecendo no histórico de vendas e no fechamento de caixa.
+                        </div>
+                        <div class="pdv-form-block" id="suprimento-info" style="padding:14px;border-radius:12px;background:rgba(22,163,74,0.1);border:1px solid rgba(22,163,74,0.25);margin-bottom:16px;font-size:0.75rem;color:var(--pdv-text-muted);">
+                            <i class="fa-solid fa-info-circle" style="color:var(--pdv-success,#16a34a);"></i>
+                            Registre aqui valores que entram no caixa (troco, reposição de dinheiro, etc.).
                         </div>
                     </div>
                 `,
@@ -2253,6 +2260,10 @@
                 cancelButtonText: 'Cancelar',
                 didOpen: () => {
                     const elValor = document.getElementById('suprimento-valor');
+                    const elCategoria = document.getElementById('suprimento-categoria');
+                    const infoEl = document.getElementById('suprimento-info');
+                    const hintEl = document.getElementById('suprimento-venda-hint');
+                    const confirmBtn = Swal.getConfirmButton();
                     const formatField = () => {
                         const n = BuildFlow.parseDiscountInput(elValor.value);
                         elValor.value = BuildFlow.formatCurrency(n);
@@ -2262,6 +2273,19 @@
                         elValor.value = raw > 0 ? raw.toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '';
                     });
                     elValor.addEventListener('blur', formatField);
+
+                    const updateCategoria = () => {
+                        const isVenda = elCategoria.value === CATEGORIA_VENDA;
+                        infoEl.style.display = isVenda ? 'none' : 'block';
+                        hintEl.style.display = isVenda ? 'block' : 'none';
+                        elValor.placeholder = isVenda ? 'Valor da venda' : 'R$ 0,00';
+                        document.getElementById('suprimento-descricao').placeholder = isVenda ? 'Ex: Venda avulsa de peça' : 'Ex: Troco adicionado ao caixa';
+                        confirmBtn.innerHTML = isVenda
+                            ? '<i class="fa-solid fa-basket-shopping"></i> Registrar como Venda'
+                            : '<i class="fa-solid fa-check"></i> Registrar Suprimento';
+                    };
+                    elCategoria.addEventListener('change', updateCategoria);
+                    updateCategoria();
                     document.getElementById('suprimento-descricao').focus();
                 },
                 preConfirm: () => {
@@ -2273,7 +2297,7 @@
                         return false;
                     }
                     if (!descricao) {
-                        Swal.showValidationMessage('Informe a descrição do suprimento');
+                        Swal.showValidationMessage('Informe a descrição');
                         return false;
                     }
                     return { valor, descricao, categoria };
@@ -2285,6 +2309,43 @@
             try {
                 Swal.showLoading();
                 const userData = JSON.parse(localStorage.getItem('user') || '{}');
+
+                if (value.categoria === CATEGORIA_VENDA) {
+                    const saleData = {
+                        items: [{
+                            id: 'VENDA_NAO_REGISTRADA',
+                            name: value.descricao,
+                            sku: 'NAO-REGISTRADO',
+                            qty: 1,
+                            price: value.valor,
+                            discount: 0,
+                            discountType: 'percent',
+                            lineGross: value.valor,
+                            discountAmount: 0,
+                            lineTotal: value.valor,
+                            custom: true
+                        }],
+                        subtotal: value.valor,
+                        grossSubtotal: value.valor,
+                        itemsDiscountTotal: 0,
+                        globalDiscount: 0,
+                        globalDiscountType: 'percent',
+                        globalDiscountAmount: 0,
+                        totalDiscount: 0,
+                        total: value.valor,
+                        status: 'FINALIZED',
+                        paymentMethod: 'Dinheiro',
+                        amountPaid: value.valor,
+                        change: 0,
+                        caixaId: BuildFlow.normalizeId(caixaAberto._id || caixaAberto.id),
+                        splitPayment: null,
+                        unregisteredSale: true
+                    };
+                    const venda = await BuildFlow.createSale(saleData);
+                    BuildFlow.showToast(`Venda de item não registrado contabilizada: ${BuildFlow.formatCurrency(value.valor)} — ${BuildFlow.escapeHtml(value.descricao)}`, 'success');
+                    return;
+                }
+
                 await BuildFlow.registrarSuprimentoCaixa({
                     valor: value.valor,
                     descricao: value.descricao,
@@ -2294,7 +2355,7 @@
                 });
                 BuildFlow.showToast(`Suprimento de ${BuildFlow.formatCurrency(value.valor)} registrado: ${BuildFlow.escapeHtml(value.descricao)}`, 'success');
             } catch (error) {
-                BuildFlow.showToast(error.message || 'Erro ao registrar suprimento', 'danger');
+                BuildFlow.showToast(error.message || 'Erro ao registrar movimento', 'danger');
             }
         }
 

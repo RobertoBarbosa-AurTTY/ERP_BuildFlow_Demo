@@ -4,6 +4,9 @@ const { ObjectId } = require('mongodb');
 const { nextSequence } = require('../../src/lib/counters');
 const stock = require('../../src/lib/stock');
 
+const isCustomItem = (item) => !!(item && item.custom);
+const stockItems = (items) => (items || []).filter((i) => !isCustomItem(i));
+
 exports.handler = withAuth(async (event, context, user) => {
   
 
@@ -84,8 +87,8 @@ exports.handler = withAuth(async (event, context, user) => {
         const oldSale = await sales.findOne({ _id: new ObjectId(id) });
         if (!oldSale) return { statusCode: 404, body: 'Venda não encontrada' };
 
-        const productsCol = db.collection('products');
-        const oldItems = oldSale.items || [];
+const productsCol = db.collection('products');
+        const oldItems = stockItems(oldSale.items || []);
         const newStatus = updateData.status || oldSale.status;
 
         // Se o status mudou para FINALIZED (de RESERVED)
@@ -109,7 +112,7 @@ exports.handler = withAuth(async (event, context, user) => {
           await stock.revertStock(productsCol, oldItems, oldSale.status);
 
           // Aplicar estoque novo conforme o status novo (condição impede saldo negativo)
-          const appliedNew = await stock.applyStock(productsCol, updateData.items, newStatus);
+          const appliedNew = await stock.applyStock(productsCol, stockItems(updateData.items), newStatus);
           if (!appliedNew.ok) {
             // Reverter parcial do novo e restaurar estoque antigo
             await stock.revertStock(productsCol, oldItems, oldSale.status);
@@ -159,12 +162,13 @@ exports.handler = withAuth(async (event, context, user) => {
           return { statusCode: 400, body: JSON.stringify({ message: 'A venda precisa ter ao menos um item.' }) };
         }
 
-        const productsCol = db.collection('products');
+const productsCol = db.collection('products');
         const demand = new Map();
         for (const item of items) {
-          if (!item.id) {
+          if (!item.id && !isCustomItem(item)) {
             return { statusCode: 400, body: JSON.stringify({ message: 'Item sem identificador de produto.' }) };
           }
+          if (isCustomItem(item)) continue;
           const qty = Math.max(0, Number(item.qty) || 0);
           if (qty < 1) {
             return { statusCode: 400, body: JSON.stringify({ message: 'Quantidade inválida em um dos itens.' }) };
@@ -246,8 +250,8 @@ exports.handler = withAuth(async (event, context, user) => {
         const saleToDelete = await sales.findOne({ _id: new ObjectId(deleteId) });
         if (!saleToDelete) return { statusCode: 404, body: JSON.stringify({ message: 'Venda não encontrada' }) };
 
-        // Restaurar estoque dos produtos
-        const productsToRestore = saleToDelete.items || [];
+// Restaurar estoque dos produtos
+        const productsToRestore = stockItems(saleToDelete.items || []);
         if (saleToDelete.status === 'FINALIZED') {
           await stock.restoreStock(db.collection('products'), productsToRestore);
         } else if (saleToDelete.status === 'RESERVED') {

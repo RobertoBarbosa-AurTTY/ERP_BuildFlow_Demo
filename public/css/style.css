@@ -1175,7 +1175,6 @@ input[type=number] {
     position: fixed;
     height: 100vh;
     z-index: 100;
-    view-transition-name: sidebar;
 }
 
 .sidebar-inner {
@@ -1333,7 +1332,6 @@ input[type=number] {
     min-width: 0;
     margin-left: var(--sidebar-width);
     padding: 0 32px 32px 32px;
-    view-transition-name: main-content;
 }
 
 /* Top Navbar */
