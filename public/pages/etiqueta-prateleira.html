@@ -7,6 +7,42 @@
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        /* Impressão em rolo térmico: página do tamanho exato da placa */
+        @media print {
+            @page { size: 100mm 48mm; margin: 0; }
+            html, body { margin: 0 !important; padding: 0 !important; }
+            .layout, .main-content {
+                min-height: 0 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .wms-panel.print-source {
+                min-height: 0 !important;
+                height: auto !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .wms-label-preview-area {
+                min-height: 0 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                background: #fff !important;
+            }
+            .label-shelf.label-shelf-plate {
+                width: 100mm !important;
+                min-height: 48mm !important;
+                height: 48mm !important;
+                margin: 0 !important;
+                page-break-after: always;
+                break-after: page;
+            }
+            .label-shelf.label-shelf-plate:last-child {
+                page-break-after: auto;
+                break-after: auto;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="layout">

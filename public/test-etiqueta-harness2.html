@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BuildFlow - Etiqueta de Precificação</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-    <style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>harness</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+
         /* Estilos específicos para a página de etiquetas */
         .wms-layout {
             display: grid;
@@ -531,127 +529,71 @@
             
             @page { margin: 0; }
         }
-    </style>
+    
+</style>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<script>
+window.BuildFlow = {
+  getProducts: () => Promise.resolve([{ _id: { $oid: "p1" }, name: "Arroz Branco Tipo 1 - 5kg Embalagem", sku: "ARZ-001", barcode: "7891234567890", price: 29.9, location: {} }]),
+  showToast: () => {},
+  normalizeId: (id) => (id && id.$oid) ? id.$oid : String(id || ""),
+  getSettings: () => ({ storeName: "SUPERMERCADO TESTE", companyName: "TESTE" })
+};
+</script>
 </head>
 <body>
-    <div class="layout">
-        
-
-        <main class="main-content">
-            <nav class="top-nav no-print">
-                <div class="search-bar">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="quickSearch" placeholder="Buscar por nome, SKU ou código de barras..." style="width: 100%;">
-                </div>
-                <div class="nav-actions">
-                </div>
-            </nav>
-
-            <header class="page-header no-print">
-                <h2>Etiqueta de <span>Precificação</span></h2>
-                <p>Etiquetas de gôndola com nome da loja, produto e preço. Selecione o item e imprima.</p>
-            </header>
-
-            <div class="wms-layout no-print">
-                <section class="wms-panel no-print">
-                    <h4><i class="fa-solid fa-sliders-h"></i> Configurar etiqueta</h4>
-                    
-                    <div style="flex: 1; overflow-y: auto;">
-                        <div class="wms-form-grid">
-                            <div class="filter-group full-width">
-                                <label><i class="fa-solid fa-cube"></i> Produto</label>
-                                <div class="autocomplete-wrapper">
-                                    <input type="text" id="productSearchInput" class="filter-input" placeholder="Digite nome, SKU ou código de barras..." autocomplete="off">
-                                    <button type="button" class="clear-btn" id="clearSearchBtn" title="Limpar busca">
-                                        <i class="fa-solid fa-times-circle"></i>
-                                    </button>
-                                    <div class="autocomplete-list" id="autocompleteList"></div>
-                                </div>
-                            </div>
-
-                            <div class="filter-group full-width">
-                                <label><i class="fa-solid fa-palette"></i> Cor da etiqueta</label>
-                                <select id="labelColor" class="filter-select">
-                                    <option value="yellow" selected>🟡 Amarelo (promoção)</option>
-                                    <option value="red">🔴 Vermelho (oferta)</option>
-                                    <option value="white">⚪ Branco (padrão)</option>
-                                </select>
-                            </div>
-
-                            <div class="full-width">
-                                <label style="font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 8px;">
-                                    <i class="fa-regular fa-eye" style="margin-right: 6px;"></i> Exibir na etiqueta
-                                </label>
-                                <div class="checkbox-grid">
-                                    <div class="checkbox-item">
-                                        <input type="checkbox" id="showStoreName" checked>
-                                        <label for="showStoreName"><i class="fa-solid fa-store"></i> Nome da loja</label>
-                                    </div>
-                                    <div class="checkbox-item">
-                                        <input type="checkbox" id="showSku" checked>
-                                        <label for="showSku"><i class="fa-solid fa-hashtag"></i> SKU</label>
-                                    </div>
-                                    <div class="checkbox-item" style="grid-column: 1 / -1;">
-                                        <label for="barcodeSource" style="display: block; margin-bottom: 6px; font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em;">
-                                            <i class="fa-solid fa-barcode"></i> Código de barras
-                                        </label>
-                                        <select id="barcodeSource" class="filter-select" style="width: 100%;">
-                                            <option value="barcode">Código de barras do produto</option>
-                                            <option value="sku">SKU como código de barras</option>
-                                            <option value="none">Nenhum</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        <div class="filter-group full-width">
-                                <label><i class="fa-solid fa-copy"></i> Quantidade de etiquetas</label>
-                                <input type="number" id="labelQty" class="filter-input" value="1" min="1" max="99">
-                            </div>
-
-                            <div class="filter-group full-width" style="margin-top: 2px;">
-                                <details style="font-size: 0.78rem; color: var(--text-muted);">
-                                    <summary style="cursor: pointer; font-weight: 600; color: var(--text-muted);">
-                                        <i class="fa-solid fa-circle-info" style="margin-right: 6px;"></i>Configuração da impressão (imprimindo estourado? leia aqui)
-                                    </summary>
-                                    <ol style="margin: 10px 0 0 18px; padding: 0; line-height: 1.7;">
-                                        <li>No print, selecione a impressora térmica <strong>XD210</strong> (não "Salvar como PDF").</li>
-                                        <li>Em <strong>Tamanho do papel</strong>, escolha <strong>60 x 40 mm</strong> (ou Papel personalizado 60 x 40 no driver do Windows).</li>
-                                        <li>Em <strong>Escala</strong>, selecione <strong>100%</strong> (nunca "Ajustar à página").</li>
-                                        <li>Em <strong>Margens</strong>, selecione <strong>Nenhuma</strong>.</li>
-                                        <li>Desmarque <strong>Cabeçalhos e rodapés</strong> e <strong>Limpar cabeçalhos e rodapés</strong>.</li>
-                                        <li>Se o driver não tiver o tamanho 60x40: Windows &gt; Dispositivos e impressoras &gt; XD210 &gt; Preferências de impressão &gt; Papel personalizado &gt; 60 x 40 mm.</li>
-                                    </ol>
-                                </details>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="button" id="btnPrint" class="btn btn-success" style="flex: 1;">
-                            <i class="fa-solid fa-print"></i> Imprimir etiquetas
-                        </button>
-                    </div>
-                </section>
-
-                <section class="wms-panel print-source">
-                    <h4 class="no-print"><i class="fa-solid fa-tag"></i> Prévia da etiqueta</h4>
-                    <div id="printArea">
-                        <div id="labelPreview">
-                            <p class="label-preview-placeholder no-print">
-                                <i class="fa-regular fa-image"></i>
-                                Selecione um produto para visualizar a etiqueta.
-                            </p>
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </main>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="../js/layout.js"></script>
-    <script src="../js/main.js"></script>
-    <script>
+<div class="layout">
+<main class="main-content">
+<nav class="top-nav no-print"><div class="search-bar"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="quickSearch" placeholder="Buscar..."></div><div class="nav-actions"></div></nav>
+<header class="page-header no-print"><h2>Etiqueta de <span>Precificação</span></h2><p>teste</p></header>
+<div class="wms-layout no-print">
+<section class="wms-panel no-print">
+<h4><i class="fa-solid fa-sliders-h"></i> Configurar etiqueta</h4>
+<div style="flex: 1; overflow-y: auto;">
+<div class="wms-form-grid">
+<div class="filter-group full-width">
+<label>Produto</label>
+<div class="autocomplete-wrapper">
+<input type="text" id="productSearchInput" class="filter-input" autocomplete="off">
+<button type="button" class="clear-btn" id="clearSearchBtn"><i class="fa-solid fa-times-circle"></i></button>
+<div class="autocomplete-list" id="autocompleteList"></div>
+</div>
+</div>
+<div class="filter-group full-width">
+<label>Cor da etiqueta</label>
+<select id="labelColor" class="filter-select">
+<option value="yellow" selected>Amarelo</option><option value="red">Vermelho</option><option value="white">Branco</option>
+</select>
+</div>
+<div class="full-width">
+<label>Exibir na etiqueta</label>
+<div class="checkbox-grid">
+<div class="checkbox-item"><input type="checkbox" id="showStoreName" checked><label for="showStoreName">Loja</label></div>
+<div class="checkbox-item"><input type="checkbox" id="showSku" checked><label for="showSku">SKU</label></div>
+<div class="checkbox-item" style="grid-column: 1 / -1;">
+<label for="barcodeSource" style="display: block; margin-bottom: 6px; font-weight: 700;">Código de barras</label>
+<select id="barcodeSource" class="filter-select" style="width: 100%;">
+<option value="barcode">Código de barras do produto</option><option value="sku">SKU como código</option><option value="none">Nenhum</option>
+</select>
+</div>
+</div>
+</div>
+<div class="filter-group full-width">
+<label>Quantidade de etiquetas</label>
+<input type="number" id="labelQty" class="filter-input" value="1" min="1" max="99">
+</div>
+</div>
+</div>
+<div class="form-actions"><button type="button" id="btnPrint" class="btn btn-success">Imprimir etiquetas</button></div>
+</section>
+<section class="wms-panel print-source">
+<h4 class="no-print">Prévia da etiqueta</h4>
+<div id="printArea"><div id="labelPreview"></div></div>
+</section>
+</div>
+</main>
+</div>
+<script>
         let products = [];
         let selectedProduct = null;
 
@@ -726,11 +668,11 @@
             accent.setAttribute("rx", "3");
             svg.appendChild(accent);
 
-            const LX = 24;
+            const LX = 30;
             let y = 0;
 
             if (data.showStore && data.store) {
-                y = 38;
+                y = 48;
                 const el = document.createElementNS(NS, "text");
                 el.setAttribute("x", String(LX));
                 el.setAttribute("y", String(y));
@@ -748,11 +690,11 @@
                 nameLines[1] = nameLines[1].slice(0, 36) + '…';
             }
 
-            y = data.showStore ? 68 : 22;
+            y = data.showStore ? 82 : 28;
             for (let i = 0; i < nameLines.length; i++) {
                 const nameEl = document.createElementNS(NS, "text");
                 nameEl.setAttribute("x", String(LX));
-                nameEl.setAttribute("y", String(y + i * 24));
+                nameEl.setAttribute("y", String(y + i * 26));
                 nameEl.setAttribute("font-size", "22");
                 nameEl.setAttribute("font-weight", "700");
                 nameEl.setAttribute("fill", "#1e293b");
@@ -760,18 +702,18 @@
                 nameEl.textContent = nameLines[i];
                 svg.appendChild(nameEl);
             }
-            y += nameLines.length * 24 + 6;
+            y += nameLines.length * 26 + 16;
 
             if (data.showSku && data.sku) {
                 const el = document.createElementNS(NS, "text");
                 el.setAttribute("x", String(LX));
-                el.setAttribute("y", String(y + 11));
+                el.setAttribute("y", String(y + 14));
                 el.setAttribute("font-size", "14");
                 el.setAttribute("fill", "#64748b");
                 el.setAttribute("font-family", "monospace");
                 el.textContent = "SKU " + data.sku;
                 svg.appendChild(el);
-                y += 24;
+                y += 28;
             }
 
             const barcodeValue = data.barcodeSource === 'sku' ? data.sku : data.barcodeText;
@@ -789,7 +731,7 @@
                         JsBarcode(tempSvg, barcodeValue, {
                             format: fmt,
                             width: 2,
-                            height: 100,
+                            height: 30,
                             displayValue: false,
                             margin: 0,
                             background: "transparent"
@@ -798,34 +740,18 @@
                     } catch (_) {}
                 }
 
-                let barcodeW = 180;
-                let barcodeH = 32;
-                const aw = tempSvg.getAttribute('width');
-                const ah = tempSvg.getAttribute('height');
-                if (aw) barcodeW = parseFloat(aw) || barcodeW;
-                if (ah) barcodeH = parseFloat(ah) || barcodeH;
-
-                const rowTop = y + 10;
-                const rowBottom = VB_H - 10;
-                const rowH = rowBottom - rowTop;
-                const colMidX = 306;
-                const colRightX = colMidX + 22;
-                const colRightW = VB_W - LX - colRightX;
-
-                const bS = Math.min((colMidX - LX - 14) / barcodeW, 3.2, (rowH - 10) / barcodeH);
-                const bW = barcodeW * bS;
-                const bH = barcodeH * bS;
-                const bX = LX + Math.max(0, (colMidX - LX - 14 - bW) / 2);
-                const bY = rowTop;
-
-                const amtFs = Math.max(34, Math.min(110, Math.floor((colRightW - 36) / (priceDisplay.length * 0.62))));
-                const curFs = Math.max(18, Math.round(amtFs * 0.32));
+                const availH = VB_H - 12 - (y + 6);
+                const cY = y + 6 + Math.round(availH / 2);
+                const amtFs = Math.min(72, Math.max(34, Math.min(availH * 0.7, 240 / (priceDisplay.length * 0.68))));
+                const curFs = 22;
                 const amtW = priceDisplay.length * amtFs * 0.6;
                 const curW = curFs * 0.62 * 3;
                 const fullW = curW + 6 + amtW;
-                const priceCY = rowTop + Math.round(amtFs * 0.5);
-                const priceY = priceCY + Math.round(amtFs * 0.4);
-                const xStart = colRightX + Math.max(0, (colRightW - fullW) / 2);
+                const priceY = cY + Math.round(amtFs * 0.36);
+                const priceCenterY = cY;
+                const colRightX = 330;
+                const colRightW = VB_W - 20 - colRightX;
+                const xStart = colRightX + (colRightW - fullW) / 2;
 
                 const curEl = document.createElementNS(NS, "text");
                 curEl.setAttribute("x", String(xStart));
@@ -848,25 +774,28 @@
                 svg.appendChild(amtEl);
 
                 if (barcodeOk) {
+                    const vb = (tempSvg.getAttribute('viewBox') || '0 0 180 32').split(/[ ,]+/);
+                    const barcodeW = parseFloat(vb[2]) || 180;
+                    const barcodeH = parseFloat(vb[3]) || 32;
+                    const s = Math.min(238 / barcodeW, 3.2, 130 / barcodeH);
+                    const w = barcodeW * s;
                     const g = document.createElementNS(NS, "g");
-                    g.setAttribute("transform", "translate(" + bX.toFixed(1) + "," + bY.toFixed(1) + ") scale(" + bS.toFixed(3) + "," + bS.toFixed(3) + ")");
+                    g.setAttribute("transform", "translate(" + (30 + (238 - w) / 2).toFixed(1) + "," + (priceCenterY - barcodeH * s / 2) + ") scale(" + s + "," + s + ")");
                     g.innerHTML = tempSvg.innerHTML;
                     svg.appendChild(g);
                 }
             } else {
-                const rowTop = y + 10;
-                const rowBottom = VB_H - 10;
-                const rowH = rowBottom - rowTop;
-                const amtFs = Math.max(40, Math.min(130, Math.floor((VB_W - 2 * LX - 14) / (priceDisplay.length * 0.62))));
-                const curFs = Math.max(20, Math.round(amtFs * 0.32));
+                const availH = VB_H - 8 - (y + 6);
+                const cY = y + 6 + Math.round(availH / 2);
+                const amtFs = Math.min(96, Math.max(48, Math.min(availH * 0.8, 240 / (priceDisplay.length * 0.68))));
+                const curFs = 30;
                 const amtW = priceDisplay.length * amtFs * 0.6;
                 const fullW = curFs * 0.62 * 3 + 6 + amtW;
-                const priceCY = rowTop + Math.round(amtFs * 0.5);
-                const priceY = priceCY + Math.round(amtFs * 0.4);
                 const xStart = (VB_W - fullW) / 2;
+                const priceY = cY + Math.round(amtFs * 0.36);
 
                 const curEl = document.createElementNS(NS, "text");
-                curEl.setAttribute("x", String(Math.max(LX, xStart)));
+                curEl.setAttribute("x", String(xStart));
                 curEl.setAttribute("y", String(priceY));
                 curEl.setAttribute("font-size", String(curFs));
                 curEl.setAttribute("font-weight", "700");
@@ -876,7 +805,7 @@
                 svg.appendChild(curEl);
 
                 const amtEl = document.createElementNS(NS, "text");
-                amtEl.setAttribute("x", String(Math.max(LX, xStart + curFs * 0.62 * 3 + 6)));
+                amtEl.setAttribute("x", String(xStart + curFs * 0.62 * 3 + 6));
                 amtEl.setAttribute("y", String(priceY));
                 amtEl.setAttribute("font-size", String(amtFs));
                 amtEl.setAttribute("font-weight", "800");
