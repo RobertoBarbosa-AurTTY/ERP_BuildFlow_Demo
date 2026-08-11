@@ -245,7 +245,10 @@ exports.handler = withAuth(async (event, context, user) => {
       .slice(0, 10);
 
     // Enriquecer com dados atuais do produto (estoque, custo)
-    const prodIds = topProducts.filter(p => p.productId).map(p => new ObjectId(p.productId));
+    // Itens "custom" (venda de item não registrado) não têm ObjectId válido
+    const prodIds = topProducts
+      .filter(p => p.productId && ObjectId.isValid(p.productId))
+      .map(p => new ObjectId(p.productId));
     if (prodIds.length > 0) {
       const prodMap = {};
       const produtos = await db.collection('products').find(
