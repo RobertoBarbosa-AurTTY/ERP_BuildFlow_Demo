@@ -2339,14 +2339,19 @@ input[type=number] {
     background: var(--bg-hover);
 }
 
+.dashboard-stats-grid {
+    gap: 14px;
+    margin-bottom: 26px;
+}
+
 .dashboard-stat {
     position: relative;
     overflow: hidden;
     flex-direction: column;
     align-items: stretch;
-    gap: 14px;
-    padding: 18px 20px;
-    border-radius: 16px;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: 14px;
     background: var(--bg-card);
     border: 1px solid var(--border);
 }
@@ -2376,13 +2381,13 @@ input[type=number] {
 }
 
 .dashboard-stat__icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
+    font-size: 0.85rem;
     flex-shrink: 0;
 }
 
@@ -2396,7 +2401,7 @@ input[type=number] {
 
 .dashboard-stat__top .stat-value h3 {
     margin: 0;
-    font-size: 1.75rem;
+    font-size: 1.4rem;
     line-height: 1;
 }
 
@@ -2466,7 +2471,7 @@ input[type=number] {
 }
 
 .dashboard-stat .stat-info h3 {
-    font-size: 1.45rem;
+    font-size: 1.15rem;
     font-weight: 900;
     letter-spacing: -0.02em;
     line-height: 1.1;
