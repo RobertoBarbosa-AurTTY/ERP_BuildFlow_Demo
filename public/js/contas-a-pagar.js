@@ -393,7 +393,7 @@
 
     const parcelas = isGroup
       ? `${bill.installmentNumber || "—"}/${bill.totalInstallments}`
-      : "—";
+      : "1";
     const renderRow = (label, value) =>
       `<div style="padding:10px 14px;background:var(--bg-input);border-radius:10px;"><div style="color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px;">${label}</div><div style="font-size:0.9rem;">${value}</div></div>`;
     const html = `
