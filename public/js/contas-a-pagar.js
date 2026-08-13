@@ -132,8 +132,20 @@
   function renderTable() {
     if (!els.tableBody) return;
     if (!bills.length) {
-      els.tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted)">Nenhuma conta encontrada. Cadastre seu primeiro boleto.</td></tr>`;
+      els.tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted)">Nenhuma conta encontrada. Cadastre seu primeiro boleto.</td></tr>`;
       return;
+    }
+
+    const groupStats = {};
+    for (const bill of bills) {
+      if (!bill.installmentGroupId) continue;
+      if (!groupStats[bill.installmentGroupId]) {
+        groupStats[bill.installmentGroupId] = { total: 0, paid: 0 };
+      }
+      groupStats[bill.installmentGroupId].total += 1;
+      if (bill.status === "paid") {
+        groupStats[bill.installmentGroupId].paid += 1;
+      }
     }
 
     els.tableBody.innerHTML = bills
@@ -150,6 +162,16 @@
                 ? `Pago em ${formatDate(bill.paidDate)}`
                 : "—";
 
+        const isGroup = bill.installmentGroupId && bill.totalInstallments > 1;
+        const parcelasHtml = isGroup
+          ? String(
+              bill.groupTotal ||
+                groupStats[bill.installmentGroupId]?.total ||
+                bill.totalInstallments ||
+                1,
+            )
+          : "1";
+
         return `<tr class="ap-row ap-row--${bill.status}" data-bill-id="${id}" style="cursor:pointer;">
           <td><strong>${BuildFlow.escapeHtml(bill.description)}</strong>${bill.documentNumber ? `<br><small>${BuildFlow.escapeHtml(bill.documentNumber)}</small>` : ""}</td>
           <td>${BuildFlow.escapeHtml(bill.supplier || "—")}</td>
@@ -157,6 +179,7 @@
           <td>${formatDate(bill.dueDate)}</td>
           <td><strong>${BuildFlow.formatCurrency(bill.amount)}</strong></td>
           <td style="white-space:nowrap;">${statusBadge(bill.status)}</td>
+          <td style="white-space:nowrap;text-align:center;">${parcelasHtml}</td>
           <td><small>${daysLabel}</small></td>
           <td class="ap-actions">
             ${bill.status !== "paid" && bill.status !== "cancelled" ? `<button type="button" class="btn-icon" data-pay="${id}" title="Marcar como paga"><i class="fa-solid fa-check"></i></button>` : ""}

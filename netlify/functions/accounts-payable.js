@@ -258,6 +258,55 @@ exports.handler = withAuth(async (event, context, user) => {
         ]);
         const data = dataRaw.map((bill) => enrichBill(bill, today));
 
+        // Resumo de parcelas por grupo (pagas/restantes) considerando TODAS as parcelas,
+        // mesmo quando há filtro aplicado (status, categoria, busca...).
+        const groupIds = [
+          ...new Set(
+            data
+              .filter((b) => b.installmentGroupId)
+              .map((b) => b.installmentGroupId),
+          ),
+        ];
+        if (groupIds.length) {
+          const agg = await collection
+            .aggregate([
+              {
+                $match: { installmentGroupId: { $in: groupIds } },
+              },
+              {
+                $group: {
+                  _id: "$installmentGroupId",
+                  total: { $sum: 1 },
+                  paid: {
+                    $sum: {
+                      $cond: [{ $eq: ["$status", "paid"] }, 1, 0],
+                    },
+                  },
+                  open: {
+                    $sum: {
+                      $cond: [
+                        { $in: ["$status", ["paid", "cancelled"]] },
+                        0,
+                        1,
+                      ],
+                    },
+                  },
+                },
+              },
+            ])
+            .toArray();
+          const stats = {};
+          for (const row of agg) stats[row._id] = row;
+          for (const bill of data) {
+            const s = stats[bill.installmentGroupId];
+            if (s) {
+              bill.groupTotal = s.total;
+              bill.groupPaid = s.paid;
+              bill.groupOpen = s.open;
+            }
+          }
+        }
+
         return {
           statusCode: 200,
           body: JSON.stringify({
