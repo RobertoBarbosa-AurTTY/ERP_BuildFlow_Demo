@@ -18,10 +18,23 @@ function endOfDay(date = new Date()) {
 function parseLocalDate(value) {
   if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
     const [year, month, day] = value.split("-").map(Number);
-    return new Date(year, month - 1, day);
+    return new Date(Date.UTC(year, month - 1, day));
   }
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/**
+ * Data de hoje no calendário local do cliente, expressa como meia-noite UTC.
+ * Evita que o servidor (UTC) compute um dia diferente do fuso do usuário.
+ */
+function clientToday(tzOffset) {
+  const offset = parseInt(tzOffset, 10) || 0;
+  const now = new Date();
+  const local = new Date(now.getTime() - offset * 60000);
+  return new Date(
+    Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate()),
+  );
 }
 
 function addDays(date, days) {
@@ -153,8 +166,8 @@ exports.handler = withAuth(async (event, context, user) => {
 
   const db = await getDb();
   const collection = db.collection("accounts_payable");
-  const today = startOfDay();
   const params = event.queryStringParameters || {};
+  const today = clientToday(params.tzOffset);
 
   try {
     switch (event.httpMethod) {

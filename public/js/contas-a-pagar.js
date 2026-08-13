@@ -34,6 +34,8 @@
 
   const els = {};
 
+  const TZ_OFFSET = new Date().getTimezoneOffset();
+
   function $(id) {
     return document.getElementById(id);
   }
@@ -44,11 +46,14 @@
 
   function formatDate(value) {
     if (!value) return "—";
-    return new Date(value).toLocaleDateString("pt-BR");
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return "—";
+    return `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}`;
   }
 
   function getLocalDateString() {
-    return new Date().toISOString().slice(0, 10);
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }
 
   function statusBadge(status) {
@@ -72,6 +77,7 @@
     if (els.filterFrom?.value) params.set("from", els.filterFrom.value);
     if (els.filterTo?.value) params.set("to", els.filterTo.value);
     params.set("limit", "all");
+    params.set("tzOffset", String(TZ_OFFSET));
 
     const summaryParams = new URLSearchParams(params.toString());
     summaryParams.set("summary", "true");
@@ -179,8 +185,8 @@
     for (const bill of bills) {
       if (bill.status === "paid" || bill.status === "cancelled") continue;
       const d = new Date(bill.dueDate);
-      if (d.getMonth() !== targetMonth || d.getFullYear() !== targetYear) continue;
-      const key = d.getDate();
+      if (d.getUTCMonth() !== targetMonth || d.getUTCFullYear() !== targetYear) continue;
+      const key = d.getUTCDate();
       if (!byDay[key]) byDay[key] = [];
       byDay[key].push(bill);
     }
@@ -217,7 +223,7 @@
       .map((day) => {
         const height = Math.max(4, (day.total / max) * 100);
         const date = new Date(day.date);
-        const label = date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+        const label = `${String(date.getUTCDate()).padStart(2, "0")}/${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
         const cls = day.total > 0 ? "ap-bar--active" : "";
         return `<div class="ap-bar-wrap" title="${label}: ${BuildFlow.formatCurrency(day.total)} (${day.count})">
           <div class="ap-bar ${cls}" style="height:${height}%"></div>
@@ -252,7 +258,7 @@
     const dayBills = bills.filter((b) => {
       if (b.status === "paid" || b.status === "cancelled") return false;
       const d = new Date(b.dueDate);
-      return d.getDate() === day && d.getMonth() === calendarViewMonth && d.getFullYear() === calendarViewYear;
+      return d.getUTCDate() === day && d.getUTCMonth() === calendarViewMonth && d.getUTCFullYear() === calendarViewYear;
     });
     if (!dayBills.length) return;
 
@@ -289,7 +295,7 @@
   }
 
   function showInstallmentGroup(groupId) {
-    BuildFlow.apiFetch(`/accounts-payable?groupId=${encodeURIComponent(groupId)}`).then((groupBills) => {
+    BuildFlow.apiFetch(`/accounts-payable?groupId=${encodeURIComponent(groupId)}&tzOffset=${TZ_OFFSET}`).then((groupBills) => {
       if (!groupBills || !groupBills.length) return;
       const rows = groupBills
         .map((b) => {
@@ -329,7 +335,7 @@
     let groupData = null;
     if (isGroup) {
       try {
-        const res = await BuildFlow.apiFetch(`/accounts-payable?groupId=${encodeURIComponent(bill.installmentGroupId)}`);
+        const res = await BuildFlow.apiFetch(`/accounts-payable?groupId=${encodeURIComponent(bill.installmentGroupId)}&tzOffset=${TZ_OFFSET}`);
         if (res && res.length) groupData = res;
       } catch (_) {}
     }
@@ -468,13 +474,13 @@
     try {
       if (editingId) {
         const { totalInstallments: _, ...editPayload } = payload;
-        await BuildFlow.apiFetch("/accounts-payable", {
+        await BuildFlow.apiFetch(`/accounts-payable?tzOffset=${TZ_OFFSET}`, {
           method: "PUT",
           body: JSON.stringify({ id: editingId, ...editPayload, amount: Number(els.fieldAmount.value) }),
         });
         Swal.fire({ icon: "success", title: "Conta atualizada!", timer: 1800, showConfirmButton: false });
       } else {
-        await BuildFlow.apiFetch("/accounts-payable", {
+        await BuildFlow.apiFetch(`/accounts-payable?tzOffset=${TZ_OFFSET}`, {
           method: "POST",
           body: JSON.stringify(payload),
         });
@@ -502,11 +508,13 @@
     });
     if (!result.isConfirmed) return;
     try {
-      await BuildFlow.apiFetch("/accounts-payable", {
+      await BuildFlow.apiFetch(`/accounts-payable?tzOffset=${TZ_OFFSET}`, {
         method: "PUT",
         body: JSON.stringify({ id, action: "pay", paidDate: getLocalDateString() }),
       });
       Swal.fire({ icon: "success", title: "Pagamento registrado!", timer: 1600, showConfirmButton: false });
+      BuildFlow.clearPaymentNoticeFlags();
+      BuildFlow.refreshMensalidadeStatus();
       await loadData();
     } catch (err) {
       Swal.fire({ icon: "error", title: "Erro", text: err.message });
@@ -525,7 +533,7 @@
     });
     if (!result.isConfirmed) return;
     try {
-      await BuildFlow.apiFetch("/accounts-payable", {
+      await BuildFlow.apiFetch(`/accounts-payable?tzOffset=${TZ_OFFSET}`, {
         method: "DELETE",
         body: JSON.stringify({ id }),
       });
@@ -537,7 +545,7 @@
 
   function checkBrowserNotifications() {
     if (!summary || !("Notification" in window)) return;
-    const key = "ap_notified_" + new Date().toISOString().slice(0, 10);
+    const key = "ap_notified_" + getLocalDateString();
     if (localStorage.getItem(key)) return;
 
     const alerts = [...(summary.alerts?.overdue || []), ...(summary.alerts?.dueSoon || [])];

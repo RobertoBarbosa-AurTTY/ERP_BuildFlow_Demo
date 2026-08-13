@@ -30,9 +30,18 @@ const BuildFlow = {
             );
           }
         } else {
-          throw new Error(
-            `Erro no servidor (${response.status}): ${text.substring(0, 100)}`,
-          );
+          let message = `Erro no servidor (${response.status})`;
+          try {
+            const parsed = JSON.parse(text);
+            if (parsed && typeof parsed.message === "string" && parsed.message.trim()) {
+              message = parsed.message;
+            } else if (text.trim()) {
+              message = `${text.trim().substring(0, 100)} (erro ${response.status})`;
+            }
+          } catch {
+            if (text.trim()) message = `${text.trim().substring(0, 100)} (erro ${response.status})`;
+          }
+          throw new Error(message);
         }
       }
 
@@ -41,6 +50,8 @@ const BuildFlow = {
       // Segurança: o token fica APENAS no cookie HttpOnly. Aqui guardamos
       // apenas dados de exibição do usuário (sem credenciais).
       localStorage.setItem("user", JSON.stringify(data.user));
+      // Novo login sempre reativa o aviso de mensalidade (aparece 1x por sessão).
+      this.clearPaymentNoticeFlags();
       return data;
     } catch (error) {
       console.error("Login error:", error);
@@ -317,17 +328,17 @@ const BuildFlow = {
     });
 
     let data;
-    const contentType = response.headers.get("content-type");
-    if (contentType && contentType.includes("application/json")) {
-      data = await response.json();
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      data = await response.json().catch(() => null);
     } else {
       const text = await response.text();
-      if (!response.ok) {
-        throw new Error(text.substring(0, 120) || `Erro ${response.status}`);
-      }
       try {
         data = JSON.parse(text);
       } catch {
+        data = text || null;
+      }
+      if (response.ok && typeof data !== "object") {
         throw new Error("Resposta inválida do servidor");
       }
     }
@@ -343,7 +354,15 @@ const BuildFlow = {
     }
 
     if (!response.ok) {
-      throw new Error(data.message || `Erro ${response.status}`);
+      // Extrai uma mensagem legível (JSON com `message` ou texto puro),
+      // evitando exibir JSON cru de { message: ... } ao usuário
+      if (data && typeof data.message === "string" && data.message.trim()) {
+        throw new Error(data.message);
+      }
+      if (typeof data === "string" && data.trim()) {
+        throw new Error(`${data.trim().substring(0, 120)} (erro ${response.status})`);
+      }
+      throw new Error(`Erro ao carregar os dados (código ${response.status})`);
     }
 
     return data;
@@ -1698,6 +1717,127 @@ const BuildFlow = {
     localStorage.setItem("buildflow_version", currentVersion);
   },
 
+  /** Dias até o vencimento calculados no calendário LOCAL do navegador. */
+  clientDaysUntilDue(dueDateValue) {
+    const due = new Date(dueDateValue);
+    if (Number.isNaN(due.getTime())) return 0;
+    const dueCanonical = Date.UTC(
+      due.getUTCFullYear(),
+      due.getUTCMonth(),
+      due.getUTCDate(),
+    );
+    const today = new Date();
+    const todayCanonical = Date.UTC(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+    );
+    return Math.round((dueCanonical - todayCanonical) / 86400000);
+  },
+
+  /**
+   * Consulta o boleto da mensalidade do sistema e mantém o selo fixo
+   * "Mensalidade pendente" no canto inferior direito enquanto não for pago.
+   * @returns {Promise<object|null>} conta da mensalidade não paga ou null.
+   */
+  async refreshMensalidadeStatus() {
+    let bills = [];
+    try {
+      const res = await this.apiFetch(
+        `/accounts-payable?limit=all&tzOffset=${new Date().getTimezoneOffset()}`,
+      );
+      bills = (res && res.data) || [];
+    } catch {
+      return null;
+    }
+
+    const mensalidade = bills.find(
+      (b) =>
+        b.status !== "paid" &&
+        b.status !== "cancelled" &&
+        /mensalidade|sistema|buildflow|assinatura|licen/i.test(
+          b.description || "",
+        ),
+    );
+
+    const existing = document.getElementById("mensalidade-pending-badge");
+    if (!mensalidade) {
+      if (existing) existing.remove();
+      return null;
+    }
+    if (!existing) {
+      const late = this.clientDaysUntilDue(mensalidade.dueDate) <= 0;
+      const badge = document.createElement("div");
+      badge.id = "mensalidade-pending-badge";
+      badge.style.cssText = `position:fixed;right:20px;bottom:20px;z-index:9998;
+        display:flex;align-items:center;gap:8px;background:${late ? "#dc2626" : "#f59e0b"};
+        color:#fff;padding:10px 16px;border-radius:999px;font-size:0.8rem;font-weight:700;
+        box-shadow:0 8px 24px rgba(0,0,0,0.25);`;
+      badge.innerHTML =
+        '<i class="fa-solid fa-circle-exclamation"></i> Mensalidade pendente';
+      document.body.appendChild(badge);
+    }
+    return mensalidade;
+  },
+
+  /**
+   * Popup por sessão: avisa vencimento/atraso da mensalidade do sistema.
+   * Aparece a cada login enquanto houver mensalidade não paga com vencimento
+   * atingido (vence hoje ou em atraso); não reaparece ao atualizar a página
+   * e deixa de aparecer assim que a conta é quitada em Contas a Pagar.
+   */
+  async showPaymentDueNoticeOnce() {
+    const now = new Date();
+    const monthKey = `buildflow_notice_payment_${now.getFullYear()}_${now.getMonth()}`;
+
+    const mensalidade = await this.refreshMensalidadeStatus();
+    if (!mensalidade) {
+      localStorage.removeItem(monthKey);
+      return;
+    }
+    const daysUntilDue = this.clientDaysUntilDue(mensalidade.dueDate);
+    if (daysUntilDue > 0) {
+      localStorage.removeItem(monthKey);
+      return;
+    }
+    if (localStorage.getItem(monthKey)) return;
+    if (typeof Swal === "undefined") return;
+
+    localStorage.setItem(monthKey, "1");
+
+    const due = new Date(mensalidade.dueDate);
+    const dueDay = Number.isNaN(due.getTime()) ? null : due.getUTCDate();
+    const dueDayHtml = dueDay
+      ? `, agendada para o <strong>dia ${dueDay}</strong>`
+      : "";
+    const lateHtml =
+      daysUntilDue < 0
+        ? `está <strong>${Math.max(1, Math.abs(daysUntilDue))} dia(s) em atraso</strong>`
+        : `vence <strong>hoje</strong>`;
+
+    Swal.fire({
+      icon: "warning",
+      title: "Mensalidade do Sistema",
+      html: `<div style="text-align:left;font-size:0.9rem;line-height:1.7;">
+        <p>A <strong>mensalidade do sistema</strong>${dueDayHtml} ${lateHtml}.</p>
+        <p>Para garantir a continuidade do acesso, pedimos que regularize o pagamento o quanto antes.</p>
+        <p style="color:var(--text-muted);font-size:0.8rem;margin-top:4px;">A conta pode ser quitada na tela Contas a Pagar.</p>
+      </div>`,
+      confirmButtonText: "Entendi",
+      confirmButtonColor: "#4f46e5",
+      background: "var(--bg-card, #fff)",
+      color: "var(--text-primary, #111)",
+    });
+  },
+
+  /** Remove as flags do aviso de mensalidade (usado ao marcar a conta como paga). */
+  clearPaymentNoticeFlags() {
+    const prefix = "buildflow_notice_payment_";
+    Object.keys(localStorage)
+      .filter((key) => key.startsWith(prefix))
+      .forEach((key) => localStorage.removeItem(key));
+  },
+
   registerServiceWorker() {
     if (!("serviceWorker" in navigator)) return;
     const isLocal = /^https?:$/.test(window.location.protocol) && /localhost|127\.0\.0\.1/.test(window.location.hostname);
@@ -1793,6 +1933,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   BuildFlow.initUserMenu();
   BuildFlow.checkVersionUpdate();
   BuildFlow.registerServiceWorker();
+
+  // Aviso único de mensalidade em atraso (após login, fora da tela de login)
+  const cachedUser = localStorage.getItem("user");
+  if (cachedUser && !["/", "/login"].includes(window.location.pathname)) {
+    setTimeout(() => BuildFlow.showPaymentDueNoticeOnce(), 900);
+  }
 });
 
 // Animation CSS
