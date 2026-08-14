@@ -30,17 +30,17 @@ function getPeriodRange({ period = "month", tzOffset = 0, selectedDate } = {}) {
   tzOffset = parseInt(tzOffset, 10) || 0;
 
   const now = new Date();
-  const localEpoch = now.getTime() - tzOffset * 60000;
+  const localEpoch = now.getTime() + tzOffset * 60000;
   const localDate = new Date(localEpoch);
   const localMidnightEpoch = Date.UTC(localDate.getUTCFullYear(), localDate.getUTCMonth(), localDate.getUTCDate());
-  const todayStart = new Date(localMidnightEpoch + tzOffset * 60000);
+  const todayStart = new Date(localMidnightEpoch - tzOffset * 60000);
 
   let rangeStart, rangeEnd;
   if (period === "day") {
     let dayStart;
     if (selectedDate) {
       const [y, m, d] = String(selectedDate).split("-").map(Number);
-      dayStart = new Date(Date.UTC(y, m - 1, d) + tzOffset * 60000);
+      dayStart = new Date(Date.UTC(y, m - 1, d) - tzOffset * 60000);
     } else {
       dayStart = new Date(todayStart);
     }
@@ -50,8 +50,8 @@ function getPeriodRange({ period = "month", tzOffset = 0, selectedDate } = {}) {
     rangeStart = new Date(todayStart.getTime() - 6 * 24 * 60 * 60 * 1000);
     rangeEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
   } else {
-    rangeStart = new Date(Date.UTC(todayStart.getFullYear(), todayStart.getMonth(), 1) + tzOffset * 60000);
-    rangeEnd = new Date(Date.UTC(todayStart.getFullYear(), todayStart.getMonth() + 1, 1) + tzOffset * 60000);
+    rangeStart = new Date(Date.UTC(todayStart.getFullYear(), todayStart.getMonth(), 1) - tzOffset * 60000);
+    rangeEnd = new Date(Date.UTC(todayStart.getFullYear(), todayStart.getMonth() + 1, 1) - tzOffset * 60000);
   }
 
   return {
