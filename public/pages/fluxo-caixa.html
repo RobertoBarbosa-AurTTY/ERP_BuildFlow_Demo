@@ -69,6 +69,11 @@
         .fc-days-table th { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
         .fc-days-table td:first-child, .fc-days-table th:first-child { text-align: left; }
         .fc-days-table tr.fc-today-row td { background: rgba(79,70,229,0.06); }
+        .fc-days-table tr.fc-day-row { cursor: pointer; }
+        .fc-days-table tr.fc-day-row:hover td { background: rgba(79, 70, 229, 0.08); }
+        .fc-day-section { margin-bottom: 18px; }
+        .fc-day-section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.85rem; font-weight: 700; }
+        .fc-day-section-head strong { color: var(--brand); font-variant-numeric: tabular-nums; }
         .fc-days-table .fc-col-group { text-align: center; background: var(--bg-hover, rgba(0,0,0,0.03)); }
         .fc-days-wrap { overflow-x: auto; }
         .pos { color: #10b981; } .neg { color: #ef4444; }

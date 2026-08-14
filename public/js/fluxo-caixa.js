@@ -105,8 +105,8 @@
     if (!els.daysTable || !report) return;
     els.daysTable.querySelector("tbody").innerHTML = report.cashFlow
       .map((day) => {
-        return `<tr class="${day.isToday ? "fc-today-row" : ""}">
-          <td>${day.dia}${day.isToday ? " <small>(hoje)</small>" : ""}</td>
+        return `<tr class="fc-day-row ${day.isToday ? "fc-today-row" : ""}" data-day="${day.dia}" title="Clique para ver a composição do dia">
+          <td>${day.dia}${day.isToday ? " <small>(hoje)</small>" : ""} <span class="fc-modal-row-link">Ver detalhes</span></td>
           <td class="${moneyClass(day.entradaRealizada)}">${formatCurrency(day.entradaRealizada)}</td>
           <td class="${moneyClass(day.entradaPrevista)}">${formatCurrency(day.entradaPrevista)}</td>
           <td class="${moneyClass(-day.saidaRealizada)}">${formatCurrency(-day.saidaRealizada)}</td>
@@ -116,6 +116,77 @@
         </tr>`;
       })
       .join("");
+  }
+
+  // ===== Composição do dia (clique na linha do Detalhamento Diário) =====
+  function dayDetailParams(date) {
+    const tzOffset = -new Date().getTimezoneOffset();
+    return new URLSearchParams({ date, tzOffset: String(tzOffset) });
+  }
+
+  function daySectionHtml(title, total, items, emptyMsg, cols) {
+    const [c1, c2, c3] = cols;
+    const rows = items.length
+      ? items
+          .map(
+            (i) =>
+              `<tr><td>${BuildFlow.escapeHtml(i.descricao)}</td><td>${BuildFlow.escapeHtml(i.referencia)}</td><td class="num">${fmtDateOnly(i.data)}</td><td class="num"><strong>${formatCurrency(i.amount)}</strong></td></tr>`,
+          )
+          .join("")
+      : `<tr><td colspan="4" class="fc-modal-empty" style="padding:14px;">${emptyMsg}</td></tr>`;
+    return `<div class="fc-day-section">
+      <div class="fc-day-section-head"><span>${title}</span><strong>${formatCurrency(total)}</strong></div>
+      <table class="fc-modal-table"><thead><tr><th>${c1}</th><th>${c2}</th><th class="num">${c3}</th><th class="num">Valor</th></tr></thead><tbody>${rows}</tbody></table>
+    </div>`;
+  }
+
+  async function openDayDetail(date) {
+    const day = report?.cashFlow.find((d) => d.dia === date);
+    if (!day) return;
+    const label = date.replace("-", "/");
+    const title = `Detalhamento do dia ${label}`;
+    const html = `<p class="fc-modal-empty">Carregando...</p>`;
+    Swal.fire({
+      title,
+      html,
+      width: 860,
+      showConfirmButton: false,
+      showCloseButton: true,
+      customClass: { popup: "sale-detail-swal", title: "sale-detail-swal__title", htmlContainer: "sale-detail-swal__html" },
+      didOpen: async () => {
+        const htmlEl = Swal.getHtmlContainer();
+        try {
+          const res = await BuildFlow.apiFetch(`/financial-day-detail?${dayDetailParams(date).toString()}`);
+          const e = (r) => r || { items: [], total: 0 };
+          const inR = e(res.entradaRealizada);
+          const inP = e(res.entradaPrevista);
+          const outR = e(res.saidaRealizada);
+          const outP = e(res.saidaPrevista);
+          const saldoDia = inR.total + inP.total - outR.total - outP.total;
+          htmlEl.innerHTML = `
+            <div class="sale-detail-sheet">
+              <div class="sale-detail-meta" style="grid-template-columns:1fr 1fr 1fr;">
+                <div class="sale-detail-kv"><label>Dia</label><span>${label}</span></div>
+                <div class="sale-detail-kv"><label>Entradas</label><span>${formatCurrency(inR.total + inP.total)}</span></div>
+                <div class="sale-detail-kv"><label>Saídas</label><span>${formatCurrency(outR.total + outP.total)}</span></div>
+              </div>
+              ${daySectionHtml("Entradas realizadas (vendas + recebimentos)", inR.total, inR.items, "Nenhuma entrada realizada neste dia.", ["Descrição", "Forma / Cliente", "Data"])}
+              ${daySectionHtml("Entradas previstas (a receber)", inP.total, inP.items, "Nenhuma conta a receber prevista para este dia.", ["Descrição", "Cliente", "Vencimento"])}
+              ${daySectionHtml("Saídas realizadas (contas pagas)", outR.total, outR.items, "Nenhuma conta paga neste dia.", ["Descrição", "Categoria", "Pago em"])}
+              ${daySectionHtml("Saídas previstas (a pagar)", outP.total, outP.items, "Nenhuma conta a pagar prevista para este dia.", ["Descrição", "Categoria", "Vencimento"])}
+              <div class="sale-detail-total"><span>Saldo do dia</span><strong>${formatCurrency(saldoDia)}</strong></div>
+            </div>`;
+        } catch (err) {
+          htmlEl.innerHTML = `<p class="fc-modal-empty">Não foi possível carregar: ${BuildFlow.escapeHtml(err.message)}</p>`;
+        }
+      },
+    });
+  }
+
+  function bindDayRows() {
+    els.daysTable?.querySelectorAll("tr.fc-day-row").forEach((tr) => {
+      tr.addEventListener("click", () => openDayDetail(tr.dataset.day));
+    });
   }
 
   // ===== Drill-down do DRE (clique na linha abre a composição) =====
@@ -355,6 +426,7 @@
     renderChart();
     renderDre();
     renderDaysTable();
+    bindDayRows();
   }
 
   function bindEvents() {
@@ -362,6 +434,7 @@
     els.periodSelect?.addEventListener("change", () => loadData());
     els.dateSelect?.addEventListener("change", () => loadData());
     bindDreRows();
+    bindDayRows();
   }
 
   function cacheElements() {
@@ -389,6 +462,7 @@
     window.openDreDetail = openDreDetail;
     window.loadMoreDreDetail = loadMoreDreDetail;
     window.openSaleDetailDre = openSaleDetailDre;
+    window.openDayDetail = openDayDetail;
     try {
       await loadData();
     } catch (err) {
