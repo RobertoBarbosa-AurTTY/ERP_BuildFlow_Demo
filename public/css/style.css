@@ -315,7 +315,7 @@ body:not(.light-theme) .swal2-html-container [style*="background:#f8fafc"] {
     display: flex;
     align-items: center;
     gap: 12px;
-    color: var(--brand);
+    color: var(--text-primary);
 }
 
 .close-modal {
@@ -456,7 +456,7 @@ body:not(.light-theme) .swal2-html-container [style*="background:#f8fafc"] {
 .sale-detail-qty {
     font-weight: 800;
     margin-right: 6px;
-    color: var(--brand);
+    color: var(--text-primary);
 }
 
 .sale-detail-row__value {
@@ -504,7 +504,7 @@ body:not(.light-theme) .swal2-html-container [style*="background:#f8fafc"] {
 .sale-detail-total strong {
     font-size: 1.35rem;
     font-weight: 900;
-    color: var(--brand);
+    color: var(--text-primary);
 }
 
 .sale-detail-actions {
@@ -842,12 +842,12 @@ body.light-theme .nav-link:hover i {
 }
 
 body.light-theme .nav-link.active {
-    color: var(--brand);
+    color: var(--text-primary);
     background: rgba(37, 99, 235, 0.08);
 }
 
 body.light-theme .nav-link.active i {
-    color: var(--brand);
+    color: var(--text-primary);
 }
 
 
@@ -870,7 +870,7 @@ body.light-theme .product-card {
 }
 
 body.light-theme .product-card:hover {
-    border-color: var(--brand) !important;
+    border-color: var(--text-primary) !important;
     transform: translateY(-2px);
 }
 
@@ -895,7 +895,7 @@ body.light-theme .total-section {
 }
 
 body.light-theme .total-section h2 {
-    color: var(--brand) !important;
+    color: var(--text-primary) !important;
 }
 
 body.light-theme .pdv-footer {
@@ -1053,7 +1053,7 @@ input[type=number] {
 }
 
 .form-input:focus {
-    border-color: var(--brand);
+    border-color: var(--text-primary);
     background: var(--bg-hover);
     outline: none;
     box-shadow: 0 0 0 4px var(--brand-light);
@@ -1144,7 +1144,7 @@ input[type=number] {
 }
 
 .entry-mode-option:hover {
-    border-color: var(--brand);
+    border-color: var(--text-primary);
     background: var(--bg-hover);
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
 }
@@ -1233,7 +1233,7 @@ input[type=number] {
 }
 
 .sidebar-logo-text span {
-    color: var(--brand);
+    color: var(--text-primary);
 }
 
 /* Navigation Groups */
@@ -1307,7 +1307,7 @@ input[type=number] {
 }
 
 .nav-link.active i {
-    color: var(--brand);
+    color: var(--text-primary);
 }
 
 .nav-link.active::before {
@@ -1626,7 +1626,7 @@ input[type=number] {
 }
 
 .quick-access-section .section-title-inner h3 i {
-    color: var(--brand);
+    color: var(--text-primary);
 }
 
 .quick-access-section .section-title-inner p {
@@ -1671,7 +1671,7 @@ input[type=number] {
 
 .quick-access-card:hover {
     transform: translateY(-3px);
-    border-color: var(--brand);
+    border-color: var(--text-primary);
     box-shadow: 0 8px 24px rgba(79, 70, 229, 0.15);
 }
 
@@ -1690,7 +1690,7 @@ input[type=number] {
 .quick-access-card .qa-meta {
     font-size: 0.7rem;
     font-weight: 700;
-    color: var(--brand);
+    color: var(--text-primary);
     padding-top: 8px;
     border-top: 1px solid var(--border);
     margin-top: auto;
@@ -1735,7 +1735,7 @@ input[type=number] {
 .filter-input:focus,
 .filter-select:focus,
 .filter-group select:focus {
-    border-color: var(--brand);
+    border-color: var(--text-primary);
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
 }
 
@@ -1797,7 +1797,7 @@ input[type=number] {
 }
 
 .wms-panel h4 i {
-    color: var(--brand);
+    color: var(--text-primary);
 }
 
 .wms-form-grid {
@@ -2303,7 +2303,7 @@ input[type=number] {
 }
 
 .dashboard-page .page-header h2 span {
-    color: var(--brand);
+    color: var(--text-primary);
 }
 
 .dashboard-header-meta {
@@ -2432,7 +2432,7 @@ input[type=number] {
 
 .dashboard-stat--revenue .dashboard-stat__icon {
     background: rgba(79, 70, 229, 0.12);
-    color: var(--brand);
+    color: var(--text-primary);
 }
 
 .dashboard-stat--sales {
@@ -2489,7 +2489,7 @@ input[type=number] {
 }
 
 .dashboard-link-btn:hover {
-    border-color: var(--brand) !important;
+    border-color: var(--text-primary) !important;
     background: var(--brand-light) !important;
 }
 
@@ -2517,7 +2517,7 @@ input[type=number] {
 
 .dashboard-table-title i.icon-cash {
     background: rgba(79, 70, 229, 0.12);
-    color: var(--brand);
+    color: var(--text-primary);
 }
 
 .dashboard-tables-grid .card-table {
@@ -2671,7 +2671,7 @@ input[type=number] {
 
 .insight-card__icon--brand {
     background: rgba(79, 70, 229, 0.12);
-    color: var(--brand);
+    color: var(--text-primary);
 }
 
 .insight-card__icon--violet {
@@ -2946,7 +2946,7 @@ tr:last-child td {
 
 /* Utilities */
 .bg-emerald-op { background: rgba(16, 185, 129, 0.1); color: var(--emerald); }
-.bg-blue-op { background: rgba(79, 70, 229, 0.1); color: var(--brand); }
+.bg-blue-op { background: rgba(79, 70, 229, 0.1); color: var(--text-primary); }
 .bg-violet-op { background: rgba(139, 92, 246, 0.1); color: var(--violet); }
 .bg-amber-op { background: rgba(245, 158, 11, 0.1); color: var(--amber); }
 
@@ -3118,11 +3118,11 @@ tr:last-child td {
     }
 
     .nav-link.active {
-        color: var(--brand) !important;
+        color: var(--text-primary) !important;
     }
 
     .nav-link.active i {
-        color: var(--brand) !important;
+        color: var(--text-primary) !important;
         transform: scale(1.1) !important;
     }
 

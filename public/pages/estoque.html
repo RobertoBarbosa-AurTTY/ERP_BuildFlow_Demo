@@ -49,7 +49,7 @@
         }
 
         .filter-input:focus {
-            border-color: var(--brand);
+            border-color: var(--text-primary);
         }
 
         .filter-input[readonly] {
@@ -167,7 +167,7 @@
         }
 
         .modal-header h3 i {
-            color: var(--brand);
+            color: var(--text-primary);
         }
 
         .close-modal {
@@ -279,7 +279,7 @@
 
         .copyable-item:hover {
             background: rgba(79, 70, 229, 0.1);
-            color: var(--brand);
+            color: var(--text-primary);
         }
 
         .copyable-item:active {
@@ -290,7 +290,7 @@
             font-size: 0.7rem;
             opacity: 0;
             transition: opacity 0.2s;
-            color: var(--brand);
+            color: var(--text-primary);
         }
 
         .copyable-item:hover .copy-icon {
@@ -329,7 +329,7 @@
 
         /* Ícone de SKU */
         .sku-icon {
-            color: var(--brand);
+            color: var(--text-primary);
             font-size: 0.8rem;
         }
 
@@ -620,7 +620,7 @@
                     <i class="fa-solid fa-circle-question" style="position: absolute; top: 8px; right: 10px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; opacity: 0.6; transition: opacity 0.2s; z-index: 2;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'" onclick="event.stopPropagation(); showLowStockInfo()"></i>
                 </div>
                 <div class="card-stat" style="position: relative;">
-                    <h3 id="totalItemsCount" style="color: var(--brand);">0</h3>
+                    <h3 id="totalItemsCount" style="color: var(--text-primary);">0</h3>
                     <p>Total de Itens</p>
                     <i class="fa-solid fa-circle-question" style="position: absolute; top: 8px; right: 10px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; opacity: 0.6; transition: opacity 0.2s;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'" onclick="showTotalItemsInfo()"></i>
                 </div>
@@ -738,7 +738,7 @@
                             <input type="number" id="editProdCost" class="filter-input" step="0.01">
                         </div>
                         <div class="filter-group" style="grid-column: span 2; margin-top: 8px;">
-                            <label style="color: var(--brand);"><i class="fa-solid fa-warehouse"></i> Endereço na prateleira</label>
+                            <label style="color: var(--text-primary);"><i class="fa-solid fa-warehouse"></i> Endereço na prateleira</label>
                         </div>
                         <div class="filter-group">
                             <label>Corredor</label>
@@ -899,14 +899,14 @@
                 if (mode === 'skus') {
                     skusLabel.style.borderColor = 'var(--brand)';
                     skusLabel.style.background = 'rgba(79, 70, 229, 0.08)';
-                    skusLabel.style.color = 'var(--brand)';
+                    skusLabel.style.color = 'var(--text-primary)';
                     unitsLabel.style.borderColor = 'var(--border)';
                     unitsLabel.style.background = 'transparent';
                     unitsLabel.style.color = 'var(--text-muted)';
                 } else {
                     unitsLabel.style.borderColor = 'var(--brand)';
                     unitsLabel.style.background = 'rgba(79, 70, 229, 0.08)';
-                    unitsLabel.style.color = 'var(--brand)';
+                    unitsLabel.style.color = 'var(--text-primary)';
                     skusLabel.style.borderColor = 'var(--border)';
                     skusLabel.style.background = 'transparent';
                     skusLabel.style.color = 'var(--text-muted)';
@@ -932,14 +932,14 @@
                 if (mode === 'investment') {
                     investLabel.style.borderColor = 'var(--brand)';
                     investLabel.style.background = 'rgba(79, 70, 229, 0.08)';
-                    investLabel.style.color = 'var(--brand)';
+                    investLabel.style.color = 'var(--text-primary)';
                     saleLabel.style.borderColor = 'var(--border)';
                     saleLabel.style.background = 'transparent';
                     saleLabel.style.color = 'var(--text-muted)';
                 } else {
                     saleLabel.style.borderColor = 'var(--brand)';
                     saleLabel.style.background = 'rgba(79, 70, 229, 0.08)';
-                    saleLabel.style.color = 'var(--brand)';
+                    saleLabel.style.color = 'var(--text-primary)';
                     investLabel.style.borderColor = 'var(--border)';
                     investLabel.style.background = 'transparent';
                     investLabel.style.color = 'var(--text-muted)';
@@ -1415,7 +1415,7 @@
                     const imageCell = document.createElement('td');
                     imageCell.style.cssText = 'width: 70px; text-align: center;';
                     const imageBox = document.createElement('div');
-                    imageBox.style.cssText = 'width: 44px; height: 44px; margin: 0 auto; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--bg-hover); color: var(--brand); border: 1px solid var(--border);';
+                    imageBox.style.cssText = 'width: 44px; height: 44px; margin: 0 auto; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--bg-hover); color: var(--text-primary); border: 1px solid var(--border);';
                     if (p.imageUrl) {
                         const img = document.createElement('img');
                         img.loading = 'lazy';
@@ -1504,7 +1504,7 @@
                 const html = `
                     <div class="sale-detail-sheet">
                         <div class="caixa-report-hero" style="background:linear-gradient(135deg,rgba(79,70,229,0.12) 0%,var(--bg-input) 100%);border-color:rgba(79,70,229,0.25);">
-                            <div class="caixa-report-hero__icon" style="width:52px;height:52px;border-radius:14px;background:rgba(79,70,229,0.15);color:var(--brand);font-size:1.3rem;overflow:hidden;">
+                            <div class="caixa-report-hero__icon" style="width:52px;height:52px;border-radius:14px;background:rgba(79,70,229,0.15);color:var(--text-primary);font-size:1.3rem;overflow:hidden;">
                                 ${imgHtml}
                             </div>
                             <div class="caixa-report-hero__info">
@@ -1532,7 +1532,7 @@
                             </div>
                         </div>
                         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
-                            <span style="background:rgba(79,70,229,0.08);color:var(--brand);padding:3px 12px;border-radius:100px;font-size:0.68rem;font-weight:600;border:1px solid rgba(79,70,229,0.15);display:inline-flex;align-items:center;gap:5px;"><i class="fa-solid fa-folder"></i> ${BuildFlow.escapeHtml(p.category || '—')}</span>
+                            <span style="background:rgba(79,70,229,0.08);color:var(--text-primary);padding:3px 12px;border-radius:100px;font-size:0.68rem;font-weight:600;border:1px solid rgba(79,70,229,0.15);display:inline-flex;align-items:center;gap:5px;"><i class="fa-solid fa-folder"></i> ${BuildFlow.escapeHtml(p.category || '—')}</span>
                             <span style="background:rgba(16,185,129,0.08);color:var(--emerald);padding:3px 12px;border-radius:100px;font-size:0.68rem;font-weight:600;border:1px solid rgba(16,185,129,0.15);display:inline-flex;align-items:center;gap:5px;"><i class="fa-solid fa-tag"></i> ${BuildFlow.escapeHtml(p.brand || 'Marca Própria')}</span>
                             <span style="background:rgba(100,116,139,0.08);color:var(--text-muted);padding:3px 12px;border-radius:100px;font-size:0.68rem;font-weight:600;border:1px solid rgba(100,116,139,0.15);display:inline-flex;align-items:center;gap:5px;"><i class="fa-solid fa-truck"></i> ${BuildFlow.escapeHtml(p.supplier || 'Fornecedor não informado')}</span>
                         </div>
@@ -1569,7 +1569,7 @@
                                     </div>
                                     <div class="sale-detail-row sale-detail-row--muted">
                                         <span>Lucro estimado</span>
-                                        <span class="sale-detail-row__value" id="swalPerfProfit" style="color:var(--brand);">Carregando...</span>
+                                        <span class="sale-detail-row__value" id="swalPerfProfit" style="color:var(--text-primary);">Carregando...</span>
                                     </div>
                                     <div class="sale-detail-row sale-detail-row--muted">
                                         <span>Última movimentação</span>
@@ -1583,11 +1583,11 @@
                                     </div>
                                     <div class="sale-detail-row sale-detail-row--muted">
                                         <span>Lucro unitário</span>
-                                        <span class="sale-detail-row__value" style="color:var(--brand);">R$ ${unitProfit.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                                        <span class="sale-detail-row__value" style="color:var(--text-primary);">R$ ${unitProfit.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
                                     </div>
                                     <div class="sale-detail-row sale-detail-row--muted">
                                         <span>Margem de lucro</span>
-                                        <span class="sale-detail-row__value" style="color:var(--brand);">${profitMargin.toLocaleString('pt-BR', {minimumFractionDigits: 2})}%</span>
+                                        <span class="sale-detail-row__value" style="color:var(--text-primary);">${profitMargin.toLocaleString('pt-BR', {minimumFractionDigits: 2})}%</span>
                                     </div>
                                     <div class="sale-detail-row sale-detail-row--muted">
                                         <span>Investimento total</span>

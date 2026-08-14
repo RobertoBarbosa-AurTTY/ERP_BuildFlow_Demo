@@ -103,16 +103,15 @@
 
   function renderDaysTable() {
     if (!els.daysTable || !report) return;
-    els.daysTable.querySelector("tbody").innerHTML = report.cashFlow
+    const days = report.history || report.cashFlow;
+    els.daysTable.querySelector("tbody").innerHTML = days
       .map((day) => {
         const cell = (line, v, cls) =>
           `<td class="fc-day-cell ${moneyClass(cls)}" data-day="${day.dia}" data-line="${line}" title="Clique para ver como este valor foi calculado">${formatCurrency(v)}</td>`;
         return `<tr class="fc-day-row ${day.isToday ? "fc-today-row" : ""}" data-day="${day.dia}" title="Clique para ver a composição do dia">
           <td>${day.dia}${day.isToday ? " <small>(hoje)</small>" : ""} <span class="fc-modal-row-link">Ver detalhes</span></td>
           ${cell("entradaRealizada", day.entradaRealizada, day.entradaRealizada)}
-          ${cell("entradaPrevista", day.entradaPrevista, day.entradaPrevista)}
           ${cell("saidaRealizada", -day.saidaRealizada, -day.saidaRealizada)}
-          ${cell("saidaPrevista", -day.saidaPrevista, -day.saidaPrevista)}
           ${cell("saldoDia", day.saldoDia, day.saldoDia)}
           ${cell("saldoAcumulado", day.saldoAcumulado, day.saldoAcumulado)}
         </tr>`;
@@ -149,46 +148,86 @@
     return new URLSearchParams({ date, tzOffset: String(tzOffset) });
   }
 
+  const PAGER_PAGE_SIZE = 10;
+  let pagerStore = {};
+  let pagerSeq = 0;
+
+  function dayRowHtml(i) {
+    const badge = i.emAtraso ? ` <span class="fc-badge-atraso">em atraso</span>` : "";
+    const dataCell = i.vencimento
+      ? `<span class="fc-venc">Venc ${fmtDay(i.vencimento)}</span> &middot; <span class="fc-pago">Pago em ${fmtDay(i.data)}</span>`
+      : i.tipo === "venda"
+        ? fmtDateOnly(i.data)
+        : fmtDay(i.data);
+    return `<tr><td>${BuildFlow.escapeHtml(i.descricao)}${badge}</td><td>${BuildFlow.escapeHtml(i.referencia)}</td><td class="num">${dataCell}</td><td class="num"><strong>${formatCurrency(i.amount)}</strong></td></tr>`;
+  }
+
   function daySectionHtml(cfg, focus) {
     const [c1, c2, c3] = cfg.cols;
-    const rows = cfg.items.length
-      ? cfg.items
-          .map((i) => {
-            const badge = i.emAtraso ? ` <span class="fc-badge-atraso">em atraso</span>` : "";
-            const dataCell = i.vencimento
-              ? `<span class="fc-venc">Venc ${fmtDay(i.vencimento)}</span> &middot; <span class="fc-pago">Pago em ${fmtDay(i.data)}</span>`
-              : i.tipo === "venda"
-                ? fmtDateOnly(i.data)
-                : fmtDay(i.data);
-            return `<tr><td>${BuildFlow.escapeHtml(i.descricao)}${badge}</td><td>${BuildFlow.escapeHtml(i.referencia)}</td><td class="num">${dataCell}</td><td class="num"><strong>${formatCurrency(i.amount)}</strong></td></tr>`;
-          })
-          .join("")
-      : `<tr><td colspan="4" class="fc-modal-empty" style="padding:14px;">${cfg.emptyMsg}</td></tr>`;
+    const tone = cfg.tone || "";
+    const icon = cfg.icon || "";
+    const n = cfg.items.length;
+    const totalPages = Math.max(1, Math.ceil(n / PAGER_PAGE_SIZE));
+    const secId = "p" + (++pagerSeq);
+    pagerStore[secId] = cfg.items;
+    const rows = n
+      ? cfg.items.slice(0, PAGER_PAGE_SIZE).map(dayRowHtml).join("")
+      : `<tr><td colspan="4" class="fc-modal-empty"><i class="fa-solid fa-box-open"></i>${cfg.emptyMsg}</td></tr>`;
+    const pager =
+      totalPages > 1
+        ? `<div class="fc-modal-pager" data-pager="${secId}" data-pages="${totalPages}">
+            <div class="fc-modal-pager-btns">${Array.from({ length: totalPages }, (_, k) => `<button type="button" class="fc-pager-btn ${k === 0 ? "active" : ""}" data-page="${k + 1}">${k + 1}</button>`).join("")}</div>
+            <span class="fc-pager-count">1&ndash;${Math.min(PAGER_PAGE_SIZE, n)} de ${n}</span>
+          </div>`
+        : "";
     const nota = cfg.nota ? `<p class="fc-day-nota">${cfg.nota}</p>` : "";
-    return `<div class="fc-day-section ${focus ? "fc-day-section--focus" : ""}">
-      <div class="fc-day-section-head"><span>${cfg.title}</span><strong>${formatCurrency(cfg.total)}</strong></div>
+    return `<div class="fc-day-section ${tone ? "fc-day-section--" + tone : ""} ${focus ? "fc-day-section--focus" : ""}">
+      <div class="fc-day-section-head"><span>${icon ? `<i class="fa-solid ${icon}"></i>` : ""}${cfg.title}</span><strong class="${tone === "in" ? "pos" : tone === "out" ? "neg" : ""}">${formatCurrency(cfg.total)}</strong></div>
       ${nota}
       <p class="fc-day-expl">${cfg.expl}</p>
       <p class="fc-day-fonte"><i class="fa-solid fa-database"></i> Fonte: ${cfg.fonte}</p>
       <table class="fc-modal-table"><thead><tr><th>${c1}</th><th>${c2}</th><th class="num">${c3}</th><th class="num">Valor</th></tr></thead><tbody>${rows}</tbody></table>
+      ${pager}
     </div>`;
   }
 
-  function saldoSectionHtml(label, expl, rows, total, focus) {
+  function bindModalPagers(container) {
+    container.addEventListener("click", (ev) => {
+      const btn = ev.target.closest(".fc-pager-btn");
+      if (!btn || !container.contains(btn)) return;
+      const section = btn.closest(".fc-day-section");
+      const pagerEl = section?.querySelector(".fc-modal-pager");
+      if (!section || !pagerEl) return;
+      const id = pagerEl.dataset.pager;
+      const items = pagerStore[id];
+      const pages = Number(pagerEl.dataset.pages);
+      if (!items || !pages) return;
+      const page = Math.min(Math.max(Number(btn.dataset.page), 1), pages);
+      const tbody = section.querySelector("tbody");
+      tbody.innerHTML = items.slice((page - 1) * PAGER_PAGE_SIZE, page * PAGER_PAGE_SIZE).map(dayRowHtml).join("");
+      pagerEl.querySelectorAll(".fc-pager-btn").forEach((b) => b.classList.toggle("active", Number(b.dataset.page) === page));
+      const count = pagerEl.querySelector(".fc-pager-count");
+      if (count) count.textContent = `${(page - 1) * PAGER_PAGE_SIZE + 1}–${Math.min(page * PAGER_PAGE_SIZE, items.length)} de ${items.length}`;
+    });
+  }
+
+  function saldoSectionHtml(label, expl, rows, total, focus, isTotal) {
     const body = rows
       .map(
         (r) =>
-          `<tr><td>${BuildFlow.escapeHtml(r.label)}</td><td></td><td class="num">${r.data ? fmtDateOnly(r.data) : ""}</td><td class="num">${formatCurrency(r.value)}</td></tr>`,
+          `<tr><td>${BuildFlow.escapeHtml(r.label)}</td><td class="num ${r.value < 0 ? "neg" : "pos"}">${formatCurrency(r.value)}</td></tr>`,
       )
       .join("");
-    return `<div class="fc-day-section ${focus ? "fc-day-section--focus" : ""}">
-      <div class="fc-day-section-head"><span>${label}</span><strong>${formatCurrency(total)}</strong></div>
+    return `<div class="fc-saldo-section ${isTotal ? "fc-saldo-total" : ""} ${focus ? "fc-day-section--focus" : ""}">
+      <div class="fc-day-section-head"><span>${label}</span><strong class="${total < 0 ? "neg" : "pos"}">${formatCurrency(total)}</strong></div>
       <p class="fc-day-expl">${expl}</p>
-      <table class="fc-modal-table"><thead><tr><th>Componente</th><th></th><th class="num">Data</th><th class="num">Valor</th></tr></thead><tbody>${body}</tbody></table>
+      <table class="fc-saldo-table"><tbody>${body}</tbody></table>
     </div>`;
   }
 
   function buildDayDetailHtml(res, day, focusLine) {
+    pagerStore = {};
+    pagerSeq = 0;
     const e = (r) => r || { items: [], total: 0 };
     const inR = e(res.entradaRealizada);
     const inP = e(res.entradaPrevista);
@@ -200,11 +239,11 @@
 
     const sections = [
       daySectionHtml(
-        { ...DAY_LINES.entradaRealizada, total: inR.total, items: inR.items, emptyMsg: "Nenhuma entrada realizada neste dia.", cols: ["Descrição", "Forma / Cliente", "Data"] },
+        { ...DAY_LINES.entradaRealizada, total: inR.total, items: inR.items, emptyMsg: "Nenhuma entrada realizada neste dia.", cols: ["Descrição", "Forma / Cliente", "Data"], tone: "in", icon: "fa-arrow-down" },
         focusLine === "entradaRealizada",
       ),
       daySectionHtml(
-        { ...DAY_LINES.entradaPrevista, total: inP.total, items: inP.items, emptyMsg: "Nenhuma conta a receber prevista para este dia.", cols: ["Descrição", "Cliente", "Vencimento"] },
+        { ...DAY_LINES.entradaPrevista, total: inP.total, items: inP.items, emptyMsg: "Nenhuma conta a receber prevista para este dia.", cols: ["Descrição", "Cliente", "Vencimento"], tone: "in", icon: "fa-arrow-down" },
         focusLine === "entradaPrevista",
       ),
       daySectionHtml(
@@ -214,6 +253,8 @@
           items: outR.items,
           emptyMsg: "Nenhuma conta paga neste dia.",
           cols: ["Descrição", "Categoria", "Pago em"],
+          tone: "out",
+          icon: "fa-arrow-up",
           nota: outR.items.length
             ? `${outR.items.length} ${outR.items.length > 1 ? "contas pagas" : "conta paga"} neste dia${atrasadasOut ? ` &middot; ${atrasadasOut} ${atrasadasOut > 1 ? "estavam" : "estava"} em atraso` : ""}`
             : "",
@@ -221,7 +262,7 @@
         focusLine === "saidaRealizada",
       ),
       daySectionHtml(
-        { ...DAY_LINES.saidaPrevista, total: outP.total, items: outP.items, emptyMsg: "Nenhuma conta a pagar prevista para este dia.", cols: ["Descrição", "Categoria", "Vencimento"] },
+        { ...DAY_LINES.saidaPrevista, total: outP.total, items: outP.items, emptyMsg: "Nenhuma conta a pagar prevista para este dia.", cols: ["Descrição", "Categoria", "Vencimento"], tone: "out", icon: "fa-arrow-up" },
         focusLine === "saidaPrevista",
       ),
       saldoSectionHtml(
@@ -235,6 +276,7 @@
         ],
         saldoDia,
         focusLine === "saldoDia",
+        false,
       ),
       saldoSectionHtml(
         "Saldo acumulado",
@@ -245,6 +287,7 @@
         ],
         day.saldoAcumulado,
         focusLine === "saldoAcumulado",
+        true,
       ),
     ];
 
@@ -255,19 +298,19 @@
 
     return `
       <div class="sale-detail-sheet">
-        <div class="sale-detail-meta" style="grid-template-columns:1fr 1fr 1fr;">
-          <div class="sale-detail-kv"><label>Dia</label><span>${day.dia.replace("-", "/")}</span></div>
-          <div class="sale-detail-kv"><label>Entradas</label><span>${formatCurrency(inR.total + inP.total)}</span></div>
-          <div class="sale-detail-kv"><label>Saídas</label><span>${formatCurrency(outR.total + outP.total)}</span></div>
+        <div class="fc-modal-hero">
+          <div class="fc-modal-chip"><label>Dia</label><span>${day.dia.split("-").reverse().join("/")}</span></div>
+          <div class="fc-modal-chip"><label>Entradas</label><span class="pos">${formatCurrency(inR.total + inP.total)}</span></div>
+          <div class="fc-modal-chip"><label>Saídas</label><span class="neg">${formatCurrency(outR.total + outP.total)}</span></div>
         </div>
         ${sections.join("")}
       </div>`;
   }
 
   async function openDayDetail(date, line) {
-    const day = report?.cashFlow.find((d) => d.dia === date);
+    const day = (report?.history || report?.cashFlow || []).find((d) => d.dia === date);
     if (!day) return;
-    const title = `Como foi calculado — ${date.replace("-", "/")}`;
+    const title = `Como foi calculado — ${date.split("-").reverse().join("/")}`;
     const html = `<p class="fc-modal-empty">Carregando...</p>`;
     Swal.fire({
       title,
@@ -281,6 +324,7 @@
         try {
           const res = await BuildFlow.apiFetch(`/financial-day-detail?${dayDetailParams(date).toString()}`);
           htmlEl.innerHTML = buildDayDetailHtml(res, day, line);
+          bindModalPagers(htmlEl);
         } catch (err) {
           htmlEl.innerHTML = `<p class="fc-modal-empty">Não foi possível carregar: ${BuildFlow.escapeHtml(err.message)}</p>`;
         }

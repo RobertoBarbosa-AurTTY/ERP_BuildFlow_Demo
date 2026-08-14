@@ -163,8 +163,34 @@ exports.handler = withAuth(async (event) => {
       byDay[k].entradaPrevista = (byDay[k].entradaPrevista || 0) + (Number(bill.amount) || 0);
     }
 
+    // Histórico dos últimos 30 dias (apenas realizado).
+    // Só entram na série os dias que têm dados salvos (vendas/pagamentos) + hoje.
+    let saldoHistorico = 0;
+    const history = [];
+    for (let i = PROJECTION_DAYS - 1; i >= 0; i--) {
+      const day = addDays(todayStart, -i);
+      const k = dayKey(day, tzOffset);
+      const row = byDay[k] || {};
+      const entradaRealizada = Math.round((row.entradaRealizada || 0) * 100) / 100;
+      const saidaRealizada = Math.round((row.saidaRealizada || 0) * 100) / 100;
+      const saldoDia = Math.round((entradaRealizada - saidaRealizada) * 100) / 100;
+      saldoHistorico = Math.round((saldoHistorico + saldoDia) * 100) / 100;
+      if (entradaRealizada === 0 && saidaRealizada === 0 && k !== todayKey) continue;
+      history.push({
+        date: day.toISOString(),
+        dia: k,
+        entradaRealizada,
+        saidaRealizada,
+        saldoDia,
+        saldoAcumulado: saldoHistorico,
+        isToday: k === todayKey,
+      });
+    }
+
     // Série de 30 dias com saldo acumulado
-    let saldoAcumulado = 0;
+    const hojeRow = byDay[todayKey] || {};
+    const hojeSaldoDia = Math.round(((hojeRow.entradaRealizada || 0) - (hojeRow.saidaRealizada || 0)) * 100) / 100;
+    let saldoAcumulado = saldoHistorico - hojeSaldoDia;
     const cashFlow = [];
     for (let i = 0; i < PROJECTION_DAYS; i++) {
       const day = addDays(projStart, i);
@@ -212,6 +238,7 @@ exports.handler = withAuth(async (event) => {
       startDate: rangeStart.toISOString(),
       endDate: rangeEnd.toISOString(),
       cashFlow,
+      history,
       dre,
     };
   });

@@ -31,11 +31,11 @@
         .fc-bar--in { background: linear-gradient(180deg, #10b981, #059669); }
         .fc-bar--out { background: linear-gradient(180deg, #ef4444, #dc2626); }
         .fc-bar-wrap span { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
-        .fc-bar-wrap.fc-today .fc-bar { box-shadow: 0 0 0 2px var(--brand); }
-        .fc-bar-wrap.fc-today span { color: var(--brand); font-weight: 700; }
+        .fc-bar-wrap.fc-today .fc-bar { box-shadow: 0 0 0 2px rgba(255,255,255,0.55); }
+        .fc-bar-wrap.fc-today span { color: var(--text-primary); font-weight: 700; }
         .fc-line {
             position: absolute; left: 0; right: 0; height: 2px;
-            background: rgba(99, 102, 241, 0.9); border-radius: 2px; z-index: 2;
+            background: rgba(203, 213, 225, 0.85); border-radius: 2px; z-index: 2;
         }
         .fc-legend { display: flex; gap: 20px; margin: 8px 0 0; font-size: 0.75rem; color: var(--text-muted); }
         .fc-legend i { margin-right: 5px; }
@@ -45,7 +45,7 @@
         .dre-table .dre-total td { font-weight: 800; font-size: 1rem; border-top: 2px solid var(--border); border-bottom: none; }
         .dre-table .dre-sub td { color: var(--text-secondary); }
         .dre-table tr[data-line] { cursor: pointer; }
-        .dre-table tr[data-line]:hover td { background: rgba(79,70,229,0.07); }
+        .dre-table tr[data-line]:hover td { background: rgba(255,255,255,0.04); }
         .dre-table td .drill-hint { font-size: 0.7rem; color: var(--text-muted); font-weight: 500; display: block; }
         .fc-modal-expl { margin: 0 0 12px; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; text-align: left; }
         .fc-modal-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
@@ -53,7 +53,7 @@
         .fc-modal-table tbody tr:hover { background: rgba(79, 70, 229, 0.05); }
         .fc-modal-table td.num, .fc-modal-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
         .fc-modal-table th { color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; }
-        .fc-modal-row-link { color: var(--brand); cursor: pointer; font-weight: 600; }
+        .fc-modal-row-link { color: var(--text-primary); cursor: pointer; font-weight: 600; }
         .fc-modal-row-link:hover { text-decoration: underline; }
         .fc-modal-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 2px solid var(--border); font-size: 0.9rem; }
         .fc-modal-footer strong { font-size: 1.05rem; }
@@ -73,18 +73,55 @@
         .fc-days-table tr.fc-day-row:hover td { background: rgba(79, 70, 229, 0.08); }
         .fc-days-table td.fc-day-cell { cursor: pointer; }
         .fc-days-table td.fc-day-cell:hover { background: rgba(79, 70, 229, 0.14) !important; }
-        .fc-day-section { margin-bottom: 18px; }
-        .fc-day-section--focus { border: 1px solid var(--brand); border-radius: 10px; padding: 10px; }
-        .fc-day-section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.85rem; font-weight: 700; }
-        .fc-day-section-head strong { color: var(--brand); font-variant-numeric: tabular-nums; }
-        .fc-day-expl { margin: 0 0 6px; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; text-align: left; }
-        .fc-day-fonte { margin: 0 0 8px; font-size: 0.72rem; color: var(--text-muted); text-align: left; }
-        .fc-day-nota { margin: -2px 0 8px; font-size: 0.72rem; color: var(--text-muted); text-align: left; }
-        .fc-badge-atraso { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 10px; font-size: 0.62rem; font-weight: 600; color: #fff; background: #ef4444; vertical-align: middle; white-space: nowrap; }
-        .fc-venc { color: #ef4444; }
-        .fc-pago { color: #10b981; }
-        .fc-days-table .fc-col-group { text-align: center; background: var(--bg-hover, rgba(0,0,0,0.03)); }
+        .fc-day-section { background: #171a20; border: 1px solid var(--border); border-left: 3px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; }
+        .fc-day-section--in { border-left-color: #10b981; }
+        .fc-day-section--out { border-left-color: #ef4444; }
+        .fc-day-section--focus { border-color: rgba(255,255,255,0.55); box-shadow: 0 0 0 4px rgba(255,255,255,0.06); }
+        .fc-day-section-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 6px; font-size: 0.88rem; font-weight: 700; color: var(--text-primary); }
+        .fc-day-section-head i { margin-right: 8px; opacity: 0.85; }
+        .fc-day-section-head strong { font-size: 1rem; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .fc-day-section-head strong.pos { color: #10b981; }
+        .fc-day-section-head strong.neg { color: #ef4444; }
+        .fc-day-expl { margin: 0 0 8px; font-size: 0.78rem; color: var(--text-secondary); line-height: 1.55; text-align: left; }
+        .fc-day-fonte { margin: 0 0 10px; font-size: 0.7rem; color: var(--text-muted); text-align: left; border-left: 2px solid var(--border); padding-left: 8px; }
+        .fc-day-nota { margin: 0 0 10px; font-size: 0.72rem; color: var(--text-secondary); text-align: left; font-weight: 600; }
+        .fc-modal-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        .fc-modal-table th, .fc-modal-table td { padding: 9px 10px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; white-space: nowrap; }
+        .fc-modal-table tbody tr:last-child td { border-bottom: none; }
+        .fc-modal-table tbody tr:hover td { background: rgba(255,255,255,0.035); }
+        .fc-modal-table td.num, .fc-modal-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+        .fc-modal-table th { color: var(--text-muted); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em; }
+        .fc-modal-table td { color: var(--text-secondary); }
+        .fc-modal-table td:first-child { color: var(--text-primary); font-weight: 600; }
+        .fc-badge-atraso { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.03em; color: #fff; background: rgba(239,68,68,0.9); vertical-align: middle; white-space: nowrap; }
+        .fc-venc { color: #ef4444; font-weight: 600; }
+        .fc-pago { color: #10b981; font-weight: 600; }
+        .fc-modal-empty { padding: 26px 10px; text-align: center; color: var(--text-muted); font-size: 0.82rem; }
+        .fc-modal-empty i { display: block; font-size: 1.4rem; margin-bottom: 6px; opacity: 0.7; }
+        .fc-modal-hero { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .fc-modal-chip { padding: 12px 14px; border-radius: 12px; background: var(--bg-input); border: 1px solid var(--border); }
+        .fc-modal-chip label { display: block; font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 5px; }
+        .fc-modal-chip span { font-size: 0.95rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+        .fc-modal-chip span.pos { color: #10b981; }
+        .fc-modal-chip span.neg { color: #ef4444; }
+        .fc-saldo-section { background: linear-gradient(180deg, #171a20, #14161b); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; }
+        .fc-saldo-total { background: #101318; border-top: 2px solid rgba(255,255,255,0.25); }
+        .fc-saldo-total .fc-day-section-head strong { font-size: 1.15rem; }
+        .fc-saldo-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        .fc-saldo-table td { padding: 7px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--text-secondary); }
+        .fc-saldo-table tr:last-child td { border-bottom: none; }
+        .fc-saldo-table td:last-child { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .fc-modal-pager { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 12px; }
+        .fc-modal-pager-btns { display: flex; gap: 6px; }
+        .fc-pager-btn { min-width: 30px; height: 30px; padding: 0 6px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-weight: 700; font-size: 0.8rem; cursor: pointer; transition: background 0.15s, color 0.15s; }
+        .fc-pager-btn:hover:not(.active) { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+        .fc-pager-btn.active { background: #fff; color: #0b0e14; border-color: #fff; }
+        .fc-pager-count { font-size: 0.7rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
         .fc-days-wrap { overflow-x: auto; }
+        .fc-days-table .fc-col-group { text-align: center; background: rgba(255,255,255,0.03); }
+        .fc-days-table tr.fc-today-row td { background: rgba(255,255,255,0.045); }
+        .fc-days-table tr.fc-day-row:hover td { background: rgba(255,255,255,0.05); }
+        .fc-days-table td.fc-day-cell:hover { background: rgba(255,255,255,0.09) !important; }
         .pos { color: #10b981; } .neg { color: #ef4444; }
         @media (max-width: 768px) {
             .page-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
@@ -177,21 +214,15 @@
                 <table class="fc-days-table" id="daysTable">
                     <thead>
                         <tr>
-                            <th rowspan="2">Dia</th>
-                            <th colspan="2" class="fc-col-group">Entradas</th>
-                            <th colspan="2" class="fc-col-group">Saídas</th>
-                            <th rowspan="2">Saldo dia</th>
-                            <th rowspan="2">Acumulado</th>
-                        </tr>
-                        <tr>
-                            <th>Realizada</th>
-                            <th>Prevista</th>
-                            <th>Realizada</th>
-                            <th>Prevista</th>
+                            <th>Dia</th>
+                            <th class="fc-col-group">Entradas realizadas</th>
+                            <th class="fc-col-group">Saídas realizadas</th>
+                            <th>Saldo dia</th>
+                            <th>Acumulado</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted);">Carregando...</td></tr>
+                        <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted);">Carregando...</td></tr>
                     </tbody>
                 </table>
                 </div>

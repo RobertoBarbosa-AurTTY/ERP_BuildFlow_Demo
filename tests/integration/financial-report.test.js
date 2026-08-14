@@ -34,12 +34,26 @@ test("financial-report mês: estrutura e consistência", async () => {
     }
   }
 
-  // saldo acumulado = soma acumulada dos saldos diários
-  let acc = 0;
+  // saldo acumulado = histórico real (seed) + soma acumulada dos saldos diários projetados
+  const seed = body.cashFlow[0].saldoAcumulado - body.cashFlow[0].saldoDia;
+  let acc = seed;
   for (const day of body.cashFlow) {
     acc += day.saldoDia;
     assert.ok(Math.abs(acc - day.saldoAcumulado) < 0.02, "saldo acumulado consistente");
   }
+
+  // history: dias passados com dados, realizados, contínuos com a projeção
+  assert.ok(Array.isArray(body.history), "history deve ser array");
+  assert.ok(body.history.length > 0, "history não pode ser vazio");
+  for (const day of body.history) {
+    assert.strictEqual(typeof day.saldoDia, "number");
+    assert.strictEqual(typeof day.saldoAcumulado, "number");
+    assert.ok(day.entradaRealizada > 0 || day.saidaRealizada > 0 || day.isToday, "history só com dias que têm dados");
+  }
+  const lastHist = body.history[body.history.length - 1];
+  assert.strictEqual(lastHist.isToday, true, "histórico termina em hoje");
+  assert.strictEqual(lastHist.dia, body.cashFlow[0].dia, "histórico e projeção começam no mesmo dia");
+  assert.ok(Math.abs(lastHist.saldoAcumulado - body.cashFlow[0].saldoAcumulado) < 0.02, "histórico contínuo com a projeção");
 
   for (const key of ["receitaBruta", "deducoes", "receitaLiquida", "cmv", "lucroBruto", "despesasPagas", "outrosRecebimentos", "resultadoOperacional"]) {
     assert.strictEqual(typeof body.dre[key], "number", `dre.${key} deve ser número`);
