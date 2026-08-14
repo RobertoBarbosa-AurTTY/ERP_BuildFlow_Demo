@@ -156,8 +156,10 @@
           .map((i) => {
             const badge = i.emAtraso ? ` <span class="fc-badge-atraso">em atraso</span>` : "";
             const dataCell = i.vencimento
-              ? `<span class="fc-venc">Venc ${fmtDateOnly(i.vencimento)}</span> &middot; <span class="fc-pago">Pago em ${fmtDateOnly(i.data)}</span>`
-              : fmtDateOnly(i.data);
+              ? `<span class="fc-venc">Venc ${fmtDay(i.vencimento)}</span> &middot; <span class="fc-pago">Pago em ${fmtDay(i.data)}</span>`
+              : i.tipo === "venda"
+                ? fmtDateOnly(i.data)
+                : fmtDay(i.data);
             return `<tr><td>${BuildFlow.escapeHtml(i.descricao)}${badge}</td><td>${BuildFlow.escapeHtml(i.referencia)}</td><td class="num">${dataCell}</td><td class="num"><strong>${formatCurrency(i.amount)}</strong></td></tr>`;
           })
           .join("")
@@ -341,6 +343,13 @@
     return v ? new Date(v).toLocaleDateString("pt-BR") : "—";
   }
 
+  function fmtDay(v) {
+    if (!v) return "—";
+    const d = new Date(v);
+    if (Number.isNaN(d.getTime())) return "—";
+    return `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}`;
+  }
+
   function detailParams(line, page) {
     const period = els.periodSelect?.value || "month";
     const date = els.dateSelect?.value || "";
@@ -392,7 +401,7 @@
       const body = data.items
         .map(
           (b) =>
-            `<tr><td>${BuildFlow.escapeHtml(b.description)}</td><td>${BuildFlow.escapeHtml(b.category)}</td><td class="num">${fmtDateOnly(b.dueDate)}</td><td class="num">${fmtDateOnly(b.dateValue)}</td><td class="num">${formatCurrency(b.amount)}</td></tr>`,
+            `<tr><td>${BuildFlow.escapeHtml(b.description)}</td><td>${BuildFlow.escapeHtml(b.category)}</td><td class="num">${fmtDay(b.dueDate)}</td><td class="num">${fmtDay(b.dateValue)}</td><td class="num">${formatCurrency(b.amount)}</td></tr>`,
         )
         .join("");
       if (!data.items.length) return `<p class="fc-modal-empty">Nenhum registro neste período.</p>`;

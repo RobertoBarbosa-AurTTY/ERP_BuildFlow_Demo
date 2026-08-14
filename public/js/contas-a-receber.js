@@ -42,11 +42,14 @@
 
   function formatDate(value) {
     if (!value) return "—";
-    return new Date(value).toLocaleDateString("pt-BR");
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return "—";
+    return `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}`;
   }
 
   function getLocalDateString() {
-    return new Date().toISOString().slice(0, 10);
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }
 
   function statusBadge(status) {
@@ -194,8 +197,8 @@
     for (const bill of bills) {
       if (bill.status === "received" || bill.status === "cancelled") continue;
       const d = new Date(bill.dueDate);
-      if (d.getMonth() !== targetMonth || d.getFullYear() !== targetYear) continue;
-      const key = d.getDate();
+      if (d.getUTCMonth() !== targetMonth || d.getUTCFullYear() !== targetYear) continue;
+      const key = d.getUTCDate();
       if (!byDay[key]) byDay[key] = [];
       byDay[key].push(bill);
     }
@@ -267,7 +270,7 @@
     const dayBills = bills.filter((b) => {
       if (b.status === "received" || b.status === "cancelled") return false;
       const d = new Date(b.dueDate);
-      return d.getDate() === day && d.getMonth() === calendarViewMonth && d.getFullYear() === calendarViewYear;
+      return d.getUTCDate() === day && d.getUTCMonth() === calendarViewMonth && d.getUTCFullYear() === calendarViewYear;
     });
     if (!dayBills.length) return;
 
