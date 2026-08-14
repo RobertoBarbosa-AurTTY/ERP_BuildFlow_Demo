@@ -105,12 +105,12 @@
     if (!els.daysTable || !report) return;
     els.daysTable.querySelector("tbody").innerHTML = report.cashFlow
       .map((day) => {
+        const entrada = day.entradaRealizada + day.entradaPrevista;
+        const saida = day.saidaRealizada + day.saidaPrevista;
         return `<tr class="${day.isToday ? "fc-today-row" : ""}">
           <td>${day.dia}${day.isToday ? " <small>(hoje)</small>" : ""}</td>
-          <td class="${moneyClass(day.entradaRealizada)}">${formatCurrency(day.entradaRealizada)}</td>
-          <td class="${moneyClass(day.entradaPrevista)}">${formatCurrency(day.entradaPrevista)}</td>
-          <td class="${moneyClass(-day.saidaRealizada)}">${formatCurrency(-day.saidaRealizada)}</td>
-          <td class="${moneyClass(-day.saidaPrevista)}">${formatCurrency(-day.saidaPrevista)}</td>
+          <td class="${moneyClass(entrada)}">${formatCurrency(entrada)}</td>
+          <td class="${moneyClass(-saida)}">${formatCurrency(-saida)}</td>
           <td class="${moneyClass(day.saldoDia)}">${formatCurrency(day.saldoDia)}</td>
           <td class="${moneyClass(day.saldoAcumulado)}"><strong>${formatCurrency(day.saldoAcumulado)}</strong></td>
         </tr>`;

@@ -5,16 +5,6 @@ const { withAuth, badRequest } = require("../../src/lib/helpers");
 const { cached } = require("../../src/lib/cache");
 const { getPeriodRange } = require("../../src/lib/financial-period");
 
-// Datas de contas (paidDate/receivedDate) são gravadas como meia-noite
-// UTC do dia local — a janela usa a DATA pura, sem conversão de fuso,
-// igual ao /financial-report.
-function billWindow(rangeStart, rangeEnd) {
-  return {
-    billStart: new Date(`${rangeStart.toISOString().slice(0, 10)}T00:00:00.000Z`),
-    billEnd: new Date(`${rangeEnd.toISOString().slice(0, 10)}T00:00:00.000Z`),
-  };
-}
-
 const ALLOWED_LINES = new Set(["receita", "liquida", "deducoes", "cmv", "despesas", "outros", "resultado"]);
 const DEFAULT_LIMIT = 50;
 
@@ -42,7 +32,6 @@ exports.handler = withAuth(async (event) => {
   const { pageNum, limitNum, skip } = pagination(params.page, params.limit);
 
   const { rangeStart, rangeEnd } = getPeriodRange({ period, tzOffset, selectedDate });
-  const { billStart, billEnd } = billWindow(rangeStart, rangeEnd);
 
   const cacheKey = `fd:${line}:${period}:${selectedDate || ""}:${tzOffset}:${pageNum}:${limitNum}`;
 
@@ -172,7 +161,7 @@ exports.handler = withAuth(async (event) => {
       const isPay = line === "despesas";
       const collection = isPay ? db.collection("accounts_payable") : db.collection("accounts_receivable");
       const dateField = isPay ? "paidDate" : "receivedDate";
-      const query = { status: isPay ? "paid" : "received", [dateField]: { $gte: billStart, $lt: billEnd } };
+      const query = { status: isPay ? "paid" : "received", [dateField]: { $gte: rangeStart, $lt: rangeEnd } };
 
       const [totals, rows] = await Promise.all([
         collection.aggregate([{ $match: query }, { $group: { _id: null, total: { $sum: { $ifNull: ["$amount", 0] } } } }]).toArray(),

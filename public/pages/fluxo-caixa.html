@@ -64,13 +64,11 @@
         .fc-mini-dre td { padding: 7px 8px; border-bottom: 1px solid var(--border); }
         .fc-mini-dre td:last-child { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
         .fc-mini-dre .tot td { font-weight: 800; border-top: 2px solid var(--border); border-bottom: none; }
-.fc-days-table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+        .fc-days-table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
         .fc-days-table th, .fc-days-table td { padding: 13px 16px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
         .fc-days-table th { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
         .fc-days-table td:first-child, .fc-days-table th:first-child { text-align: left; }
         .fc-days-table tr.fc-today-row td { background: rgba(79,70,229,0.06); }
-        .fc-days-table .fc-col-group { text-align: center; background: var(--bg-hover, rgba(0,0,0,0.03)); }
-        .fc-days-wrap { overflow-x: auto; }
         .pos { color: #10b981; } .neg { color: #ef4444; }
         @media (max-width: 768px) {
             .page-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
@@ -159,28 +157,20 @@
             </section>
             <section class="card-table">
                 <div class="table-header"><h3>Detalhamento Diário</h3></div>
-                <div class="fc-days-wrap">
                 <table class="fc-days-table" id="daysTable">
                     <thead>
                         <tr>
-                            <th rowspan="2">Dia</th>
-                            <th colspan="2" class="fc-col-group">Entradas</th>
-                            <th colspan="2" class="fc-col-group">Saídas</th>
-                            <th rowspan="2">Saldo dia</th>
-                            <th rowspan="2">Acumulado</th>
-                        </tr>
-                        <tr>
-                            <th>Realizada</th>
-                            <th>Prevista</th>
-                            <th>Realizada</th>
-                            <th>Prevista</th>
+                            <th>Dia</th>
+                            <th>Entradas</th>
+                            <th>Saídas</th>
+                            <th>Saldo dia</th>
+                            <th>Acumulado</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted);">Carregando...</td></tr>
+                        <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted);">Carregando...</td></tr>
                     </tbody>
                 </table>
-                </div>
             </section>
         </main>
     </div>
