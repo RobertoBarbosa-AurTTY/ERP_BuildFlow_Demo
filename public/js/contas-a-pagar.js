@@ -536,8 +536,6 @@
         body: JSON.stringify({ id, action: "pay", paidDate: getLocalDateString() }),
       });
       Swal.fire({ icon: "success", title: "Pagamento registrado!", timer: 1600, showConfirmButton: false });
-      BuildFlow.clearPaymentNoticeFlags();
-      BuildFlow.refreshMensalidadeStatus();
       await loadData();
     } catch (err) {
       Swal.fire({ icon: "error", title: "Erro", text: err.message });

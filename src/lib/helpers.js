@@ -70,7 +70,13 @@ function withAuth(handler, options = {}) {
     try {
       const result = await handler(event, context, user);
       // Handler pode retornar a resposta completa ou um objeto simples
-      if (result && typeof result.statusCode === "number") return result;
+      if (result && typeof result.statusCode === "number") {
+        // Garante Content-Type JSON em qualquer resposta (inclusive erros)
+        return {
+          ...result,
+          headers: { "Content-Type": "application/json", ...(result.headers || {}) },
+        };
+      }
       return ok(result);
     } catch (error) {
       return serverError(error);
