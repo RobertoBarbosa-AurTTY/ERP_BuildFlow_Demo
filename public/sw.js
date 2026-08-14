@@ -2,7 +2,7 @@
 // - Navegação: network-first com fallback para cache (funciona offline).
 // - Estáticos (js/css/imgs): stale-while-revalidate.
 // - API (/api/*): nunca em cache (dados sensíveis).
-const CACHE_NAME = "buildflow-v2";
+const CACHE_NAME = "buildflow-v3";
 const PRECACHE = ["/", "/dashboard", "/css/style.css", "/js/main.js", "/js/layout.js"];
 
 self.addEventListener("install", (event) => {
