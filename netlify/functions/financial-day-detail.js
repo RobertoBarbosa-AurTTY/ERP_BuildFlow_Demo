@@ -59,7 +59,7 @@ exports.handler = withAuth(async (event) => {
       payables
         .find(
           { status: "paid", paidDate: { $gte: billStart, $lt: billEnd } },
-          { projection: { description: 1, category: 1, amount: 1, paidDate: 1 } },
+          { projection: { description: 1, category: 1, amount: 1, paidDate: 1, dueDate: 1 } },
         )
         .sort({ paidDate: -1 })
         .toArray(),
@@ -126,6 +126,8 @@ exports.handler = withAuth(async (event) => {
       descricao: b.description || "—",
       referencia: b.category || "—",
       data: b.paidDate,
+      vencimento: b.dueDate || null,
+      emAtraso: Boolean(b.dueDate && new Date(b.dueDate) < billStart),
       amount: toCount(b.amount),
     }));
 

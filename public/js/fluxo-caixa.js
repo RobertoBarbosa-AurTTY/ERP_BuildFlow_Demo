@@ -134,7 +134,7 @@
     },
     saidaRealizada: {
       title: "Saída realizada",
-      expl: "Soma das contas a pagar que foram quitadas neste dia.",
+      expl: "Soma das contas a pagar quitadas neste dia. O dia considerado é o do pagamento (quando o dinheiro saiu); contas pagas depois do vencimento aparecem marcadas como \"em atraso\".",
       fonte: "Tabela de contas a pagar (status pago, data do pagamento)",
     },
     saidaPrevista: {
@@ -153,14 +153,19 @@
     const [c1, c2, c3] = cfg.cols;
     const rows = cfg.items.length
       ? cfg.items
-          .map(
-            (i) =>
-              `<tr><td>${BuildFlow.escapeHtml(i.descricao)}</td><td>${BuildFlow.escapeHtml(i.referencia)}</td><td class="num">${fmtDateOnly(i.data)}</td><td class="num"><strong>${formatCurrency(i.amount)}</strong></td></tr>`,
-          )
+          .map((i) => {
+            const badge = i.emAtraso ? ` <span class="fc-badge-atraso">em atraso</span>` : "";
+            const dataCell = i.vencimento
+              ? `<span class="fc-venc">Venc ${fmtDateOnly(i.vencimento)}</span> &middot; <span class="fc-pago">Pago em ${fmtDateOnly(i.data)}</span>`
+              : fmtDateOnly(i.data);
+            return `<tr><td>${BuildFlow.escapeHtml(i.descricao)}${badge}</td><td>${BuildFlow.escapeHtml(i.referencia)}</td><td class="num">${dataCell}</td><td class="num"><strong>${formatCurrency(i.amount)}</strong></td></tr>`;
+          })
           .join("")
       : `<tr><td colspan="4" class="fc-modal-empty" style="padding:14px;">${cfg.emptyMsg}</td></tr>`;
+    const nota = cfg.nota ? `<p class="fc-day-nota">${cfg.nota}</p>` : "";
     return `<div class="fc-day-section ${focus ? "fc-day-section--focus" : ""}">
       <div class="fc-day-section-head"><span>${cfg.title}</span><strong>${formatCurrency(cfg.total)}</strong></div>
+      ${nota}
       <p class="fc-day-expl">${cfg.expl}</p>
       <p class="fc-day-fonte"><i class="fa-solid fa-database"></i> Fonte: ${cfg.fonte}</p>
       <table class="fc-modal-table"><thead><tr><th>${c1}</th><th>${c2}</th><th class="num">${c3}</th><th class="num">Valor</th></tr></thead><tbody>${rows}</tbody></table>
@@ -189,6 +194,7 @@
     const outP = e(res.saidaPrevista);
     const saldoDia = inR.total + inP.total - outR.total - outP.total;
     const prevAcc = day.saldoAcumulado - day.saldoDia;
+    const atrasadasOut = outR.items.filter((i) => i.emAtraso).length;
 
     const sections = [
       daySectionHtml(
@@ -200,7 +206,16 @@
         focusLine === "entradaPrevista",
       ),
       daySectionHtml(
-        { ...DAY_LINES.saidaRealizada, total: outR.total, items: outR.items, emptyMsg: "Nenhuma conta paga neste dia.", cols: ["Descrição", "Categoria", "Pago em"] },
+        {
+          ...DAY_LINES.saidaRealizada,
+          total: outR.total,
+          items: outR.items,
+          emptyMsg: "Nenhuma conta paga neste dia.",
+          cols: ["Descrição", "Categoria", "Pago em"],
+          nota: outR.items.length
+            ? `${outR.items.length} ${outR.items.length > 1 ? "contas pagas" : "conta paga"} neste dia${atrasadasOut ? ` &middot; ${atrasadasOut} ${atrasadasOut > 1 ? "estavam" : "estava"} em atraso` : ""}`
+            : "",
+        },
         focusLine === "saidaRealizada",
       ),
       daySectionHtml(
