@@ -12,6 +12,21 @@ const {
   getPeriodRange,
 } = require("../../src/lib/financial-period");
 
+// Datas de contas (dueDate/paidDate/receivedDate) são gravadas como
+// meia-noite UTC do dia local. A janela e o agrupamento delas usam a
+// DATA pura (ISO), sem conversão de fuso — diferente das vendas, que
+// usam o instante real (createdAt) convertido para o fuso local.
+function billWindow(rangeStart, rangeEnd) {
+  return {
+    billStart: new Date(`${rangeStart.toISOString().slice(0, 10)}T00:00:00.000Z`),
+    billEnd: new Date(`${rangeEnd.toISOString().slice(0, 10)}T00:00:00.000Z`),
+  };
+}
+
+function billDayKey(date) {
+  return new Date(date).toISOString().slice(0, 10);
+}
+
 exports.handler = withAuth(async (event) => {
   const db = await getDb();
   const params = event.queryStringParameters || {};
@@ -21,9 +36,10 @@ exports.handler = withAuth(async (event) => {
   const selectedDate = params.date;
 
   const { rangeStart, rangeEnd, todayStart, todayKey } = getPeriodRange({ period, tzOffset, selectedDate });
+  const { billStart, billEnd } = billWindow(rangeStart, rangeEnd);
 
   const projStart = new Date(todayStart);
-  const projEnd = addDays(projStart, PROJECTION_DAYS);
+  const billProjEnd = addDays(new Date(`${todayKey}T00:00:00.000Z`), PROJECTION_DAYS);
 
   const cacheKey = `fr:${period}:${selectedDate || ""}:${tzOffset}`;
 
@@ -68,10 +84,10 @@ exports.handler = withAuth(async (event) => {
       // Contas pagas no período (saída realizada)
       db.collection("accounts_payable")
         .aggregate([
-          { $match: { status: "paid", paidDate: { $gte: rangeStart, $lt: rangeEnd } } },
+          { $match: { status: "paid", paidDate: { $gte: billStart, $lt: billEnd } } },
           {
             $group: {
-              _id: { $dateToString: { format: "%Y-%m-%d", date: "$paidDate", timezone: tz } },
+              _id: { $dateToString: { format: "%Y-%m-%d", date: "$paidDate" } },
               total: { $sum: { $ifNull: ["$amount", 0] } },
             },
           },
@@ -81,35 +97,37 @@ exports.handler = withAuth(async (event) => {
       // Recebimentos recebidos no período (entrada realizada)
       db.collection("accounts_receivable")
         .aggregate([
-          { $match: { status: "received", receivedDate: { $gte: rangeStart, $lt: rangeEnd } } },
+          { $match: { status: "received", receivedDate: { $gte: billStart, $lt: billEnd } } },
           {
             $group: {
-              _id: { $dateToString: { format: "%Y-%m-%d", date: "$receivedDate", timezone: tz } },
+              _id: { $dateToString: { format: "%Y-%m-%d", date: "$receivedDate" } },
               total: { $sum: { $ifNull: ["$amount", 0] } },
             },
           },
         ])
         .toArray(),
 
-      // Contas a pagar em aberto nos próximos 30 dias (saída prevista)
+      // Contas a pagar em aberto nos próximos 30 dias (saída prevista).
+      // Vencidas (dueDate < hoje) também entram, alocadas no dia de hoje.
       db.collection("accounts_payable")
         .find(
           {
             status: { $nin: ["paid", "cancelled"] },
             paidDate: { $in: [null, undefined] },
-            dueDate: { $gte: projStart, $lt: projEnd },
+            dueDate: { $lt: billProjEnd },
           },
           { projection: { amount: 1, dueDate: 1 } },
         )
         .toArray(),
 
-      // Contas a receber em aberto nos próximos 30 dias (entrada prevista)
+      // Contas a receber em aberto nos próximos 30 dias (entrada prevista).
+      // Vencidas (dueDate < hoje) também entram, alocadas no dia de hoje.
       db.collection("accounts_receivable")
         .find(
           {
             status: { $nin: ["received", "cancelled"] },
             receivedDate: { $in: [null, undefined] },
-            dueDate: { $gte: projStart, $lt: projEnd },
+            dueDate: { $lt: billProjEnd },
           },
           { projection: { amount: 1, dueDate: 1 } },
         )
@@ -133,12 +151,14 @@ exports.handler = withAuth(async (event) => {
 
     // Projeção por dia
     for (const bill of openPayables) {
-      const k = dayKey(new Date(bill.dueDate), tzOffset);
+      const key = billDayKey(bill.dueDate);
+      const k = key < todayKey ? todayKey : key;
       byDay[k] = byDay[k] || { entradaRealizada: 0, saidaRealizada: 0 };
       byDay[k].saidaPrevista = (byDay[k].saidaPrevista || 0) + (Number(bill.amount) || 0);
     }
     for (const bill of openReceivables) {
-      const k = dayKey(new Date(bill.dueDate), tzOffset);
+      const key = billDayKey(bill.dueDate);
+      const k = key < todayKey ? todayKey : key;
       byDay[k] = byDay[k] || { entradaRealizada: 0, saidaRealizada: 0 };
       byDay[k].entradaPrevista = (byDay[k].entradaPrevista || 0) + (Number(bill.amount) || 0);
     }
