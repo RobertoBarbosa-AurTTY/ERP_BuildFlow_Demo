@@ -11,6 +11,7 @@
         .ap-alert {
             display: none;
             align-items: center;
+            flex-wrap: wrap;
             gap: 16px;
             padding: 16px 20px;
             margin-bottom: 24px;
@@ -19,9 +20,10 @@
             border: 1px solid rgba(239, 68, 68, 0.25);
             color: var(--text-primary);
         }
-        .ap-alert i { font-size: 1.25rem; color: var(--red); }
-        .ap-alert div { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .ap-alert i { font-size: 1.25rem; color: var(--red); flex-shrink: 0; }
+        .ap-alert div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
         .ap-alert span { font-size: 0.85rem; color: var(--text-muted); }
+        .ap-alert .btn-sm { flex-shrink: 0; margin-left: auto; }
         .ap-tabs {
             display: flex; gap: 4px; margin-bottom: 24px;
             background: var(--bg-card); padding: 4px; border-radius: 12px;
@@ -132,6 +134,15 @@
         .btn-cancel { flex: 1; padding: 14px; border-radius: 10px; border: none; background: var(--bg-hover); cursor: pointer; font-weight: 700; }
         .btn-save { flex: 1; padding: 14px; border-radius: 10px; border: none; background: var(--brand); color: white; cursor: pointer; font-weight: 700; }
 
+        @media (max-width: 1024px) {
+            .card-table table { min-width: 0 !important; }
+            #tableBody td:nth-child(3),
+            #tableBody td:nth-child(7),
+            .card-table th:nth-child(3),
+            .card-table th:nth-child(7) {
+                display: none !important;
+            }
+        }
         @media (max-width: 768px) {
             .page-header {
                 flex-direction: column !important;
@@ -195,6 +206,9 @@
                 max-width: 100vw !important;
                 overflow-x: hidden !important;
             }
+            .card-table {
+                padding: 14px !important;
+            }
             .card-table table {
                 min-width: 0 !important;
                 width: 100%;
@@ -208,12 +222,6 @@
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
-            #tableBody td:nth-child(3),
-            #tableBody td:nth-child(7),
-            .card-table th:nth-child(3),
-            .card-table th:nth-child(7) {
-                display: none !important;
-            }
             .card-table td.ap-actions {
                 padding: 4px 2px !important;
                 display: flex;
@@ -226,6 +234,60 @@
                 min-width: 0 !important;
                 padding: 0 !important;
                 flex-shrink: 0;
+            }
+            .table-header {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .ap-cal-grid {
+                min-width: 600px;
+            }
+            .ap-cal-cell {
+                min-height: 76px;
+                padding: 8px;
+            }
+            .ap-chart {
+                height: 160px;
+            }
+            .ap-alert {
+                gap: 10px;
+                padding: 12px 14px;
+            }
+            .ap-alert .btn-sm {
+                margin-left: auto;
+            }
+        }
+        @media (max-width: 480px) {
+            #tableBody td:nth-child(2),
+            #tableBody td:nth-child(8),
+            .card-table th:nth-child(2),
+            .card-table th:nth-child(8) {
+                display: none !important;
+            }
+            .ap-filters {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .ap-filters input[type="date"] {
+                grid-column: span 2;
+            }
+            .ap-alert .btn-sm {
+                width: 100%;
+                margin-left: 0;
+            }
+            .ap-cal-grid {
+                min-width: 560px;
+            }
+            .ap-cal-head {
+                font-size: 0.6rem;
+                padding: 6px 0;
+            }
+            .ap-bar-wrap {
+                min-width: 22px;
+            }
+            .swal2-popup [style*="grid-template-columns:repeat(2,minmax(0,1fr))"] {
+                grid-template-columns: 1fr !important;
             }
         }
     </style>
