@@ -2,7 +2,7 @@
 // - Navegação: network-first com fallback para cache (funciona offline).
 // - Estáticos (js/css/imgs): stale-while-revalidate.
 // - API (/api/*): nunca em cache (dados sensíveis).
-const CACHE_NAME = "buildflow-v4";
+const CACHE_NAME = "buildflow-v8";
 const PRECACHE = ["/", "/dashboard", "/css/style.css", "/js/main.js", "/js/layout.js"];
 
 self.addEventListener("install", (event) => {
@@ -40,7 +40,10 @@ self.addEventListener("fetch", (event) => {
       fetch(request)
         .then((response) => {
           const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put("/", copy));
+          // guarda pela URL real da navegação (e não só pela raiz "/")
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, copy);
+          });
           return response;
         })
         .catch(() => caches.match(request).then((cached) => cached || caches.match("/"))),

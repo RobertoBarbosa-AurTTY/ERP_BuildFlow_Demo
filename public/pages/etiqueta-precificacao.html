@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -313,6 +314,19 @@
             box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
         }
 
+        .btn-outline-secondary {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+            padding: 0 16px;
+        }
+
+        .btn-outline-secondary:hover {
+            background: var(--bg-hover);
+            border-color: var(--text-muted);
+        }
+
         /* Área de prévia da etiqueta */
         .wms-panel.print-source {
             flex: 1;
@@ -412,131 +426,108 @@
         }
 
         /* ============================================ */
-        /* ESTILOS DE IMPRESSÃO */
+        /* ESTILOS DE IMPRESSÃO - CORRIGIDOS           */
         /* ============================================ */
+        #print-root { 
+            display: none !important; 
+        }
+
+        /* Container invisível que será mostrado na impressão */
+        .print-container {
+            display: none;
+        }
+
         @media print {
-            .no-print {
-                display: none !important;
-            }
-            
-            body {
-                background: #fff;
+            @page {
+                size: 75mm 40mm;
                 margin: 0;
-                padding: 0;
             }
-            
-            .sidebar, .top-nav, header,
-            .wms-panel:first-child, .wms-panel h4,
-            .form-actions, button, .btn,
-            .label-preview-placeholder { display: none !important; }
-            
-            .wms-layout {
-                display: block !important;
-                height: auto !important;
-                min-height: auto !important;
+
+            /* Reset completo para impressão */
+            * {
                 margin: 0 !important;
                 padding: 0 !important;
-                gap: 0 !important;
-                grid-template-columns: none !important;
+                box-sizing: border-box !important;
             }
-            
-            .layout {
-                display: block !important;
-                min-height: 0 !important;
-            }
-            
-            .main-content {
-                min-height: 0 !important;
-                max-height: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                overflow: visible !important;
-            }
-            
-            .wms-panel.print-source {
-                display: block !important;
-                border: none !important;
-                padding: 0 !important;
-                background: transparent !important;
-                box-shadow: none !important;
-                min-height: 0 !important;
-                height: auto !important;
-                max-height: none !important;
-                margin: 0 !important;
-                overflow: visible !important;
-            }
-            
-            #printArea {
-                display: block !important;
-                border: none !important;
-                background: transparent !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                width: 60mm !important;
-                height: auto !important;
-                min-height: 0 !important;
-                max-height: none !important;
-                overflow: visible !important;
-            }
-            
-            #labelPreview {
-                display: block !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                min-height: auto !important;
-                height: auto !important;
-                background: transparent !important;
-                box-shadow: none !important;
-            }
-            
-            #labelPreview svg,
-            .label-print-copy svg {
-                display: block !important;
-                width: 60mm !important;
-                min-width: 60mm !important;
-                max-width: 60mm !important;
-                height: 40mm !important;
-                min-height: 40mm !important;
-                max-height: 40mm !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                box-shadow: none !important;
-                border-radius: 0 !important;
+
+            /* IMPORTANTE: o style.css global do app ainda tem uma regra antiga
+               baseada em #print-root (ex: "body * { visibility: hidden }" +
+               "#print-root, #print-root * { visibility: visible }"). Como esta
+               página passou a usar .print-container/#printContainer, essa regra
+               antiga deixa TUDO com visibility:hidden e nada aparece na
+               impressão (folha sai em branco). As linhas abaixo forçam a
+               visibilidade correta e sobrepõem qualquer regra global assim. */
+            html, body,
+            .print-container, #print-root, .print-root,
+            .print-container *, #print-root *, .print-root * {
+                visibility: visible !important;
             }
 
             html, body {
+                background: white !important;
                 margin: 0 !important;
                 padding: 0 !important;
-                width: 60mm !important;
-                height: 40mm !important;
-                overflow: hidden !important;
+                width: 100% !important;
+                height: 100% !important;
+                min-height: 100% !important;
+            }
+
+            /* Esconde tudo que não é para imprimir */
+            body > *:not(.print-container) {
+                display: none !important;
+            }
+
+            /* Mostra apenas o container de impressão */
+            .print-container {
+                display: block !important;
+                width: 100% !important;
+                height: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+                position: relative !important;
             }
 
             .label-print-copy {
-                width: 60mm !important;
-                height: 40mm !important;
+                display: block !important;
                 margin: 0 !important;
                 padding: 0 !important;
-                overflow: hidden !important;
-                line-height: 0 !important;
-                font-size: 0 !important;
-                page-break-after: always;
-                break-after: page;
+                page-break-after: always !important;
+                break-after: page !important;
+                page-break-inside: avoid !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                background: white !important;
+                width: 100% !important;
+                height: auto !important;
             }
 
             .label-print-copy:last-child {
-                page-break-after: auto;
-                break-after: auto;
+                page-break-after: auto !important;
+                break-after: auto !important;
             }
-            
-            @page { margin: 0; }
+
+            .label-print-copy svg {
+                display: block !important;
+                width: 100% !important;
+                max-width: 75mm !important;
+                height: auto !important;
+                margin: 0 auto !important;
+                background: white !important;
+            }
+
+            /* Força a impressão de fundos e cores */
+            .label-print-copy * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
         }
     </style>
 </head>
 <body>
     <div class="layout">
-        
-
         <main class="main-content">
             <nav class="top-nav no-print">
                 <div class="search-bar">
@@ -603,25 +594,9 @@
                                     </div>
                                 </div>
                             </div>
-                        <div class="filter-group full-width">
+                            <div class="filter-group full-width">
                                 <label><i class="fa-solid fa-copy"></i> Quantidade de etiquetas</label>
                                 <input type="number" id="labelQty" class="filter-input" value="1" min="1" max="99">
-                            </div>
-
-                            <div class="filter-group full-width" style="margin-top: 2px;">
-                                <details style="font-size: 0.78rem; color: var(--text-muted);">
-                                    <summary style="cursor: pointer; font-weight: 600; color: var(--text-muted);">
-                                        <i class="fa-solid fa-circle-info" style="margin-right: 6px;"></i>Configuração da impressão (imprimindo estourado? leia aqui)
-                                    </summary>
-                                    <ol style="margin: 10px 0 0 18px; padding: 0; line-height: 1.7;">
-                                        <li>No print, selecione a impressora térmica <strong>XD210</strong> (não "Salvar como PDF").</li>
-                                        <li>Em <strong>Tamanho do papel</strong>, escolha <strong>60 x 40 mm</strong> (ou Papel personalizado 60 x 40 no driver do Windows).</li>
-                                        <li>Em <strong>Escala</strong>, selecione <strong>100%</strong> (nunca "Ajustar à página").</li>
-                                        <li>Em <strong>Margens</strong>, selecione <strong>Nenhuma</strong>.</li>
-                                        <li>Desmarque <strong>Cabeçalhos e rodapés</strong> e <strong>Limpar cabeçalhos e rodapés</strong>.</li>
-                                        <li>Se o driver não tiver o tamanho 60x40: Windows &gt; Dispositivos e impressoras &gt; XD210 &gt; Preferências de impressão &gt; Papel personalizado &gt; 60 x 40 mm.</li>
-                                    </ol>
-                                </details>
                             </div>
                         </div>
                     </div>
@@ -630,11 +605,16 @@
                         <button type="button" id="btnPrint" class="btn btn-success" style="flex: 1;">
                             <i class="fa-solid fa-print"></i> Imprimir etiquetas
                         </button>
+                        <button type="button" id="btnPrintTest" class="btn btn-outline-secondary" style="flex: 0 0 auto;" title="Imprime só barras pretas para testar a impressora térmica">
+                            <i class="fa-solid fa-vial"></i> Teste térmico
+                        </button>
                     </div>
                 </section>
 
                 <section class="wms-panel print-source">
-                    <h4 class="no-print"><i class="fa-solid fa-tag"></i> Prévia da etiqueta</h4>
+                    <h4 class="no-print"><i class="fa-solid fa-tag"></i> Prévia da etiqueta
+                        <span style="font-size:0.65rem;font-weight:600;color:#94a3b8;background:var(--bg-input);border:1px solid var(--border);padding:2px 8px;border-radius:99px;margin-left:8px;">etiqueta v8 · impressão nativa · teste térmico</span>
+                    </h4>
                     <div id="printArea">
                         <div id="labelPreview">
                             <p class="label-preview-placeholder no-print">
@@ -647,6 +627,9 @@
             </div>
         </main>
     </div>
+
+    <!-- Container de impressão - substitui o #print-root -->
+    <div class="print-container print-root" id="printContainer"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../js/layout.js"></script>
@@ -670,9 +653,9 @@
             return div.innerHTML;
         }
 
-        const LABEL_WIDTH_MM = 60;
+        const LABEL_WIDTH_MM = 75;
         const LABEL_HEIGHT_MM = 40;
-        const VB_W = 600;
+        const VB_W = 750;
         const VB_H = 400;
 
         function wrapLabelText(text, maxLen) {
@@ -697,288 +680,390 @@
             return lines;
         }
 
+        function mkSvg(tag, attrs, textContent) {
+            const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+            for (const k in attrs) el.setAttribute(k, String(attrs[k]));
+            if (textContent !== undefined) el.textContent = textContent;
+            return el;
+        }
+
+        function fitChars(text, maxChars) {
+            const s = String(text || '');
+            return s.length > maxChars ? s.slice(0, Math.max(0, maxChars - 1)) + '…' : s;
+        }
+
         function createLabelSVGElement(data) {
-            const NS = "http://www.w3.org/2000/svg";
             const COLORS = {
-                yellow: { bg: '#fffbeb', border: '#f59e0b' },
-                red: { bg: '#fef2f2', border: '#ef4444' },
-                white: { bg: '#f8fafc', border: '#94a3b8' }
+                yellow: { bg: '#ffffff', bar: '#f59e0b' },
+                red:    { bg: '#ffffff', bar: '#dc2626' },
+                white:  { bg: '#ffffff', bar: '#111827' }
             };
             const c = COLORS[data.color] || COLORS.yellow;
+            const INK = '#111827';
+            const SUB = '#475569';
+            const FONT = 'Arial,Helvetica,sans-serif';
+            const MONO = "Consolas,'Courier New',monospace";
+            const LX = 30;
+            const RX = VB_W - 26;
+            const STORE_MAX_CHARS = Math.floor((RX - LX) / (14 * 0.62 + 2));
+            const NAME_MAX_CHARS = Math.floor((RX - LX) / (25 * 0.62));
+            const SKU_MAX_CHARS = Math.min(60, Math.floor((RX - LX) / (13 * 0.62)));
 
-            const svg = document.createElementNS(NS, "svg");
-            svg.setAttribute("width", LABEL_WIDTH_MM + "mm");
-            svg.setAttribute("height", LABEL_HEIGHT_MM + "mm");
-            svg.setAttribute("viewBox", "0 0 " + VB_W + " " + VB_H);
+            const svg = mkSvg('svg', {
+                width: LABEL_WIDTH_MM + 'mm',
+                height: LABEL_HEIGHT_MM + 'mm',
+                viewBox: '0 0 ' + VB_W + ' ' + VB_H,
+                xmlns: 'http://www.w3.org/2000/svg'
+            });
 
-            const bg = document.createElementNS(NS, "rect");
-            bg.setAttribute("width", String(VB_W));
-            bg.setAttribute("height", String(VB_H));
-            bg.setAttribute("fill", c.bg);
-            svg.appendChild(bg);
+            svg.appendChild(mkSvg('rect', { x: 0, y: 0, width: VB_W, height: VB_H, fill: c.bg }));
+            svg.appendChild(mkSvg('rect', { x: 0, y: 0, width: 12, height: VB_H, fill: c.bar }));
 
-            const accent = document.createElementNS(NS, "rect");
-            accent.setAttribute("x", "0");
-            accent.setAttribute("y", "10");
-            accent.setAttribute("width", "10");
-            accent.setAttribute("height", String(VB_H - 20));
-            accent.setAttribute("fill", c.border);
-            accent.setAttribute("rx", "3");
-            svg.appendChild(accent);
-
-            const LX = 24;
-            let y = 0;
-
-            if (data.showStore && data.store) {
-                y = 38;
-                const el = document.createElementNS(NS, "text");
-                el.setAttribute("x", String(LX));
-                el.setAttribute("y", String(y));
-                el.setAttribute("font-size", "16");
-                el.setAttribute("font-weight", "700");
-                el.setAttribute("fill", "#64748b");
-                el.setAttribute("font-family", "Arial,sans-serif");
-                el.textContent = data.store.toUpperCase();
-                svg.appendChild(el);
+            const storeShown = data.showStore && data.store;
+            if (storeShown) {
+                svg.appendChild(mkSvg('text', {
+                    x: LX, y: 34,
+                    'font-size': 14, 'font-weight': '800',
+                    'letter-spacing': '2',
+                    fill: SUB, 'font-family': FONT
+                }, fitChars(String(data.store).toUpperCase(), STORE_MAX_CHARS)));
             }
 
-            const nameLines = wrapLabelText(data.name, 38);
+            const nameLines = wrapLabelText(data.name, NAME_MAX_CHARS);
             if (nameLines.length > 2) {
                 nameLines.length = 2;
-                nameLines[1] = nameLines[1].slice(0, 36) + '…';
+                nameLines[1] = nameLines[1].slice(0, NAME_MAX_CHARS - 2) + '…';
             }
-
-            y = data.showStore ? 68 : 22;
+            const yName = storeShown ? 62 : 54;
             for (let i = 0; i < nameLines.length; i++) {
-                const nameEl = document.createElementNS(NS, "text");
-                nameEl.setAttribute("x", String(LX));
-                nameEl.setAttribute("y", String(y + i * 24));
-                nameEl.setAttribute("font-size", "22");
-                nameEl.setAttribute("font-weight", "700");
-                nameEl.setAttribute("fill", "#1e293b");
-                nameEl.setAttribute("font-family", "Arial,sans-serif");
-                nameEl.textContent = nameLines[i];
-                svg.appendChild(nameEl);
+                svg.appendChild(mkSvg('text', {
+                    x: LX, y: yName + i * 28,
+                    'font-size': 25, 'font-weight': '800',
+                    fill: INK, 'font-family': FONT
+                }, nameLines[i]));
             }
-            y += nameLines.length * 24 + 6;
 
+            let afterNameY = yName + (nameLines.length - 1) * 28 + 8;
             if (data.showSku && data.sku) {
-                const el = document.createElementNS(NS, "text");
-                el.setAttribute("x", String(LX));
-                el.setAttribute("y", String(y + 11));
-                el.setAttribute("font-size", "14");
-                el.setAttribute("fill", "#64748b");
-                el.setAttribute("font-family", "monospace");
-                el.textContent = "SKU " + data.sku;
-                svg.appendChild(el);
-                y += 24;
+                svg.appendChild(mkSvg('text', {
+                    x: LX, y: afterNameY + 13,
+                    'font-size': 13, fill: SUB, 'font-family': MONO
+                }, fitChars('SKU ' + data.sku, SKU_MAX_CHARS)));
+                afterNameY += 22;
             }
+
+            const zoneTop = afterNameY + 12;
+            const zoneBot = VB_H - 14;
+            const zoneH = zoneBot - zoneTop;
+            const priceDisplay = data.priceInt + ',' + data.priceCents;
 
             const barcodeValue = data.barcodeSource === 'sku' ? data.sku : data.barcodeText;
             const wantBarcode = barcodeValue && data.barcodeSource !== 'none';
-            let barcodeOk = false;
-            const priceDisplay = data.priceInt + ',' + data.priceCents;
+            const availW = RX - LX;
+
+            if (!wantBarcode) {
+                let amtFs = Math.floor((availW - 34) / (priceDisplay.length * 0.62 + 0.5));
+                amtFs = Math.max(34, Math.min(Math.floor(zoneH * 0.72), amtFs));
+                const curFs = Math.max(16, Math.round(amtFs * 0.34));
+                const curW = curFs * 1.45;
+                const gap = 6;
+                const amtW = priceDisplay.length * amtFs * 0.62;
+                const totalW = curW + gap + amtW;
+                const xStart = LX + Math.max(0, (availW - totalW) / 2);
+                const priceY = Math.round(zoneTop + zoneH / 2 + amtFs * 0.35);
+
+                svg.appendChild(mkSvg('text', {
+                    x: xStart, y: priceY,
+                    'font-size': curFs, 'font-weight': '700',
+                    fill: SUB, 'font-family': FONT
+                }, 'R$'));
+
+                svg.appendChild(mkSvg('text', {
+                    x: xStart + curW + gap, y: priceY,
+                    'font-size': amtFs, 'font-weight': '800',
+                    fill: INK, 'font-family': FONT
+                }, priceDisplay));
+            }
 
             if (wantBarcode) {
-                const tempSvg = document.createElementNS(NS, "svg");
-                tempSvg.setAttribute("viewBox", "0 0 180 32");
-                const formats = ["CODE128", "EAN13", "CODE39", "ITF"];
+                let barcodeOk = false;
+                const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                const formats = ['CODE128', 'EAN13', 'CODE39', 'ITF'];
                 for (const fmt of formats) {
                     if (barcodeOk) break;
                     try {
                         JsBarcode(tempSvg, barcodeValue, {
                             format: fmt,
                             width: 2,
-                            height: 100,
-                            displayValue: false,
+                            height: 70,
+                            displayValue: true,
+                            fontSize: 15,
+                            font: 'monospace',
+                            textMargin: 3,
                             margin: 0,
-                            background: "transparent"
+                            lineColor: '#000000',
+                            background: 'transparent'
                         });
                         barcodeOk = true;
                     } catch (_) {}
                 }
 
-                let barcodeW = 180;
-                let barcodeH = 32;
-                const aw = tempSvg.getAttribute('width');
-                const ah = tempSvg.getAttribute('height');
-                if (aw) barcodeW = parseFloat(aw) || barcodeW;
-                if (ah) barcodeH = parseFloat(ah) || barcodeH;
-
-                const rowTop = y + 10;
-                const rowBottom = VB_H - 10;
-                const rowH = rowBottom - rowTop;
-                const colMidX = 306;
-                const colRightX = colMidX + 22;
-                const colRightW = VB_W - LX - colRightX;
-
-                const bS = Math.min((colMidX - LX - 14) / barcodeW, 3.2, (rowH - 10) / barcodeH);
-                const bW = barcodeW * bS;
-                const bH = barcodeH * bS;
-                const bX = LX + Math.max(0, (colMidX - LX - 14 - bW) / 2);
-                const bY = rowTop;
-
-                const amtFs = Math.max(34, Math.min(110, Math.floor((colRightW - 36) / (priceDisplay.length * 0.62))));
-                const curFs = Math.max(18, Math.round(amtFs * 0.32));
-                const amtW = priceDisplay.length * amtFs * 0.6;
-                const curW = curFs * 0.62 * 3;
-                const fullW = curW + 6 + amtW;
-                const priceCY = rowTop + Math.round(amtFs * 0.5);
-                const priceY = priceCY + Math.round(amtFs * 0.4);
-                const xStart = colRightX + Math.max(0, (colRightW - fullW) / 2);
-
-                const curEl = document.createElementNS(NS, "text");
-                curEl.setAttribute("x", String(xStart));
-                curEl.setAttribute("y", String(priceY));
-                curEl.setAttribute("font-size", String(curFs));
-                curEl.setAttribute("font-weight", "700");
-                curEl.setAttribute("fill", "#64748b");
-                curEl.setAttribute("font-family", "Arial,sans-serif");
-                curEl.textContent = "R$";
-                svg.appendChild(curEl);
-
-                const amtEl = document.createElementNS(NS, "text");
-                amtEl.setAttribute("x", String(xStart + curW + 6));
-                amtEl.setAttribute("y", String(priceY));
-                amtEl.setAttribute("font-size", String(amtFs));
-                amtEl.setAttribute("font-weight", "800");
-                amtEl.setAttribute("fill", "#1e293b");
-                amtEl.setAttribute("font-family", "Arial,sans-serif");
-                amtEl.textContent = priceDisplay;
-                svg.appendChild(amtEl);
+                const colMidX = Math.round(LX + availW * 0.52);
 
                 if (barcodeOk) {
-                    const g = document.createElementNS(NS, "g");
-                    g.setAttribute("transform", "translate(" + bX.toFixed(1) + "," + bY.toFixed(1) + ") scale(" + bS.toFixed(3) + "," + bS.toFixed(3) + ")");
+                    const bw = parseFloat(tempSvg.getAttribute('width')) || 200;
+                    const bh = parseFloat(tempSvg.getAttribute('height')) || 90;
+                    const barCellL = LX;
+                    const barCellW = colMidX - 14 - barCellL;
+                    const s = Math.min(barCellW / bw, zoneH / bh, 1.3);
+                    const bx = barCellL + Math.max(0, (barCellW - bw * s) / 2);
+                    const by = zoneTop + Math.max(0, (zoneH - bh * s) / 2);
+                    const g = mkSvg('g', {
+                        transform: 'translate(' + bx.toFixed(1) + ',' + by.toFixed(1) + ') scale(' + s.toFixed(3) + ')'
+                    });
                     g.innerHTML = tempSvg.innerHTML;
                     svg.appendChild(g);
                 }
-            } else {
-                const rowTop = y + 10;
-                const rowBottom = VB_H - 10;
-                const rowH = rowBottom - rowTop;
-                const amtFs = Math.max(40, Math.min(130, Math.floor((VB_W - 2 * LX - 14) / (priceDisplay.length * 0.62))));
-                const curFs = Math.max(20, Math.round(amtFs * 0.32));
-                const amtW = priceDisplay.length * amtFs * 0.6;
-                const fullW = curFs * 0.62 * 3 + 6 + amtW;
-                const priceCY = rowTop + Math.round(amtFs * 0.5);
-                const priceY = priceCY + Math.round(amtFs * 0.4);
-                const xStart = (VB_W - fullW) / 2;
 
-                const curEl = document.createElementNS(NS, "text");
-                curEl.setAttribute("x", String(Math.max(LX, xStart)));
-                curEl.setAttribute("y", String(priceY));
-                curEl.setAttribute("font-size", String(curFs));
-                curEl.setAttribute("font-weight", "700");
-                curEl.setAttribute("fill", "#64748b");
-                curEl.setAttribute("font-family", "Arial,sans-serif");
-                curEl.textContent = "R$";
-                svg.appendChild(curEl);
+                const priceCellL = colMidX + 18;
+                const priceCellW = RX - priceCellL;
+                let amtFs = Math.floor((priceCellW - 52) / (priceDisplay.length * 0.62));
+                amtFs = Math.max(28, Math.min(Math.floor(zoneH * 0.72), amtFs));
+                const curFs = Math.max(14, Math.round(amtFs * 0.34));
+                const curW = curFs * 1.45;
+                const gap = 6;
+                const amtW = priceDisplay.length * amtFs * 0.62;
+                const totalW = curW + gap + amtW;
+                const xStart = priceCellL + Math.max(0, (priceCellW - totalW) / 2);
+                const priceY = Math.round(zoneTop + zoneH / 2 + amtFs * 0.35);
 
-                const amtEl = document.createElementNS(NS, "text");
-                amtEl.setAttribute("x", String(Math.max(LX, xStart + curFs * 0.62 * 3 + 6)));
-                amtEl.setAttribute("y", String(priceY));
-                amtEl.setAttribute("font-size", String(amtFs));
-                amtEl.setAttribute("font-weight", "800");
-                amtEl.setAttribute("fill", "#1e293b");
-                amtEl.setAttribute("font-family", "Arial,sans-serif");
-                amtEl.textContent = priceDisplay;
-                svg.appendChild(amtEl);
+                svg.appendChild(mkSvg('text', {
+                    x: xStart, y: priceY,
+                    'font-size': curFs, 'font-weight': '700',
+                    fill: SUB, 'font-family': FONT
+                }, 'R$'));
+
+                svg.appendChild(mkSvg('text', {
+                    x: xStart + curW + gap, y: priceY,
+                    'font-size': amtFs, 'font-weight': '800',
+                    fill: INK, 'font-family': FONT
+                }, priceDisplay));
             }
 
             return svg;
         }
 
-        function setPrintPageSize() {
-            let st = document.getElementById('printPageStyle');
-            if (!st) {
-                st = document.createElement('style');
-                st.id = 'printPageStyle';
-                document.head.appendChild(st);
-            }
-            st.textContent = '@page { size: ' + LABEL_WIDTH_MM + 'mm ' + LABEL_HEIGHT_MM + 'mm; margin: 0; }';
-        }
-
-        async function renderPriceLabels(returnHtml = false) {
-            if (!selectedProduct) {
-                if (returnHtml) return '';
-                const preview = document.getElementById('labelPreview');
-                preview.innerHTML = `
-                    <p class="label-preview-placeholder no-print">
-                        <i class="fa-regular fa-image"></i>
-                        Selecione um produto para visualizar a etiqueta.
-                    </p>
-                `;
-                return '';
-            }
-
-            const price = selectedProduct.price;
+        function collectLabelData() {
+            if (!selectedProduct) return null;
             const showStore = document.getElementById('showStoreName').checked;
             const showSku = document.getElementById('showSku').checked;
             const barcodeSource = document.getElementById('barcodeSource').value;
             const color = document.getElementById('labelColor').value || 'yellow';
             const settings = BuildFlow.getSettings();
             const storeName = settings.storeName || settings.companyName || 'BuildFlow';
-            const { int, cents } = formatPriceParts(price);
-            const barcodeText = selectedProduct.barcode || '';
-            const skuText = selectedProduct.sku || '';
-
-            const svg = createLabelSVGElement({
+            const { int, cents } = formatPriceParts(selectedProduct.price);
+            return {
                 store: storeName,
                 name: selectedProduct.name,
-                sku: skuText,
+                sku: selectedProduct.sku || '',
                 priceInt: int,
                 priceCents: cents,
                 color: color,
-                barcodeText: barcodeText,
+                barcodeText: selectedProduct.barcode || '',
                 barcodeSource: barcodeSource,
                 showStore: showStore,
                 showSku: showSku
-            });
-
-            if (returnHtml) {
-                return svg.outerHTML;
-            }
-
-            const preview = document.getElementById('labelPreview');
-            preview.innerHTML = '';
-            preview.appendChild(svg);
+            };
         }
 
-        async function printLabels() {
+        // ============================================================
+        // FUNÇÃO CORRIGIDA: PREPARA AS CÓPIAS PARA IMPRESSÃO
+        // ============================================================
+        function stagePrintCopies(forceQty = null) {
+            const container = document.getElementById('printContainer');
+            if (!container) return;
+            
+            if (!selectedProduct) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            try {
+                const qtyEl = document.getElementById('labelQty');
+                const qty = forceQty !== null ? forceQty : Math.min(99, Math.max(1, parseInt(qtyEl && qtyEl.value, 10) || 1));
+                const data = collectLabelData();
+                if (!data) return;
+                
+                const svg = createLabelSVGElement(data);
+                if (!svg) return;
+                
+                let html = '';
+                for (let i = 0; i < qty; i++) {
+                    html += '<div class="label-print-copy">' + svg.outerHTML + '</div>';
+                }
+                container.innerHTML = html;
+                
+                console.log('✅ Etiquetas preparadas para impressão:', qty, 'cópias');
+                console.log('📄 Container tem', container.children.length, 'elementos');
+            } catch (e) {
+                console.error('Erro ao preparar etiquetas:', e);
+            }
+        }
+
+        // ============================================================
+        // FUNÇÃO CORRIGIDA: IMPRIMIR ETIQUETAS
+        // ============================================================
+        // ============================================================
+        // JANELA DE IMPRESSÃO ISOLADA
+        // Monta um documento HTML novo, do zero, sem NENHUM CSS/JS do
+        // app (nada de style.css, layout.js, main.js). Isso garante que
+        // só a etiqueta existe no documento que vai para a impressora —
+        // não tem como sobrar espaço em branco de outra coisa da página,
+        // porque não existe "outra coisa" nesse documento.
+        // ============================================================
+        function buildPrintDocument(svgMarkupArray) {
+            const w = LABEL_WIDTH_MM, h = LABEL_HEIGHT_MM;
+            const body = svgMarkupArray
+                .map(svg => '<div class="lbl">' + svg + '</div>')
+                .join('');
+            return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title></title><style>' +
+                '@page{size:' + w + 'mm ' + h + 'mm;margin:0;}' +
+                '*{margin:0;padding:0;box-sizing:border-box;}' +
+                'html,body{width:' + w + 'mm;height:' + h + 'mm;background:#fff;}' +
+                '.lbl{width:' + w + 'mm;height:' + h + 'mm;overflow:hidden;page-break-after:always;break-after:page;}' +
+                '.lbl:last-child{page-break-after:auto;break-after:auto;}' +
+                '.lbl svg{display:block;width:' + w + 'mm;height:' + h + 'mm;}' +
+                '</style></head><body>' + body + '</body></html>';
+        }
+
+        function openPrintWindow(svgMarkupArray) {
+            const win = window.open('', 'printLabelWindow', 'width=420,height=340');
+            if (!win) {
+                BuildFlow.showToast('Não foi possível abrir a janela de impressão. Libere pop-ups para este site.', 'danger');
+                return;
+            }
+            win.document.open();
+            win.document.write(buildPrintDocument(svgMarkupArray));
+            win.document.close();
+
+            const doPrint = function () {
+                win.focus();
+                win.print();
+            };
+            // pequeno atraso garante que o layout/SVG já renderizou antes do print
+            setTimeout(doPrint, 150);
+
+            win.onafterprint = function () {
+                win.close();
+            };
+            // fallback: se o navegador não disparar onafterprint, fecha sozinho
+            setTimeout(function () {
+                if (!win.closed) win.close();
+            }, 60000);
+        }
+
+        function printLabels() {
             if (!selectedProduct) {
                 BuildFlow.showToast('Selecione um produto antes de imprimir', 'warning');
                 return;
             }
+            const data = collectLabelData();
+            if (!data) return;
 
-            try {
-                const qty = Math.min(99, Math.max(1, parseInt(document.getElementById('labelQty').value, 10) || 1));
-                const svgHtml = await renderPriceLabels(true);
-                if (!svgHtml) {
-                    BuildFlow.showToast('Não foi possível gerar a etiqueta', 'danger');
-                    return;
-                }
+            const qtyEl = document.getElementById('labelQty');
+            const qty = Math.min(99, Math.max(1, parseInt(qtyEl && qtyEl.value, 10) || 1));
 
-                const preview = document.getElementById('labelPreview');
-                let copies = '';
-                for (let i = 0; i < qty; i++) {
-                    copies += '<div class="label-print-copy">' + svgHtml + '</div>';
-                }
-                preview.innerHTML = copies;
-                setPrintPageSize();
-
-                setTimeout(function() {
-                    window.print();
-                    renderPriceLabels();
-                }, 100);
-
-            } catch (error) {
-                console.error('Erro ao imprimir:', error);
-                BuildFlow.showToast('Erro ao imprimir etiquetas', 'danger');
+            const svgs = [];
+            for (let i = 0; i < qty; i++) {
+                svgs.push(createLabelSVGElement(data).outerHTML);
             }
+            openPrintWindow(svgs);
         }
 
-        // Autocomplete
+        // ============================================================
+        // FUNÇÃO CORRIGIDA: RENDERIZAR PRÉVIA
+        // ============================================================
+        async function renderPriceLabels(returnSvg = false) {
+            const preview = document.getElementById('labelPreview');
+            const data = collectLabelData();
+            if (!data) {
+                if (returnSvg) return null;
+                preview.innerHTML = `
+                    <p class="label-preview-placeholder no-print">
+                        <i class="fa-regular fa-image"></i>
+                        Selecione um produto para visualizar a etiqueta.
+                    </p>
+                `;
+                return null;
+            }
+
+            const svg = createLabelSVGElement(data);
+            if (returnSvg) return svg;
+
+            preview.innerHTML = '';
+            preview.appendChild(svg);
+            
+            // Atualiza as cópias para impressão
+            stagePrintCopies();
+            
+            return null;
+        }
+
+        // ============================================================
+        // EVENTO ANTES DE IMPRIMIR - GARANTIA EXTRA
+        // ============================================================
+        window.addEventListener('beforeprint', function () {
+            const container = document.getElementById('printContainer');
+            if (!container) return;
+            
+            // Se não tem nada no container, prepara as cópias
+            if (container.children.length === 0) {
+                if (selectedProduct) {
+                    console.log('🔄 beforeprint: preparando cópias...');
+                    stagePrintCopies();
+                }
+            }
+        });
+
+        // ============================================================
+        // EVENTOS PARA ATUALIZAR AS CÓPIAS QUANDO CONFIGURAÇÕES MUDAM
+        // ============================================================
+        ['labelQty', 'showStoreName', 'showSku', 'barcodeSource', 'labelColor'].forEach(function (id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('change', function() {
+                    if (selectedProduct) {
+                        stagePrintCopies();
+                    }
+                });
+                el.addEventListener('input', function() {
+                    if (selectedProduct && id === 'labelQty') {
+                        stagePrintCopies();
+                    }
+                });
+            }
+        });
+
+        // ============================================================
+        // PÁGINA DE TESTE TÉRMICO
+        // ============================================================
+        function printTestPage() {
+            const svg = mkSvg('svg', {
+                width: LABEL_WIDTH_MM + 'mm',
+                height: LABEL_HEIGHT_MM + 'mm',
+                viewBox: '0 0 ' + VB_W + ' ' + VB_H,
+                xmlns: 'http://www.w3.org/2000/svg'
+            });
+            svg.appendChild(mkSvg('rect', { x: 0, y: 0, width: VB_W, height: VB_H, fill: '#ffffff' }));
+            for (let i = 0; i < 6; i++) {
+                svg.appendChild(mkSvg('rect', { x: 30 + i * 120, y: 20, width: 60, height: VB_H - 40, fill: '#000000' }));
+            }
+            openPrintWindow([svg.outerHTML]);
+        }
+
+        // ============================================================
+        // AUTOCOMPLETE
+        // ============================================================
         function renderAutocomplete(filteredProducts) {
             const list = document.getElementById('autocompleteList');
             
@@ -1052,6 +1137,9 @@
             renderAutocomplete(filtered);
         }
 
+        // ============================================================
+        // DOM CONTENT LOADED
+        // ============================================================
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 products = await BuildFlow.getProducts({ limit: 'all' });
@@ -1101,13 +1189,8 @@
                 }
             });
 
-            ['labelColor', 'showStoreName', 'showSku', 'barcodeSource', 'labelQty'].forEach(id => {
-                const el = document.getElementById(id);
-                el.addEventListener('input', () => renderPriceLabels());
-                el.addEventListener('change', () => renderPriceLabels());
-            });
-
             document.getElementById('btnPrint').addEventListener('click', printLabels);
+            document.getElementById('btnPrintTest').addEventListener('click', printTestPage);
 
             renderPriceLabels();
         });

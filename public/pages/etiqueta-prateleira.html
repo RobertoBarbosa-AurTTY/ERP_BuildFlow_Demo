@@ -8,35 +8,43 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <style>
-        /* Impressão em rolo térmico: página do tamanho exato da placa */
+        /* Impressão em rolo térmico: usa o container dedicado #print-root */
+        #print-root { display: none !important; }
+
         @media print {
             @page { size: 100mm 48mm; margin: 0; }
-            html, body { margin: 0 !important; padding: 0 !important; }
-            .layout, .main-content {
-                min-height: 0 !important;
-                padding: 0 !important;
+
+            html, body {
                 margin: 0 !important;
-            }
-            .wms-panel.print-source {
-                min-height: 0 !important;
-                height: auto !important;
                 padding: 0 !important;
-                margin: 0 !important;
-            }
-            .wms-label-preview-area {
-                min-height: 0 !important;
-                padding: 0 !important;
-                margin: 0 !important;
                 background: #fff !important;
             }
+
+            /* Esconde todo o aplicativo */
+            body > .layout,
+            .sidebar, .top-nav, header,
+            .swal2-container, .toast-container,
+            .no-print {
+                display: none !important;
+            }
+
+            /* Mostra apenas as placas a imprimir */
+            #print-root { display: block !important; }
+
             .label-shelf.label-shelf-plate {
                 width: 100mm !important;
                 min-height: 48mm !important;
                 height: 48mm !important;
                 margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
                 page-break-after: always;
                 break-after: page;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
+
             .label-shelf.label-shelf-plate:last-child {
                 page-break-after: auto;
                 break-after: auto;
@@ -133,6 +141,8 @@
             </div>
         </main>
     </div>
+
+    <div id="print-root" aria-hidden="true"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../js/layout.js"></script>
@@ -254,15 +264,17 @@
                 el.addEventListener('change', () => renderShelfLabels());
             });
 
-            document.getElementById('btnPreview').addEventListener('click', renderShelfLabels);
             document.getElementById('btnPrint').addEventListener('click', () => {
                 const code = BuildFlow.formatShelfAddress(getLocationFromForm());
                 if (!code) {
                     BuildFlow.showToast('Informe corredor e prateleira', 'warning');
                     return;
                 }
+                const root = document.getElementById('print-root');
                 renderShelfLabels();
+                root.innerHTML = document.getElementById('labelPreview').innerHTML;
                 window.print();
+                root.innerHTML = '';
             });
 
             const params = new URLSearchParams(window.location.search);
