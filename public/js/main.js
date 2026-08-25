@@ -969,15 +969,43 @@ const BuildFlow = {
       const ml = 4, mr = pw - 4, cx = pw / 2;
       let y = 4;
 
-      let estHeight = 50;
-      estHeight += s.items.length * 8;
-      if (s.itemsDiscountTotal > 0) estHeight += 6;
-      if (s.globalDiscountAmount > 0) estHeight += 6;
-      if (s.amountPaid != null) estHeight += 15;
-      if (settings.showCompanyData && (settings.companyCnpj || settings.address)) estHeight += 15;
-      estHeight += 30;
+      const _pad = 8;
+      const _hy = (initY) => {
+        let _y = initY;
+        _y += 12;
+        if (settings.showCompanyData && (settings.companyCnpj || settings.address)) {
+          _y += 3;
+          if (settings.companyCnpj) _y += 3;
+          if (settings.address) _y += 2.5;
+          _y += 1;
+        }
+        _y += 9.5;
+        _y += 3;
+        s.items.forEach((item) => {
+          _y += 3;
+          if (item.discountAmount > 0) _y += 5.5;
+          _y += 0.5;
+        });
+        _y += 6;
+        if (s.grossSubtotal > 0) _y += 3;
+        if (s.itemsDiscountTotal > 0) _y += 3;
+        if (s.globalDiscountAmount > 0) _y += 3;
+        _y += 1;
+        _y += 9 + 4;
+        if (s.amountPaid != null) _y += 9;
+        _y += 1 + 4 + 4;
+        const legalLines = String(settings.receiptLegalNote || "Documento nao fiscal");
+        const maxW = pw - 8;
+        const avgCharW = 1.7;
+        const charsPerLine = Math.floor(maxW / avgCharW);
+        const numLines = Math.max(1, Math.ceil(legalLines.length / charsPerLine));
+        _y += numLines * 2.5;
+        _y += 3;
+        return _y;
+      };
+      const estHeight = Math.max(40, _hy(4) + _pad);
 
-      const doc = new jsPDF({ unit: "mm", format: [pw, Math.max(40, estHeight)] });
+      const doc = new jsPDF({ unit: "mm", format: [pw, estHeight] });
 
       doc.setTextColor(0, 0, 0);
       doc.setFillColor(255, 255, 255);

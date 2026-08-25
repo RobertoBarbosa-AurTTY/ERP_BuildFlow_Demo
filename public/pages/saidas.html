@@ -2706,8 +2706,34 @@
                 } else {
                     const pw = Number(settings.paperWidth) || 80;
                     const ml = 4, mr = pw - 4, cx = pw / 2;
-                    let est = 55 + budgetData.items.length * 8 + 25;
-                    const doc = new jsPDF({ unit: 'mm', format: [pw, Math.max(40, est)] });
+                    const _pad = 8;
+                    const _calcBudgetH = () => {
+                        let _y = 4;
+                        _y += 12;
+                        if (settings.showCompanyData && (settings.companyCnpj || settings.address)) {
+                            _y += 3;
+                            if (settings.companyCnpj) _y += 3;
+                            if (settings.address) _y += 2.5;
+                            _y += 1;
+                        }
+                        _y += 9.5;
+                        _y += 3;
+                        budgetData.items.forEach(item => {
+                            _y += 3;
+                            if (item.discount > 0) _y += 5.5;
+                            _y += 0.5;
+                        });
+                        _y += 3;
+                        _y += 9 + 4;
+                        _y += 3.5 + 4;
+                        const legalText = settings.receiptLegalNote || 'Documento nao fiscal';
+                        const charsPerLine = Math.floor((pw - 8) / 1.7);
+                        _y += Math.max(1, Math.ceil(legalText.length / charsPerLine)) * 2.5;
+                        _y += 3;
+                        return _y;
+                    };
+                    const est = Math.max(40, _calcBudgetH() + _pad);
+                    const doc = new jsPDF({ unit: 'mm', format: [pw, est] });
                     doc.setTextColor(0, 0, 0);
                     doc.setFillColor(255, 255, 255);
                     doc.rect(0, 0, pw, est, "F");
@@ -2799,8 +2825,34 @@
             if (printType === true) { // Cupom Térmico
                 const pw = Number(settings.paperWidth) || 80;
                 const ml = 4, mr = pw - 4, cx = pw / 2;
-                let est = 55 + budgetData.items.length * 8 + 25;
-                const doc = new jsPDF({ unit: 'mm', format: [pw, Math.max(40, est)] });
+                const _pad2 = 8;
+                const _calcH2 = () => {
+                    let _y = 4;
+                    _y += 12;
+                    if (settings.showCompanyData && (settings.companyCnpj || settings.address)) {
+                        _y += 3;
+                        if (settings.companyCnpj) _y += 3;
+                        if (settings.address) _y += 2.5;
+                        _y += 1;
+                    }
+                    _y += 9.5;
+                    _y += 3;
+                    budgetData.items.forEach(item => {
+                        _y += 3;
+                        if (item.discount > 0) _y += 5.5;
+                        _y += 0.5;
+                    });
+                    _y += 3;
+                    _y += 9 + 4;
+                    _y += 3.5 + 4;
+                    const legalText = settings.receiptLegalNote || 'Documento nao fiscal';
+                    const charsPerLine = Math.floor((pw - 8) / 1.7);
+                    _y += Math.max(1, Math.ceil(legalText.length / charsPerLine)) * 2.5;
+                    _y += 3;
+                    return _y;
+                };
+                const est = Math.max(40, _calcH2() + _pad2);
+                const doc = new jsPDF({ unit: 'mm', format: [pw, est] });
                 doc.setTextColor(0, 0, 0);
                 doc.setFillColor(255, 255, 255);
                 doc.rect(0, 0, pw, est, "F");
