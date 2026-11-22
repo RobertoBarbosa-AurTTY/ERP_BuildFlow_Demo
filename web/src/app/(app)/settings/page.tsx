@@ -1,14 +1,8 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/page-header";
-import { EmptyState } from "@/components/query-state";
+import { SettingsClient } from "./settings-client";
 
 export const metadata: Metadata = { title: "Configurações" };
 
 export default function Page() {
-  return (
-    <>
-      <PageHeader title="Configurações" />
-      <EmptyState title="Em construção" description="Esta tela ainda está sendo migrada para o novo front-end." />
-    </>
-  );
+  return <SettingsClient />;
 }

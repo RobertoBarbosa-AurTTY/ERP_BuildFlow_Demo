@@ -6,7 +6,7 @@
 //
 // Os dados persistem no localStorage do navegador; `resetMockData()` volta ao seed.
 
-const STORAGE_PREFIX = "buildflow:mock:";
+const STORAGE_PREFIX = "buildflow:mock:v2:";
 const LATENCY_MS = 250;
 
 type Doc = { _id: string };

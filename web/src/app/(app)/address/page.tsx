@@ -1,14 +1,14 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/page-header";
-import { EmptyState } from "@/components/query-state";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AddressView } from "./address-view";
 
-export const metadata: Metadata = { title: "Endereçar produto" };
+export const metadata: Metadata = { title: "Endereçar produtos" };
 
 export default function Page() {
   return (
-    <>
-      <PageHeader title="Endereçar produto" />
-      <EmptyState title="Em construção" description="Esta tela ainda está sendo migrada para o novo front-end." />
-    </>
+    <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+      <AddressView />
+    </Suspense>
   );
 }

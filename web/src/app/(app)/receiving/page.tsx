@@ -1,14 +1,8 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/page-header";
-import { EmptyState } from "@/components/query-state";
+import { ReceivingView } from "./receiving-view";
 
-export const metadata: Metadata = { title: "Entradas" };
+export const metadata: Metadata = { title: "Entradas de mercadoria" };
 
 export default function Page() {
-  return (
-    <>
-      <PageHeader title="Entradas" />
-      <EmptyState title="Em construção" description="Esta tela ainda está sendo migrada para o novo front-end." />
-    </>
-  );
+  return <ReceivingView />;
 }

@@ -1,14 +1,8 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/page-header";
-import { EmptyState } from "@/components/query-state";
+import { ReportsView } from "./reports-view";
 
 export const metadata: Metadata = { title: "Relatórios" };
 
 export default function Page() {
-  return (
-    <>
-      <PageHeader title="Relatórios" />
-      <EmptyState title="Em construção" description="Esta tela ainda está sendo migrada para o novo front-end." />
-    </>
-  );
+  return <ReportsView />;
 }

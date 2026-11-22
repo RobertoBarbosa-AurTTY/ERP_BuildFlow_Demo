@@ -1,14 +1,8 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/page-header";
-import { EmptyState } from "@/components/query-state";
+import { NewAddressView } from "./new-address-view";
 
-export const metadata: Metadata = { title: "Criar endereço" };
+export const metadata: Metadata = { title: "Endereços do depósito" };
 
 export default function Page() {
-  return (
-    <>
-      <PageHeader title="Criar endereço" />
-      <EmptyState title="Em construção" description="Esta tela ainda está sendo migrada para o novo front-end." />
-    </>
-  );
+  return <NewAddressView />;
 }

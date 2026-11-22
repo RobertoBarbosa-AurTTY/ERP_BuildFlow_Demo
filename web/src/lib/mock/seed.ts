@@ -60,6 +60,14 @@ const PRODUCT_ROWS: P[] = [
   ["Trena 5m", "FERR-205", "Ferramentas", "Stanley", "UN", 42, 10, 60, 32.9, 16.4, "K-02-01-03"],
 ];
 
+/** Completa 12 dígitos com o dígito verificador do EAN-13. */
+function ean13(base12: string) {
+  const sum = base12
+    .split("")
+    .reduce((acc, digit, index) => acc + Number(digit) * (index % 2 === 0 ? 1 : 3), 0);
+  return base12 + ((10 - (sum % 10)) % 10);
+}
+
 export function seedProducts(): Product[] {
   return PRODUCT_ROWS.map(([name, sku, category, supplier, unit, quantity, minStock, maxStock, price, costPrice, loc, expiry], i) => {
     const [aisle, shelf, level, slot] = loc.split("-");
@@ -67,7 +75,7 @@ export function seedProducts(): Product[] {
       _id: `p${i + 1}`,
       name,
       sku,
-      barcode: `78912345${String(67890 + i).padStart(5, "0")}`,
+      barcode: ean13(`78912345${String(6789 + i).padStart(4, "0")}`),
       category,
       supplier,
       brand: supplier,
@@ -92,16 +100,16 @@ export function seedCategories(): Category[] {
 }
 
 const CUSTOMER_ROWS: [string, string, string, string][] = [
-  ["Construtora Horizonte Ltda", "12345678000190", "compras@horizonte.com.br", "82988112233"],
-  ["Maria Aparecida Santos", "12345678909", "maria.santos@email.com", "82999887766"],
-  ["João Pedro Almeida", "98765432100", "joaopedro@email.com", "82991234567"],
-  ["Reformas Litoral ME", "23456789000155", "contato@reformaslitoral.com.br", "8233445566"],
-  ["Ana Beatriz Lima", "45678912300", "anabeatriz@email.com", "82987654321"],
-  ["Carlos Eduardo Ferreira", "32165498700", "", "82996541230"],
-  ["Imobiliária Ponta Verde", "34567890000122", "manutencao@pontaverde.com.br", "8232109876"],
-  ["Fernanda Costa Rocha", "74185296300", "fernanda.rocha@email.com", "82993216549"],
-  ["Paulo Henrique Souza", "85296374100", "", "82981472583"],
-  ["Elétrica Nordeste Serviços", "45678901000133", "financeiro@eletricanordeste.com.br", "8230304040"],
+  ["Construtora Horizonte Ltda", "12345678000195", "compras@horizonte.com.br", "82988112240"],
+  ["Maria Aparecida Santos", "12345678909", "maria.santos@email.com", "82999887728"],
+  ["João Pedro Almeida", "98765432100", "joaopedro@email.com", "82991234539"],
+  ["Reformas Litoral ME", "23456789000195", "contato@reformaslitoral.com.br", "8233445566"],
+  ["Ana Beatriz Lima", "45678912364", "anabeatriz@email.com", "82987654359"],
+  ["Carlos Eduardo Ferreira", "32165498791", "", "82996541227"],
+  ["Imobiliária Ponta Verde", "34567890000130", "manutencao@pontaverde.com.br", "8232109876"],
+  ["Fernanda Costa Rocha", "74185296355", "fernanda.rocha@email.com", "82993216546"],
+  ["Paulo Henrique Souza", "85296374100", "", "82981472518"],
+  ["Elétrica Nordeste Serviços", "45678901000175", "financeiro@eletricanordeste.com.br", "8230304040"],
 ];
 
 export function seedCustomers(): Customer[] {
@@ -281,20 +289,34 @@ export function seedReceivables(): AccountReceivable[] {
 
 export function seedCashSessions(): CashSession[] {
   const rand = prng(7);
+  const sales = seedSales();
+  const movements = seedCashMovements();
   const sessions: CashSession[] = [];
   for (let day = 59; day >= 0; day--) {
     const number = 60 - day;
+    const id = `cx${number}`;
     const open = day === 0;
+    const openingAmount = 200;
+    // Fechamento = dinheiro esperado no caixa; ~10% das sessões com pequena diferença.
+    const cashSales = sales
+      .filter((s) => s.caixaId === id && s.status === "FINALIZED")
+      .reduce((sum, s) => sum + (s.splitPayment ? s.splitPayment.cash : s.paymentMethod === "Dinheiro" ? s.total : 0), 0);
+    const moves = movements
+      .filter((m) => m.caixaId === id)
+      .reduce((sum, m) => sum + (m.type === "suprimento" ? m.amount : -m.amount), 0);
+    const expected = Math.round((openingAmount + cashSales + moves) * 100) / 100;
+    const hasDiff = rand() < 0.1;
+    const diff = hasDiff ? (rand() < 0.5 ? -1 : 1) * Math.round(2 + rand() * 25) : 0;
     sessions.push({
-      _id: `cx${number}`,
+      _id: id,
       number,
       status: open ? "aberto" : "fechado",
       operatorName: OPERATORS[number % 2],
       openedAt: daysAgo(day, 8),
       closedAt: open ? undefined : daysAgo(day, 18),
-      openingAmount: 200,
-      closingAmount: open ? undefined : Math.round(800 + rand() * 1600),
-      notes: !open && rand() < 0.1 ? "Diferença conferida com a gerência" : undefined,
+      openingAmount,
+      closingAmount: open ? undefined : Math.round((expected + diff) * 100) / 100,
+      notes: !open && hasDiff ? "Diferença conferida com a gerência" : undefined,
     });
   }
   return sessions.reverse();
@@ -327,27 +349,33 @@ export function seedStockMovements(): StockMovement[] {
 }
 
 export function seedWarehouseAddresses(): WarehouseAddress[] {
-  const out: WarehouseAddress[] = [];
-  let id = 1;
-  for (const aisle of ["A", "B", "C", "D", "E", "F"]) {
-    for (const shelf of ["01", "02"]) {
-      for (const level of ["01", "02"]) {
-        for (const slot of ["01", "02", "03"]) {
-          out.push({
-            _id: `wa${id++}`,
-            deposit: "DEPÓSITO 01",
-            aisle,
-            shelf,
-            level,
-            slot,
-            code: `D01-${aisle}-${shelf}-${level}-${slot}`,
-            capacity: 100,
-            active: true,
-            createdAt: daysAgo(150),
-          });
+  // Grade base em todos os corredores usados pelos produtos + os endereços exatos deles.
+  const codes = new Map<string, [string, string, string, string]>();
+  for (const aisle of ["A", "B", "C", "D", "E", "F", "G", "H", "K", "R", "T"]) {
+    for (const shelf of ["01", "02", "03"]) {
+      for (const level of ["01", "02", "03"]) {
+        for (const slot of ["01", "02", "03", "04"]) {
+          codes.set(`${aisle}-${shelf}-${level}-${slot}`, [aisle, shelf, level, slot]);
         }
       }
     }
   }
-  return out;
+  for (const row of PRODUCT_ROWS) {
+    const [aisle, shelf, level, slot] = row[10].split("-");
+    codes.set(row[10], [aisle, shelf, level, slot]);
+  }
+  return [...codes.values()]
+    .sort((a, b) => a.join("-").localeCompare(b.join("-")))
+    .map(([aisle, shelf, level, slot], i) => ({
+      _id: `wa${i + 1}`,
+      deposit: "DEPÓSITO 01",
+      aisle,
+      shelf,
+      level,
+      slot,
+      code: `D01-${aisle}-${shelf}-${level}-${slot}`,
+      capacity: 100,
+      active: true,
+      createdAt: daysAgo(150),
+    }));
 }

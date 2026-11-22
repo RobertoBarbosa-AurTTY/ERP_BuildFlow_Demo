@@ -1,14 +1,8 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/page-header";
-import { EmptyState } from "@/components/query-state";
+import { CashAuditClient } from "./cash-audit-client";
 
 export const metadata: Metadata = { title: "Auditoria de caixa" };
 
 export default function Page() {
-  return (
-    <>
-      <PageHeader title="Auditoria de caixa" />
-      <EmptyState title="Em construção" description="Esta tela ainda está sendo migrada para o novo front-end." />
-    </>
-  );
+  return <CashAuditClient />;
 }

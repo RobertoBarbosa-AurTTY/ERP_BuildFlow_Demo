@@ -38,7 +38,7 @@ export function AppSidebar() {
   const { resolvedTheme, setTheme } = useTheme();
 
   return (
-    <Sidebar collapsible="icon" variant="inset">
+    <Sidebar collapsible="icon" variant="inset" className="no-print">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
