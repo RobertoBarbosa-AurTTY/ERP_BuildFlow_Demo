@@ -1,16 +1,16 @@
+# Front-end: Next.js exportado como site estático (web/out).
+# Back-end: Netlify Functions em netlify/functions, expostas em /api/*
+# (ainda não usadas pelo front novo, que roda com dados de demonstração).
 [build]
-  publish = "public"
+  command = "npm ci --prefix web && npm run build --prefix web"
+  publish = "web/out"
   functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
 
 [functions]
   node_bundler = "esbuild"
-
-# ===== Security Headers =====
-[[headers]]
-  for = "/sw.js"
-  [headers.values]
-    Cache-Control = "no-cache"
-    X-Content-Type-Options = "nosniff"
 
 [[headers]]
   for = "/*"
@@ -20,139 +20,23 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
 
+# Arquivos com hash no nome podem ficar em cache para sempre.
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
 [[headers]]
   for = "/api/*"
   [headers.values]
-    X-Content-Type-Options = "nosniff"
-    X-Frame-Options = "DENY"
-    Referrer-Policy = "strict-origin-when-cross-origin"
     Cache-Control = "no-store"
-
-[[headers]]
-  for = "/"
-  [headers.values]
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob:; font-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
-
 
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
 
-# Clean URLs — English, no .html
 [[redirects]]
   from = "/"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/login"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/dashboard"
-  to = "/dashboard.html"
-  status = 200
-
-[[redirects]]
-  from = "/pos"
-  to = "/pages/saidas.html"
-  status = 200
-
-[[redirects]]
-  from = "/stock"
-  to = "/pages/estoque.html"
-  status = 200
-
-[[redirects]]
-  from = "/receiving"
-  to = "/pages/entradas.html"
-  status = 200
-
-[[redirects]]
-  from = "/price-tag"
-  to = "/pages/etiqueta-precificacao.html"
-  status = 200
-
-[[redirects]]
-  from = "/shelf-label"
-  to = "/pages/etiqueta-prateleira.html"
-  status = 200
-
-[[redirects]]
-  from = "/reports"
-  to = "/pages/relatorios.html"
-  status = 200
-
-[[redirects]]
-  from = "/sales-history"
-  to = "/pages/historico-vendas.html"
-  status = 200
-
-[[redirects]]
-  from = "/bills"
-  to = "/pages/contas-a-pagar.html"
-  status = 200
-
-[[redirects]]
-  from = "/import"
-  to = "/pages/importacao-fornecedor.html"
-  status = 200
-
-[[redirects]]
-  from = "/address"
-  to = "/pages/enderecar-produto.html"
-  status = 200
-
-[[redirects]]
-  from = "/new-address"
-  to = "/pages/criar-endereco.html"
-  status = 200
-
-[[redirects]]
-  from = "/settings"
-  to = "/pages/configuracoes.html"
-  status = 200
-
-[[redirects]]
-  from = "/manual"
-  to = "/pages/manual.html"
-  status = 200
-
-[[redirects]]
-  from = "/messages"
-  to = "/pages/mensagens.html"
-  status = 200
-
-[[redirects]]
-  from = "/customers"
-  to = "/pages/clientes.html"
-  status = 200
-
-[[redirects]]
-  from = "/receivables"
-  to = "/pages/contas-a-receber.html"
-  status = 200
-
-[[redirects]]
-  from = "/cash-flow"
-  to = "/pages/fluxo-caixa.html"
-  status = 200
-
-[[redirects]]
-  from = "/cash-audit"
-  to = "/pages/auditoria-caixa.html"
-  status = 200
-
-# Block direct access to /pages/*
-[[redirects]]
-  from = "/pages/*"
-  to = "/index.html"
-  status = 404
-
-# SPA fallback
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+  to = "/dashboard/"
+  status = 302

@@ -16,12 +16,15 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm ci --prefix web
       - name: Lint + testes
-        run: npm run build
+        run: npm run build && npm run lint --prefix web
+      - name: Build do front-end (export estático)
+        run: npm run build --prefix web
       - name: Deploy to Netlify
         uses: nwtgck/actions-netlify@v3
         with:
-          publish-dir: ./public
+          publish-dir: ./web/out
           functions-dir: ./netlify/functions
           deploy-message: "CI deploy: ${{ github.event.head_commit.message }}"
           production-branch: main

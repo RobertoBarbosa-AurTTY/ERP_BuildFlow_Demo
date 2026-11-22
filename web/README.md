@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BuildFlow ERP — Front-end
 
-## Getting Started
+Novo front-end do BuildFlow em **Next.js 16 + shadcn/ui + Tailwind CSS 4**, substituindo o front antigo em HTML/JS (`public/`).
 
-First, run the development server:
+> **Status:** front-end estático com **dados de demonstração**. Ainda não está ligado às Netlify Functions do back-end.
+
+## Rodando localmente
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd web
+npm install
+npm run dev        # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Login de demonstração: `admin@buildflow.com.br` / `admin123` (também `gerente@buildflow.com.br` / `gerente123` e `caixa@buildflow.com.br` / `caixa123`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Build e deploy (Netlify)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build      # gera o site estático em web/out
+```
 
-## Learn More
+O `netlify.toml` na raiz do repositório já roda esse build e publica `web/out`, mantendo as functions em `netlify/functions` (`/api/*`).
 
-To learn more about Next.js, take a look at the following resources:
+## Estrutura
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Pasta | Conteúdo |
+|:--|:--|
+| `src/app/(app)` | Telas com menu lateral (dashboard, estoque, financeiro, relatórios…) |
+| `src/app/(pos)` | PDV em tela cheia, independente do menu |
+| `src/components/ui` | Componentes shadcn/ui |
+| `src/components/*` | Componentes por domínio (`pos`, `inventory`, `finance`, `analytics`) |
+| `src/lib/services` | Funções de dados usadas pelas telas (via React Query) |
+| `src/lib/mock` | "Banco" em memória + `localStorage` e dados de demonstração |
+| `src/lib/domain` | Tipos e regras de negócio (totais de venda, status de estoque e contas) |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Ligando ao back-end
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+As telas só falam com `src/lib/services/*`. Para usar a API real, reescreva essas funções chamando `/api/<function>` (as Netlify Functions já existentes), sem mexer nas telas, e troque o login demo (`src/lib/auth.ts`) por `/api/auth-login` + `/api/auth-me`.
