@@ -1,5 +1,12 @@
 # BuildFlow ERP
 
+![Node.js](https://img.shields.io/badge/Node.js-Serverless-5FA04E?style=flat-square&logo=nodedotjs&logoColor=white)
+![Netlify Functions](https://img.shields.io/badge/Netlify-Functions-00C7B7?style=flat-square&logo=netlify&logoColor=white)
+![MongoDB Atlas](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=flat-square&logo=mongodb&logoColor=white)
+![PWA](https://img.shields.io/badge/PWA-offline--first-5A0FC8?style=flat-square&logo=pwa&logoColor=white)
+![JWT](https://img.shields.io/badge/Auth-JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)
+![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
+
 BuildFlow é um sistema de gestão empresarial (ERP) moderno, desenvolvido com uma arquitetura **Serverless** e integrado ao **MongoDB Atlas**. Focado em eficiência, o sistema oferece uma interface premium para controle de estoque, frente de caixa (PDV), contas a pagar/receber e relatórios analíticos, com PWA (instalável e offline-first).
 
 ## 🚀 Tecnologias Utilizadas
@@ -43,7 +50,7 @@ BuildFlow é um sistema de gestão empresarial (ERP) moderno, desenvolvido com u
 
 1. Clone o repositório:
    ```bash
-   git clone https://github.com/robertocarlossupplychain-cmd/BuildFlow.git
+   git clone https://github.com/RobertoBarbosa-AurTTY/ERP_BuildFlow_Demo.git
    ```
 
 2. Instale as dependências:
@@ -99,4 +106,4 @@ npm run clear-sales  # limpa vendas de um período
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
 ---
-Desenvolvido por **Roberto Carlos Supply Chain CMD**.
+Desenvolvido por **[Roberto Carlos](https://github.com/RobertoBarbosa-AurTTY)**.
