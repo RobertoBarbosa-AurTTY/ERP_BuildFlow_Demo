@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Collapsible } from "radix-ui";
-import { ArrowUpRight, ChevronDown, CircleHelp, Keyboard, Lightbulb, Search, SearchX } from "lucide-react";
+import { ArrowUpRight, BookOpen, Bot, ChevronDown, CircleHelp, Keyboard, Lightbulb, Search, SearchX } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/query-state";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { Kbd } from "@/components/ui/kbd";
 import { cn } from "@/lib/utils";
-import { FAQ, MODULES, SHORTCUTS, type HelpModule, type HelpTopic } from "./content";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AssistantChat } from "@/components/assistant/assistant-chat";
+import { FAQ, MODULES, SHORTCUTS, type HelpModule, type HelpTopic } from "@/lib/help/content";
 
 function normalize(value: string) {
   return value
@@ -24,7 +26,7 @@ function topicText(topic: HelpTopic) {
   return normalize([topic.title, topic.body, ...(topic.steps ?? []), topic.tip].filter(Boolean).join(" "));
 }
 
-export function ManualClient() {
+function HelpCenter() {
   const [search, setSearch] = useState("");
   const [openTopics, setOpenTopics] = useState<Set<string>>(() => new Set(["pdv:0"]));
   const term = normalize(search.trim());
@@ -62,8 +64,6 @@ export function ManualClient() {
 
   return (
     <>
-      <PageHeader title="Central de ajuda" description="Guias rápidos de cada módulo, atalhos do PDV e perguntas frequentes." />
-
       <Card className="bg-linear-to-br from-primary/10 via-card to-card">
         <CardContent className="flex flex-col gap-3 py-2 sm:py-4">
           <p className="text-lg font-semibold tracking-tight">Como podemos ajudar?</p>
@@ -293,5 +293,34 @@ function TopicCollapsible({
       </Collapsible.Trigger>
       <Collapsible.Content className="pb-3 text-sm leading-relaxed">{children}</Collapsible.Content>
     </Collapsible.Root>
+  );
+}
+
+export function ManualClient() {
+  return (
+    <>
+      <PageHeader
+        title="Ajuda"
+        description="Converse com o assistente ou consulte os guias de cada módulo, atalhos do PDV e perguntas frequentes."
+      />
+      <Tabs defaultValue="assistant" className="gap-4">
+        <TabsList>
+          <TabsTrigger value="assistant">
+            <Bot />
+            Assistente IA
+          </TabsTrigger>
+          <TabsTrigger value="guide">
+            <BookOpen />
+            Central de ajuda
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="assistant">
+          <AssistantChat />
+        </TabsContent>
+        <TabsContent value="guide" className="flex flex-col gap-6">
+          <HelpCenter />
+        </TabsContent>
+      </Tabs>
+    </>
   );
 }
